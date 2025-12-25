@@ -75,59 +75,6 @@ const stats = [
 
 <template>
   <div class="min-h-screen bg-background">
-    <!-- Improved navigation bar -->
-    <nav
-      class="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50"
-    >
-      <div class="container mx-auto px-6 py-4">
-        <div class="flex items-center justify-between">
-          <NuxtLink to="/" class="flex items-center gap-3">
-            <div
-              class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center"
-            >
-              <Shield class="w-5 h-5 text-white" />
-            </div>
-            <span class="text-xl font-semibold text-foreground"
-              >WorkForce Pro</span
-            >
-          </NuxtLink>
-
-          <div class="hidden md:flex items-center gap-6">
-            <NuxtLink
-              to="/features"
-              class="text-sm font-medium text-muted-foreground hover:text-foreground"
-              >Features</NuxtLink
-            >
-            <NuxtLink
-              to="/pricing"
-              class="text-sm font-medium text-muted-foreground hover:text-foreground"
-              >Pricing</NuxtLink
-            >
-            <NuxtLink
-              to="/about"
-              class="text-sm font-medium text-muted-foreground hover:text-foreground"
-              >About</NuxtLink
-            >
-            <NuxtLink
-              to="/contact"
-              class="text-sm font-medium text-muted-foreground hover:text-foreground"
-              >Contact</NuxtLink
-            >
-          </div>
-
-          <div class="flex items-center gap-3">
-            <ThemeToggle />
-            <Button variant="ghost" size="sm" @click="navigateTo('/auth/login')"
-              >Sign In</Button
-            >
-            <Button size="sm" @click="navigateTo('/onboarding/step-1')"
-              >Get Started</Button
-            >
-          </div>
-        </div>
-      </div>
-    </nav>
-
     <!-- Enhanced hero section -->
     <section class="py-20 md:py-32 bg-gradient-to-b from-muted to-background">
       <div class="container mx-auto px-6">
@@ -316,56 +263,5 @@ const stats = [
         </Button>
       </div>
     </section>
-
-    <!-- Improved footer -->
-    <footer class="bg-card text-muted-foreground py-12">
-      <div class="container mx-auto px-6">
-        <div class="grid md:grid-cols-4 gap-8 mb-8">
-          <div>
-            <div class="flex items-center gap-2 mb-4">
-              <div class="w-8 h-8 bg-blue-600 rounded-lg"></div>
-              <span class="text-lg font-semibold text-foreground"
-                >WorkForce Pro</span
-              >
-            </div>
-            <p class="text-sm">
-              Modern workforce management for the digital age.
-            </p>
-          </div>
-          <div>
-            <h4 class="font-semibold text-foreground mb-3">Product</h4>
-            <div class="space-y-2 text-sm">
-              <NuxtLink to="/features" class="block hover:text-white"
-                >Features</NuxtLink
-              >
-              <NuxtLink to="/pricing" class="block hover:text-white"
-                >Pricing</NuxtLink
-              >
-            </div>
-          </div>
-          <div>
-            <h4 class="font-semibold text-foreground mb-3">Company</h4>
-            <div class="space-y-2 text-sm">
-              <NuxtLink to="/about" class="block hover:text-white"
-                >About</NuxtLink
-              >
-              <NuxtLink to="/contact" class="block hover:text-white"
-                >Contact</NuxtLink
-              >
-            </div>
-          </div>
-          <div>
-            <h4 class="font-semibold text-foreground mb-3">Legal</h4>
-            <div class="space-y-2 text-sm">
-              <a href="#" class="block hover:text-white">Privacy</a>
-              <a href="#" class="block hover:text-white">Terms</a>
-            </div>
-          </div>
-        </div>
-        <div class="border-t border-border pt-8 text-center text-sm">
-          © 2025 WorkForce Pro. All rights reserved.
-        </div>
-      </div>
-    </footer>
   </div>
 </template>

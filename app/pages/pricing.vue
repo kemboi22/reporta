@@ -56,20 +56,6 @@ const plans = [
 
 <template>
   <div class="min-h-screen bg-background">
-    <nav class="border-b border-border">
-      <div class="container mx-auto px-6 py-4">
-        <div class="flex items-center justify-between">
-          <NuxtLink to="/" class="flex items-center gap-3">
-            <div class="w-9 h-9 bg-blue-600 rounded-lg"></div>
-            <span class="text-xl font-semibold">WorkForce Pro</span>
-          </NuxtLink>
-          <Button variant="ghost" size="sm" @click="navigateTo('/')"
-            >Back to Home</Button
-          >
-        </div>
-      </div>
-    </nav>
-
     <section class="py-20 bg-muted">
       <div class="container mx-auto px-6">
         <div class="max-w-3xl mx-auto text-center mb-16">
@@ -98,7 +84,9 @@ const plans = [
                 <span class="text-4xl font-bold text-foreground"
                   >${{ plan.price }}</span
                 >
-                <span v-if="plan.price !== 'Custom'" class="text-muted-foreground"
+                <span
+                  v-if="plan.price !== 'Custom'"
+                  class="text-muted-foreground"
                   >/month</span
                 >
               </div>

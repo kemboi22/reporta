@@ -1,0 +1,67 @@
+<script setup lang="ts">
+import { Shield } from "lucide-vue-next";
+const links = [
+  {
+    name: "Home",
+    href: "/",
+  },
+  {
+    name: "Features",
+    href: "/features",
+  },
+  {
+    name: "About",
+    href: "/about",
+  },
+  {
+    name: "Contact",
+    href: "/contact",
+  },
+  // {
+  //   name: '',
+  //   href: ''
+  // },
+];
+</script>
+<template>
+  <!-- Improved navigation bar -->
+  <nav
+    class="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50"
+  >
+    <div class="container mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <NuxtLink to="/" class="flex items-center gap-3">
+          <div
+            class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center"
+          >
+            <Shield class="w-5 h-5 text-white" />
+          </div>
+          <span class="text-xl font-semibold text-foreground"
+            >WorkForce Pro</span
+          >
+        </NuxtLink>
+
+        <div class="hidden md:flex items-center gap-6">
+          <NuxtLink
+            v-for="link in links"
+            :key="link.href"
+            :to="link.href"
+            class="text-sm font-medium text-muted-foreground hover:text-foreground"
+            >{{ link.name }}</NuxtLink
+          >
+        </div>
+
+        <div class="flex items-center gap-3">
+          <ThemeToggle />
+
+          <Button variant="ghost" size="sm" @click="navigateTo('/auth/login')"
+            >Sign In</Button
+          >
+          <Button size="sm" @click="navigateTo('/onboarding/step-1')"
+            >Get Started</Button
+          >
+        </div>
+      </div>
+    </div>
+  </nav>
+</template>
