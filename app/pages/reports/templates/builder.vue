@@ -143,13 +143,13 @@ const onDrop = (targetId: number) => {
             <ArrowLeft class="h-4 w-4" />
           </Button>
           <div>
-            <h1 class="text-3xl font-bold text-slate-900">Template Builder</h1>
-            <p class="text-slate-600 mt-1">Create a custom report template</p>
+            <h1 class="text-3xl font-bold text-foreground">Template Builder</h1>
+            <p class="text-muted-foreground mt-1">Create a custom report template</p>
           </div>
         </div>
 
         <div class="flex gap-3">
-          <Button variant="outline" class="border-slate-300">
+          <Button variant="outline" class="border-border">
             <Eye class="h-4 w-4 mr-2" />
             Preview
           </Button>
@@ -166,10 +166,10 @@ const onDrop = (targetId: number) => {
       <div class="grid lg:grid-cols-3 gap-6">
         <!-- Template Settings -->
         <div class="lg:col-span-1 space-y-6">
-          <Card class="border-slate-200">
+          <Card class="border-border">
             <CardContent class="p-6 space-y-6">
               <div>
-                <h3 class="text-lg font-semibold text-slate-900 mb-4">
+                <h3 class="text-lg font-semibold text-foreground mb-4">
                   Template Settings
                 </h3>
 
@@ -231,7 +231,7 @@ const onDrop = (targetId: number) => {
                   <div class="flex items-center justify-between pt-2">
                     <div>
                       <Label>Active Status</Label>
-                      <p class="text-sm text-slate-500">
+                      <p class="text-sm text-muted-foreground">
                         Make template available
                       </p>
                     </div>
@@ -243,20 +243,20 @@ const onDrop = (targetId: number) => {
           </Card>
 
           <!-- Field Types -->
-          <Card class="border-slate-200">
+          <Card class="border-border">
             <CardContent class="p-6">
-              <h3 class="text-sm font-semibold text-slate-900 mb-4">
+              <h3 class="text-sm font-semibold text-foreground mb-4">
                 Available Field Types
               </h3>
               <div class="space-y-2">
                 <div
                   v-for="fieldType in fieldTypes"
                   :key="fieldType.value"
-                  class="flex items-center gap-3 text-sm text-slate-600 p-2 rounded-lg hover:bg-slate-50"
+                  class="flex items-center gap-3 text-sm text-muted-foreground p-2 rounded-lg hover:bg-muted"
                 >
                   <component
                     :is="fieldType.icon"
-                    class="h-4 w-4 text-slate-400"
+                    class="h-4 w-4 text-muted-foreground"
                   />
                   <span>{{ fieldType.label }}</span>
                 </div>
@@ -267,14 +267,14 @@ const onDrop = (targetId: number) => {
 
         <!-- Form Builder -->
         <div class="lg:col-span-2 space-y-4">
-          <Card class="border-slate-200">
+          <Card class="border-border">
             <CardContent class="p-6">
               <div class="flex items-center justify-between mb-6">
                 <div>
-                  <h3 class="text-lg font-semibold text-slate-900">
+                  <h3 class="text-lg font-semibold text-foreground">
                     Form Fields
                   </h3>
-                  <p class="text-sm text-slate-600 mt-1">
+                  <p class="text-sm text-muted-foreground mt-1">
                     Drag and drop to reorder fields
                   </p>
                 </div>
@@ -289,7 +289,7 @@ const onDrop = (targetId: number) => {
                 <Card
                   v-for="field in fields"
                   :key="field.id"
-                  class="border-slate-200 bg-slate-50 cursor-move"
+                  class="border-border bg-muted cursor-move"
                   draggable="true"
                   @dragstart="onDragStart(field.id)"
                   @dragover="onDragOver"
@@ -298,14 +298,14 @@ const onDrop = (targetId: number) => {
                   <CardContent class="p-4">
                     <div class="flex gap-4">
                       <div class="flex items-start pt-8 cursor-move">
-                        <GripVertical class="h-5 w-5 text-slate-400" />
+                        <GripVertical class="h-5 w-5 text-muted-foreground" />
                       </div>
 
                       <div class="flex-1 grid md:grid-cols-2 gap-4">
                         <div>
                           <Label>Field Type</Label>
                           <Select v-model="field.type">
-                            <SelectTrigger class="mt-1.5 bg-white">
+                            <SelectTrigger class="mt-1.5 bg-background">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -325,7 +325,7 @@ const onDrop = (targetId: number) => {
                           <Input
                             v-model="field.label"
                             placeholder="Enter field label"
-                            class="mt-1.5 bg-white"
+                            class="mt-1.5 bg-background"
                           />
                         </div>
 
@@ -334,7 +334,7 @@ const onDrop = (targetId: number) => {
                           <Input
                             v-model="field.placeholder"
                             placeholder="Enter placeholder"
-                            class="mt-1.5 bg-white"
+                            class="mt-1.5 bg-background"
                           />
                         </div>
 
@@ -362,9 +362,9 @@ const onDrop = (targetId: number) => {
 
                 <div
                   v-if="fields.length === 0"
-                  class="text-center py-12 text-slate-500"
+                  class="text-center py-12 text-muted-foreground"
                 >
-                  <FileText class="h-12 w-12 mx-auto mb-3 text-slate-400" />
+                  <FileText class="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
                   <p class="font-medium">No fields yet</p>
                   <p class="text-sm">
                     Click "Add Field" to start building your form

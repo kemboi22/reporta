@@ -165,8 +165,8 @@ const saveDraft = () => {
           <ArrowLeft class="h-4 w-4" />
         </Button>
         <div>
-          <h1 class="text-3xl font-bold text-slate-900">{{ template.name }}</h1>
-          <p class="text-slate-600 mt-1">{{ template.description }}</p>
+          <h1 class="text-3xl font-bold text-foreground">{{ template.name }}</h1>
+          <p class="text-muted-foreground mt-1">{{ template.description }}</p>
         </div>
         <Badge
           class="bg-blue-100 text-blue-700 hover:bg-blue-100 text-base px-4 py-2"
@@ -209,7 +209,7 @@ const saveDraft = () => {
               >
                 <Label
                   :for="`field-${field.id}`"
-                  class="text-slate-900 flex items-center gap-1"
+                  class="text-foreground flex items-center gap-1"
                 >
                   {{ field.label }}
                   <span v-if="field.required" class="text-red-500">*</span>
@@ -316,7 +316,7 @@ const saveDraft = () => {
         <Card>
           <CardContent class="p-6">
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2 text-sm text-slate-600">
+              <div class="flex items-center gap-2 text-sm text-muted-foreground">
                 <CheckCircle2 class="h-5 w-5 text-emerald-600" />
                 <span>All changes are automatically saved</span>
               </div>

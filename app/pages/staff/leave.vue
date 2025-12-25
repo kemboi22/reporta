@@ -85,7 +85,7 @@ const getStatusColor = (status: string) => {
     case "rejected":
       return "bg-red-100 text-red-700 border-red-200";
     default:
-      return "bg-slate-100 text-slate-700 border-slate-200";
+      return "bg-muted text-foreground border-border";
   }
 };
 </script>
@@ -95,8 +95,8 @@ const getStatusColor = (status: string) => {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-slate-900">My Leave</h1>
-        <p class="text-slate-600 mt-1">
+        <h1 class="text-3xl font-bold text-foreground">My Leave</h1>
+        <p class="text-muted-foreground mt-1">
           Manage your leave requests and balances
         </p>
       </div>
@@ -121,11 +121,11 @@ const getStatusColor = (status: string) => {
                 <component :is="balance.icon" class="h-6 w-6" />
               </div>
               <div>
-                <p class="text-sm text-slate-600">{{ balance.type }}</p>
-                <p class="text-3xl font-bold text-slate-900">
+                <p class="text-sm text-muted-foreground">{{ balance.type }}</p>
+                <p class="text-3xl font-bold text-foreground">
                   {{ balance.remaining }}
                 </p>
-                <p class="text-sm text-slate-500 mt-1">
+                <p class="text-sm text-muted-foreground mt-1">
                   of {{ balance.total }} days remaining
                 </p>
               </div>
@@ -146,12 +146,12 @@ const getStatusColor = (status: string) => {
           <div
             v-for="request in leaveRequests"
             :key="request.id"
-            class="p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+            class="p-4 rounded-lg border border-border hover:bg-muted transition-colors"
           >
             <div class="flex items-start justify-between">
               <div class="space-y-2 flex-1">
                 <div class="flex items-center gap-3">
-                  <h3 class="font-semibold text-slate-900">
+                  <h3 class="font-semibold text-foreground">
                     {{ request.type }}
                   </h3>
                   <Badge
@@ -161,7 +161,7 @@ const getStatusColor = (status: string) => {
                     {{ request.status }}
                   </Badge>
                 </div>
-                <div class="flex items-center gap-2 text-sm text-slate-600">
+                <div class="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar class="h-4 w-4" />
                   <span
                     >{{ request.startDate }} to {{ request.endDate }} ({{
@@ -170,12 +170,12 @@ const getStatusColor = (status: string) => {
                     {{ request.days === 1 ? "day" : "days" }})</span
                   >
                 </div>
-                <p class="text-sm text-slate-600">
+                <p class="text-sm text-muted-foreground">
                   <span class="font-medium">Reason:</span> {{ request.reason }}
                 </p>
                 <div
                   v-if="request.status === 'approved'"
-                  class="text-sm text-slate-600"
+                  class="text-sm text-muted-foreground"
                 >
                   Approved by {{ request.approver }} on
                   {{ request.approvedDate }}

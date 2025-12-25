@@ -82,7 +82,7 @@ const getStrengthText = () => {
       <div class="relative z-10">
         <NuxtLink to="/" class="flex items-center gap-2 text-white">
           <div
-            class="w-10 h-10 bg-white rounded-lg flex items-center justify-center"
+            class="w-10 h-10 bg-background rounded-lg flex items-center justify-center"
           >
             <svg
               class="w-6 h-6 text-primary"
@@ -104,7 +104,7 @@ const getStrengthText = () => {
 
       <div class="relative z-10 text-white">
         <h1 class="text-4xl font-bold mb-4">Start Your Journey</h1>
-        <p class="text-lg text-blue-100 mb-8">
+        <p class="text-lg text-primary-foreground/80 mb-8">
           Join thousands of organizations streamlining their workforce
           management operations.
         </p>
@@ -113,7 +113,7 @@ const getStrengthText = () => {
         <div class="space-y-4">
           <div class="flex items-start gap-3">
             <div
-              class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 mt-1"
+              class="w-6 h-6 rounded-full bg-background/20 flex items-center justify-center flex-shrink-0 mt-1"
             >
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path
@@ -125,14 +125,14 @@ const getStrengthText = () => {
             </div>
             <div>
               <h3 class="font-semibold mb-1">Biometric Attendance</h3>
-              <p class="text-sm text-blue-100">
+              <p class="text-sm text-primary-foreground/80">
                 Track attendance with advanced biometric integration
               </p>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <div
-              class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 mt-1"
+              class="w-6 h-6 rounded-full bg-background/20 flex items-center justify-center flex-shrink-0 mt-1"
             >
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path
@@ -144,14 +144,14 @@ const getStrengthText = () => {
             </div>
             <div>
               <h3 class="font-semibold mb-1">Comprehensive HR Tools</h3>
-              <p class="text-sm text-blue-100">
+              <p class="text-sm text-primary-foreground/80">
                 Manage staff, shifts, leaves, and appraisals in one place
               </p>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <div
-              class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 mt-1"
+              class="w-6 h-6 rounded-full bg-background/20 flex items-center justify-center flex-shrink-0 mt-1"
             >
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path
@@ -163,7 +163,7 @@ const getStrengthText = () => {
             </div>
             <div>
               <h3 class="font-semibold mb-1">Real-time Analytics</h3>
-              <p class="text-sm text-blue-100">
+              <p class="text-sm text-primary-foreground/80">
                 Get insights with powerful reporting and analytics
               </p>
             </div>
@@ -171,14 +171,14 @@ const getStrengthText = () => {
         </div>
       </div>
 
-      <div class="relative z-10 text-blue-100 text-sm">
+      <div class="relative z-10 text-primary-foreground/80 text-sm">
         © 2025 WorkForce. All rights reserved.
       </div>
     </div>
 
     <!-- Right side - Register form -->
     <div
-      class="flex-1 flex items-center justify-center p-8 bg-muted/30 overflow-y-auto"
+      class="flex-1 flex items-center justify-center p-8 bg-muted overflow-y-auto"
     >
       <div class="w-full max-w-md">
         <div class="mb-8">
@@ -309,7 +309,7 @@ const getStrengthText = () => {
               <div class="w-full border-t border-border"></div>
             </div>
             <div class="relative flex justify-center text-sm">
-              <span class="px-4 bg-muted/30 text-muted-foreground"
+              <span class="px-4 bg-muted text-muted-foreground"
                 >Or sign up with</span
               >
             </div>

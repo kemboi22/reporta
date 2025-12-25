@@ -24,17 +24,17 @@ const getActivityIcon = (type: string) => {
 
 const getActivityColor = (type: string) => {
   const colors: Record<string, string> = {
-    task: 'bg-blue-100 text-blue-600',
-    report: 'bg-amber-100 text-amber-600',
-    leave: 'bg-emerald-100 text-emerald-600',
-    document: 'bg-purple-100 text-purple-600'
+    task: 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400',
+    report: 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400',
+    leave: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400',
+    document: 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400'
   }
-  return colors[type] || 'bg-slate-100 text-slate-600'
+  return colors[type] || 'bg-muted text-muted-foreground'
 }
 </script>
 
 <template>
-  <div class="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
+  <div class="flex items-start gap-3 p-3 rounded-lg hover:bg-muted transition-colors cursor-pointer">
     <div :class="[
       'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
       getActivityColor(activity.type)
@@ -43,12 +43,12 @@ const getActivityColor = (type: string) => {
     </div>
     
     <div class="flex-1 min-w-0">
-      <p class="text-sm text-slate-900">
+      <p class="text-sm text-foreground">
         <span class="font-medium">{{ activity.user }}</span>
-        <span class="text-slate-600"> {{ activity.action }} </span>
+        <span class="text-muted-foreground"> {{ activity.action }} </span>
         <span class="font-medium">{{ activity.target }}</span>
       </p>
-      <p class="text-xs text-slate-400 mt-1">{{ activity.time }}</p>
+      <p class="text-xs text-muted-foreground mt-1">{{ activity.time }}</p>
     </div>
   </div>
 </template>

@@ -123,8 +123,8 @@ const getColorClasses = (color: string) => {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-slate-900">Report Analytics</h1>
-        <p class="text-slate-600 mt-1">
+        <h1 class="text-3xl font-bold text-foreground">Report Analytics</h1>
+        <p class="text-muted-foreground mt-1">
           Track performance and insights across all reports
         </p>
       </div>
@@ -142,7 +142,7 @@ const getColorClasses = (color: string) => {
           </SelectContent>
         </Select>
 
-        <Button variant="outline" class="border-slate-300">
+        <Button variant="outline" class="border-border">
           <Download class="h-4 w-4 mr-2" />
           Export
         </Button>
@@ -154,7 +154,7 @@ const getColorClasses = (color: string) => {
       <Card
         v-for="metric in metricsData"
         :key="metric.label"
-        class="border-slate-200"
+        class="border-border"
       >
         <CardContent class="p-6">
           <div class="flex items-start justify-between mb-4">
@@ -181,8 +181,8 @@ const getColorClasses = (color: string) => {
             </Badge>
           </div>
 
-          <p class="text-sm text-slate-600 mb-1">{{ metric.label }}</p>
-          <p class="text-3xl font-bold text-slate-900">{{ metric.value }}</p>
+          <p class="text-sm text-muted-foreground mb-1">{{ metric.label }}</p>
+          <p class="text-3xl font-bold text-foreground">{{ metric.value }}</p>
         </CardContent>
       </Card>
     </div>
@@ -190,14 +190,14 @@ const getColorClasses = (color: string) => {
     <!-- Charts Section -->
     <div class="grid lg:grid-cols-2 gap-6">
       <!-- Submission Trends -->
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
           <div class="flex items-center justify-between mb-6">
             <div>
-              <h3 class="text-lg font-semibold text-slate-900">
+              <h3 class="text-lg font-semibold text-foreground">
                 Submission Trends
               </h3>
-              <p class="text-sm text-slate-600">Daily submission volume</p>
+              <p class="text-sm text-muted-foreground">Daily submission volume</p>
             </div>
             <Select v-model="selectedDepartment">
               <SelectTrigger class="w-40">
@@ -214,12 +214,12 @@ const getColorClasses = (color: string) => {
 
           <!-- Chart Placeholder -->
           <div
-            class="h-64 bg-slate-50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-200"
+            class="h-64 bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-border"
           >
             <div class="text-center">
-              <BarChart3 class="h-12 w-12 text-slate-400 mx-auto mb-2" />
-              <p class="text-sm text-slate-600">Chart visualization area</p>
-              <p class="text-xs text-slate-500">
+              <BarChart3 class="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                <p class="text-sm text-muted-foreground">Chart visualization area</p>
+                <p class="text-xs text-muted-foreground">
                 Integrate with Chart.js or similar
               </p>
             </div>
@@ -228,23 +228,23 @@ const getColorClasses = (color: string) => {
       </Card>
 
       <!-- Template Distribution -->
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
           <div class="mb-6">
-            <h3 class="text-lg font-semibold text-slate-900">
+            <h3 class="text-lg font-semibold text-foreground">
               Template Distribution
             </h3>
-            <p class="text-sm text-slate-600">Usage by template type</p>
+            <p class="text-sm text-muted-foreground">Usage by template type</p>
           </div>
 
           <!-- Chart Placeholder -->
           <div
-            class="h-64 bg-slate-50 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-200"
+            class="h-64 bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-border"
           >
             <div class="text-center">
-              <BarChart3 class="h-12 w-12 text-slate-400 mx-auto mb-2" />
-              <p class="text-sm text-slate-600">Pie/Donut chart area</p>
-              <p class="text-xs text-slate-500">Template usage breakdown</p>
+              <BarChart3 class="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+              <p class="text-sm text-muted-foreground">Pie/Donut chart area</p>
+                <p class="text-xs text-muted-foreground">Template usage breakdown</p>
             </div>
           </div>
         </CardContent>
@@ -252,14 +252,14 @@ const getColorClasses = (color: string) => {
     </div>
 
     <!-- Department Performance -->
-    <Card class="border-slate-200">
+    <Card class="border-border">
       <CardContent class="p-6">
         <div class="flex items-center justify-between mb-6">
           <div>
-            <h3 class="text-lg font-semibold text-slate-900">
+            <h3 class="text-lg font-semibold text-foreground">
               Department Performance
             </h3>
-            <p class="text-sm text-slate-600">
+            <p class="text-sm text-muted-foreground">
               Compare metrics across departments
             </p>
           </div>
@@ -268,29 +268,29 @@ const getColorClasses = (color: string) => {
         <div class="overflow-x-auto">
           <table class="w-full">
             <thead>
-              <tr class="border-b border-slate-200">
+              <tr class="border-b border-border">
                 <th
-                  class="text-left py-3 px-4 text-sm font-semibold text-slate-900"
+                  class="text-left py-3 px-4 text-sm font-semibold text-foreground"
                 >
                   Department
                 </th>
                 <th
-                  class="text-right py-3 px-4 text-sm font-semibold text-slate-900"
+                  class="text-right py-3 px-4 text-sm font-semibold text-foreground"
                 >
                   Submissions
                 </th>
                 <th
-                  class="text-right py-3 px-4 text-sm font-semibold text-slate-900"
+                  class="text-right py-3 px-4 text-sm font-semibold text-foreground"
                 >
                   Completion Rate
                 </th>
                 <th
-                  class="text-right py-3 px-4 text-sm font-semibold text-slate-900"
+                  class="text-right py-3 px-4 text-sm font-semibold text-foreground"
                 >
                   Avg Time
                 </th>
                 <th
-                  class="text-right py-3 px-4 text-sm font-semibold text-slate-900"
+                  class="text-right py-3 px-4 text-sm font-semibold text-foreground"
                 >
                   Performance
                 </th>
@@ -300,7 +300,7 @@ const getColorClasses = (color: string) => {
               <tr
                 v-for="dept in departmentStats"
                 :key="dept.department"
-                class="border-b border-slate-100 hover:bg-slate-50"
+                class="border-b border-border hover:bg-muted"
               >
                 <td class="py-4 px-4">
                   <div class="flex items-center gap-3">
@@ -309,30 +309,30 @@ const getColorClasses = (color: string) => {
                     >
                       <Users class="h-5 w-5 text-blue-600" />
                     </div>
-                    <span class="font-medium text-slate-900">{{
+                    <span class="font-medium text-foreground">{{
                       dept.department
                     }}</span>
                   </div>
                 </td>
-                <td class="text-right py-4 px-4 font-semibold text-slate-900">
+                <td class="text-right py-4 px-4 font-semibold text-foreground">
                   {{ dept.submissions }}
                 </td>
                 <td class="text-right py-4 px-4">
                   <div class="flex items-center justify-end gap-2">
                     <div
-                      class="w-24 h-2 bg-slate-200 rounded-full overflow-hidden"
+                      class="w-24 h-2 bg-muted rounded-full overflow-hidden"
                     >
                       <div
                         class="h-full bg-emerald-500 rounded-full"
                         :style="{ width: `${dept.completion}%` }"
                       ></div>
                     </div>
-                    <span class="text-sm font-medium text-slate-900"
+                      <span class="text-sm font-medium text-foreground"
                       >{{ dept.completion }}%</span
                     >
                   </div>
                 </td>
-                <td class="text-right py-4 px-4 text-slate-700">
+                <td class="text-right py-4 px-4 text-muted-foreground">
                   {{ dept.avgTime }}
                 </td>
                 <td class="text-right py-4 px-4">
@@ -354,11 +354,11 @@ const getColorClasses = (color: string) => {
     </Card>
 
     <!-- Top Templates -->
-    <Card class="border-slate-200">
+    <Card class="border-border">
       <CardContent class="p-6">
         <div class="mb-6">
-          <h3 class="text-lg font-semibold text-slate-900">Top Templates</h3>
-          <p class="text-sm text-slate-600">
+          <h3 class="text-lg font-semibold text-foreground">Top Templates</h3>
+          <p class="text-sm text-muted-foreground">
             Most frequently used report templates
           </p>
         </div>
@@ -367,7 +367,7 @@ const getColorClasses = (color: string) => {
           <div
             v-for="(template, index) in topTemplates"
             :key="template.name"
-            class="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+            class="flex items-center justify-between p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
           >
             <div class="flex items-center gap-4">
               <div
@@ -376,8 +376,8 @@ const getColorClasses = (color: string) => {
                 {{ index + 1 }}
               </div>
               <div>
-                <p class="font-medium text-slate-900">{{ template.name }}</p>
-                <p class="text-sm text-slate-600">
+                <p class="font-medium text-foreground">{{ template.name }}</p>
+              <p class="text-sm text-muted-foreground">
                   {{ template.submissions }} submissions
                 </p>
               </div>

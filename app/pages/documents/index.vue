@@ -121,7 +121,7 @@ const getCategoryColor = (category: string) => {
     Compliance: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100",
     Training: "bg-amber-100 text-amber-700 hover:bg-amber-100",
   };
-  return colors[category] || "bg-slate-100 text-slate-700";
+  return colors[category] || "bg-muted text-foreground";
 };
 </script>
 
@@ -130,8 +130,8 @@ const getCategoryColor = (category: string) => {
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-3xl font-bold text-slate-900">Documents</h1>
-          <p class="text-slate-600 mt-1">Centralized document repository</p>
+          <h1 class="text-3xl font-bold text-foreground">Documents</h1>
+          <p class="text-muted-foreground mt-1">Centralized document repository</p>
         </div>
 
         <!-- Added upload dialog -->
@@ -192,12 +192,12 @@ const getCategoryColor = (category: string) => {
       </div>
 
       <!-- Filters -->
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
           <div class="flex flex-col md:flex-row gap-4">
             <div class="relative flex-1">
               <Search
-                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
+                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
               />
               <Input placeholder="Search documents..." class="pl-10" />
             </div>
@@ -215,11 +215,11 @@ const getCategoryColor = (category: string) => {
               </SelectContent>
             </Select>
 
-            <div class="flex border border-slate-200 rounded-lg">
+            <div class="flex border border-border rounded-lg">
               <Button
                 variant="ghost"
                 size="icon"
-                :class="viewMode === 'grid' && 'bg-slate-100'"
+                :class="viewMode === 'grid' && 'bg-muted'"
                 @click="viewMode = 'grid'"
               >
                 <Grid3x3 class="h-4 w-4" />
@@ -227,7 +227,7 @@ const getCategoryColor = (category: string) => {
               <Button
                 variant="ghost"
                 size="icon"
-                :class="viewMode === 'list' && 'bg-slate-100'"
+                :class="viewMode === 'list' && 'bg-muted'"
                 @click="viewMode = 'list'"
               >
                 <List class="h-4 w-4" />
@@ -245,7 +245,7 @@ const getCategoryColor = (category: string) => {
         <Card
           v-for="doc in documents"
           :key="doc.id"
-          class="border-slate-200 hover:shadow-lg transition-all cursor-pointer"
+          class="border-border hover:shadow-lg transition-all cursor-pointer"
         >
           <CardContent class="p-6">
             <div
@@ -254,21 +254,21 @@ const getCategoryColor = (category: string) => {
               <FileText class="h-6 w-6 text-red-600" />
             </div>
 
-            <h3 class="font-semibold text-slate-900 mb-2 line-clamp-2">
+            <h3 class="font-semibold text-foreground mb-2 line-clamp-2">
               {{ doc.name }}
             </h3>
             <Badge :class="getCategoryColor(doc.category)" class="mb-3">{{
               doc.category
             }}</Badge>
 
-            <div class="space-y-2 text-sm text-slate-600">
+            <div class="space-y-2 text-sm text-muted-foreground">
               <div class="flex justify-between">
                 <span>Size</span>
-                <span class="font-medium text-slate-900">{{ doc.size }}</span>
+                <span class="font-medium text-foreground">{{ doc.size }}</span>
               </div>
               <div class="flex justify-between">
                 <span>Downloads</span>
-                <span class="font-medium text-slate-900">{{
+                <span class="font-medium text-foreground">{{
                   doc.downloads
                 }}</span>
               </div>
@@ -292,9 +292,9 @@ const getCategoryColor = (category: string) => {
 
             <div
               v-if="doc.assignedTo && doc.assignedTo.length > 0"
-              class="mt-3 pt-3 border-t border-slate-100"
+              class="mt-3 pt-3 border-t border-border"
             >
-              <p class="text-xs text-slate-500 mb-2">Assigned to:</p>
+              <p class="text-xs text-muted-foreground mb-2">Assigned to:</p>
               <div class="flex flex-wrap gap-1">
                 <Badge
                   v-for="staff in doc.assignedTo"
@@ -311,53 +311,53 @@ const getCategoryColor = (category: string) => {
       </div>
 
       <!-- Documents List -->
-      <Card v-else class="border-slate-200">
+      <Card v-else class="border-border">
         <CardContent class="p-0">
           <table class="w-full">
-            <thead class="bg-slate-50 border-b border-slate-200">
+              <thead class="bg-muted border-b border-border">
               <tr>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+                  class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
                 >
                   Document
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+                  class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
                 >
                   Category
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+                  class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
                 >
                   Size
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+                  class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
                 >
                   Uploaded By
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+                  class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
                 >
                   Date
                 </th>
                 <th
-                  class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase"
+                  class="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase"
                 >
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-200">
+            <tbody class="divide-y divide-border">
               <tr
                 v-for="doc in documents"
                 :key="doc.id"
-                class="hover:bg-slate-50 transition-colors"
+                class="hover:bg-muted transition-colors"
               >
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
                     <FileText class="h-5 w-5 text-red-600" />
-                    <span class="font-medium text-slate-900">{{
+                    <span class="font-medium text-foreground">{{
                       doc.name
                     }}</span>
                   </div>
@@ -367,11 +367,11 @@ const getCategoryColor = (category: string) => {
                     doc.category
                   }}</Badge>
                 </td>
-                <td class="px-6 py-4 text-sm text-slate-600">{{ doc.size }}</td>
-                <td class="px-6 py-4 text-sm text-slate-600">
+                <td class="px-6 py-4 text-sm text-muted-foreground">{{ doc.size }}</td>
+                <td class="px-6 py-4 text-sm text-muted-foreground">
                   {{ doc.uploadedBy }}
                 </td>
-                <td class="px-6 py-4 text-sm text-slate-600">
+                <td class="px-6 py-4 text-sm text-muted-foreground">
                   {{ doc.uploadedDate }}
                 </td>
                 <td class="px-6 py-4 text-right">
@@ -394,30 +394,30 @@ const getCategoryColor = (category: string) => {
 
       <!-- Stats -->
       <div class="grid md:grid-cols-4 gap-6">
-        <Card class="border-slate-200">
+        <Card class="border-border">
           <CardContent class="p-6">
-            <p class="text-sm text-slate-600 mb-1">Total Documents</p>
-            <p class="text-3xl font-bold text-slate-900">248</p>
+            <p class="text-sm text-muted-foreground mb-1">Total Documents</p>
+            <p class="text-3xl font-bold text-foreground">248</p>
           </CardContent>
         </Card>
 
-        <Card class="border-slate-200">
+        <Card class="border-border">
           <CardContent class="p-6">
-            <p class="text-sm text-slate-600 mb-1">Storage Used</p>
+            <p class="text-sm text-muted-foreground mb-1">Storage Used</p>
             <p class="text-3xl font-bold text-blue-600">12.4 GB</p>
           </CardContent>
         </Card>
 
-        <Card class="border-slate-200">
+        <Card class="border-border">
           <CardContent class="p-6">
-            <p class="text-sm text-slate-600 mb-1">Categories</p>
+            <p class="text-sm text-muted-foreground mb-1">Categories</p>
             <p class="text-3xl font-bold text-purple-600">8</p>
           </CardContent>
         </Card>
 
-        <Card class="border-slate-200">
+        <Card class="border-border">
           <CardContent class="p-6">
-            <p class="text-sm text-slate-600 mb-1">Downloads</p>
+            <p class="text-sm text-muted-foreground mb-1">Downloads</p>
             <p class="text-3xl font-bold text-emerald-600">1,234</p>
           </CardContent>
         </Card>

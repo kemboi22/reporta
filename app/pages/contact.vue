@@ -28,8 +28,8 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-white">
-    <nav class="border-b border-slate-200">
+  <div class="min-h-screen bg-background">
+    <nav class="border-b border-border">
       <div class="container mx-auto px-6 py-4">
         <div class="flex items-center justify-between">
           <NuxtLink to="/" class="flex items-center gap-3">
@@ -43,11 +43,11 @@ const handleSubmit = async () => {
       </div>
     </nav>
 
-    <section class="py-20 bg-slate-50">
+    <section class="py-20 bg-muted">
       <div class="container mx-auto px-6">
         <div class="max-w-3xl mx-auto text-center mb-16">
-          <h1 class="text-5xl font-bold text-slate-900 mb-6">Get In Touch</h1>
-          <p class="text-xl text-slate-600">
+          <h1 class="text-5xl font-bold text-foreground mb-6">Get In Touch</h1>
+          <p class="text-xl text-muted-foreground">
             Have questions? We'd love to hear from you. Send us a message and
             we'll respond as soon as possible.
           </p>
@@ -123,8 +123,8 @@ const handleSubmit = async () => {
                     <Mail class="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h3 class="font-semibold text-slate-900 mb-1">Email</h3>
-                    <p class="text-sm text-slate-600">
+                    <h3 class="font-semibold text-foreground mb-1">Email</h3>
+                    <p class="text-sm text-muted-foreground">
                       support@workforcepro.com
                     </p>
                   </div>
@@ -141,8 +141,8 @@ const handleSubmit = async () => {
                     <Phone class="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h3 class="font-semibold text-slate-900 mb-1">Phone</h3>
-                    <p class="text-sm text-slate-600">+1 (555) 123-4567</p>
+                    <h3 class="font-semibold text-foreground mb-1">Phone</h3>
+                    <p class="text-sm text-muted-foreground">+1 (555) 123-4567</p>
                   </div>
                 </div>
               </CardContent>
@@ -157,8 +157,8 @@ const handleSubmit = async () => {
                     <MapPin class="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h3 class="font-semibold text-slate-900 mb-1">Office</h3>
-                    <p class="text-sm text-slate-600">
+                    <h3 class="font-semibold text-foreground mb-1">Office</h3>
+                    <p class="text-sm text-muted-foreground">
                       123 Business Ave<br />San Francisco, CA 94105
                     </p>
                   </div>

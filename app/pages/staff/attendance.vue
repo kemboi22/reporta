@@ -51,8 +51,8 @@ const stats = ref({
 <template>
   <div class="p-6 space-y-6">
     <div>
-      <h1 class="text-3xl font-bold text-slate-900">My Attendance</h1>
-      <p class="text-slate-600 mt-1">Track your attendance and working hours</p>
+      <h1 class="text-3xl font-bold text-foreground">My Attendance</h1>
+      <p class="text-muted-foreground mt-1">Track your attendance and working hours</p>
     </div>
 
     <!-- Stats -->
@@ -61,7 +61,7 @@ const stats = ref({
         <CardContent class="p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-slate-600">Attendance Rate</p>
+              <p class="text-sm text-muted-foreground">Attendance Rate</p>
               <p class="text-3xl font-bold text-green-600">
                 {{ stats.attendanceRate }}%
               </p>
@@ -79,8 +79,8 @@ const stats = ref({
         <CardContent class="p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-slate-600">Days Present</p>
-              <p class="text-3xl font-bold text-slate-900">
+              <p class="text-sm text-muted-foreground">Days Present</p>
+              <p class="text-3xl font-bold text-foreground">
                 {{ stats.daysPresent }}/{{ stats.totalDays }}
               </p>
             </div>
@@ -97,7 +97,7 @@ const stats = ref({
         <CardContent class="p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-slate-600">Late Arrivals</p>
+              <p class="text-sm text-muted-foreground">Late Arrivals</p>
               <p class="text-3xl font-bold text-orange-600">
                 {{ stats.lateArrivals }}
               </p>
@@ -115,7 +115,7 @@ const stats = ref({
         <CardContent class="p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-slate-600">Total Hours</p>
+              <p class="text-sm text-muted-foreground">Total Hours</p>
               <p class="text-3xl font-bold text-purple-600">
                 {{ stats.totalHours }}h
               </p>
@@ -142,7 +142,7 @@ const stats = ref({
             <div
               v-for="day in ['S', 'M', 'T', 'W', 'T', 'F', 'S']"
               :key="day"
-              class="text-center text-sm font-medium text-slate-600 p-2"
+              class="text-center text-sm font-medium text-muted-foreground p-2"
             >
               {{ day }}
             </div>
@@ -167,19 +167,19 @@ const stats = ref({
           <div class="flex items-center gap-4 mt-6 text-sm">
             <div class="flex items-center gap-2">
               <div class="w-4 h-4 bg-green-100 rounded"></div>
-              <span class="text-slate-600">Present</span>
+              <span class="text-muted-foreground">Present</span>
             </div>
             <div class="flex items-center gap-2">
               <div class="w-4 h-4 bg-orange-100 rounded"></div>
-              <span class="text-slate-600">Late</span>
+              <span class="text-muted-foreground">Late</span>
             </div>
             <div class="flex items-center gap-2">
               <div class="w-4 h-4 bg-red-100 rounded"></div>
-              <span class="text-slate-600">Absent</span>
+              <span class="text-muted-foreground">Absent</span>
             </div>
             <div class="flex items-center gap-2">
               <div class="w-4 h-4 bg-blue-100 rounded"></div>
-              <span class="text-slate-600">Leave</span>
+              <span class="text-muted-foreground">Leave</span>
             </div>
           </div>
         </CardContent>
@@ -195,10 +195,10 @@ const stats = ref({
             <div
               v-for="item in attendanceData.slice(0, 8)"
               :key="item.date"
-              class="flex items-center justify-between p-3 rounded-lg border border-slate-200"
+              class="flex items-center justify-between p-3 rounded-lg border border-border"
             >
               <div class="flex items-center gap-3">
-                <div class="text-sm font-medium text-slate-900">
+                <div class="text-sm font-medium text-foreground">
                   Dec {{ item.date }}
                 </div>
                 <Badge
@@ -215,7 +215,7 @@ const stats = ref({
                   {{ item.status }}
                 </Badge>
               </div>
-              <div class="text-sm text-slate-600">
+              <div class="text-sm text-muted-foreground">
                 {{ item.clockIn }} - {{ item.clockOut }} ({{ item.hours }}h)
               </div>
             </div>

@@ -74,9 +74,9 @@ const getInitials = (name: string) => {
 };
 
 const getPercentageColor = (percentage: number) => {
-  if (percentage >= 95) return "text-emerald-600";
-  if (percentage >= 80) return "text-amber-600";
-  return "text-red-600";
+  if (percentage >= 95) return "text-emerald-500";
+  if (percentage >= 80) return "text-amber-500";
+  return "text-red-500";
 };
 </script>
 
@@ -85,8 +85,8 @@ const getPercentageColor = (percentage: number) => {
     <!-- Page Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-slate-900">Attendance Reports</h1>
-        <p class="text-slate-600 mt-1">View and analyze attendance data</p>
+        <h1 class="text-3xl font-bold text-foreground">Attendance Reports</h1>
+        <p class="text-muted-foreground mt-1">View and analyze attendance data</p>
       </div>
 
       <div class="flex gap-3">
@@ -94,7 +94,7 @@ const getPercentageColor = (percentage: number) => {
           <FileText class="h-4 w-4 mr-2" />
           Generate Report
         </Button>
-        <Button class="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button class="bg-blue-500 hover:bg-blue-600 text-white">
           <Download class="h-4 w-4 mr-2" />
           Export
         </Button>
@@ -102,7 +102,7 @@ const getPercentageColor = (percentage: number) => {
     </div>
 
     <!-- Filters -->
-    <Card class="border-slate-200">
+    <Card class="border-border">
       <CardContent class="p-6">
         <div class="flex flex-col md:flex-row gap-4">
           <Select v-model="selectedPeriod">
@@ -151,128 +151,128 @@ const getPercentageColor = (percentage: number) => {
 
     <!-- Summary Cards -->
     <div class="grid md:grid-cols-4 gap-6">
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Average Attendance</p>
-          <p class="text-3xl font-bold text-emerald-600">95%</p>
-          <p class="text-sm text-slate-500 mt-2">This week</p>
+          <p class="text-sm text-muted-foreground mb-1">Average Attendance</p>
+          <p class="text-3xl font-bold text-emerald-500">95%</p>
+          <p class="text-sm text-muted-foreground mt-2">This week</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Total Present</p>
-          <p class="text-3xl font-bold text-blue-600">19</p>
-          <p class="text-sm text-slate-500 mt-2">Out of 20 days</p>
+          <p class="text-sm text-muted-foreground mb-1">Total Present</p>
+          <p class="text-3xl font-bold text-blue-500">19</p>
+          <p class="text-sm text-muted-foreground mt-2">Out of 20 days</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Late Arrivals</p>
-          <p class="text-3xl font-bold text-amber-600">3</p>
-          <p class="text-sm text-slate-500 mt-2">This week</p>
+          <p class="text-sm text-muted-foreground mb-1">Late Arrivals</p>
+          <p class="text-3xl font-bold text-amber-500">3</p>
+          <p class="text-sm text-muted-foreground mt-2">This week</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Overtime Hours</p>
-          <p class="text-3xl font-bold text-purple-600">11</p>
-          <p class="text-sm text-slate-500 mt-2">Total hours</p>
+          <p class="text-sm text-muted-foreground mb-1">Overtime Hours</p>
+          <p class="text-3xl font-bold text-purple-500">11</p>
+          <p class="text-sm text-muted-foreground mt-2">Total hours</p>
         </CardContent>
       </Card>
     </div>
 
     <!-- Attendance Table -->
-    <Card class="border-slate-200">
+    <Card class="border-border">
       <CardContent class="p-0">
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-slate-50 border-b border-slate-200">
+            <thead class="bg-muted border-b border-border">
               <tr>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+                  class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
                 >
                   Staff
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+                  class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
                 >
                   Employee ID
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+                  class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
                 >
                   Department
                 </th>
                 <th
-                  class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+                  class="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase"
                 >
                   Days Present
                 </th>
                 <th
-                  class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+                  class="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase"
                 >
                   Late Arrivals
                 </th>
                 <th
-                  class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+                  class="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase"
                 >
                   Overtime (hrs)
                 </th>
                 <th
-                  class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase"
+                  class="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase"
                 >
                   Attendance %
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-slate-200">
+            <tbody class="bg-background divide-y divide-border">
               <tr
                 v-for="record in attendanceData"
                 :key="record.id"
-                class="hover:bg-slate-50 transition-colors"
+                class="hover:bg-muted transition-colors"
               >
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center gap-3">
                     <Avatar class="h-10 w-10">
                       <AvatarImage :src="record.photo" />
-                      <AvatarFallback class="bg-blue-100 text-blue-700">
+                      <AvatarFallback class="bg-blue-50 text-blue-600">
                         {{ getInitials(record.name) }}
                       </AvatarFallback>
                     </Avatar>
-                    <span class="text-sm font-medium text-slate-900">{{
+                    <span class="text-sm font-medium text-foreground">{{
                       record.name
                     }}</span>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                   {{ record.employeeId }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <Badge class="bg-blue-100 text-blue-700 hover:bg-blue-100">{{
+                  <Badge class="bg-blue-50 text-blue-600 hover:bg-blue-100">{{
                     record.department
                   }}</Badge>
                 </td>
                 <td
-                  class="px-6 py-4 whitespace-nowrap text-center text-sm text-slate-900"
+                   class="px-6 py-4 whitespace-nowrap text-center text-sm text-foreground"
                 >
                   {{ record.daysPresent }} / {{ record.totalDays }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-center">
                   <Badge
-                    :class="
-                      record.lateArrivals > 0
-                        ? 'bg-amber-100 text-amber-700'
-                        : 'bg-emerald-100 text-emerald-700'
-                    "
+                     :class="
+                       record.lateArrivals > 0
+                         ? 'bg-amber-50 text-amber-600'
+                         : 'bg-emerald-50 text-emerald-600'
+                     "
                   >
                     {{ record.lateArrivals }}
                   </Badge>
                 </td>
                 <td
-                  class="px-6 py-4 whitespace-nowrap text-center text-sm text-slate-900"
+                   class="px-6 py-4 whitespace-nowrap text-center text-sm text-foreground"
                 >
                   {{ record.overtime }}
                 </td>
@@ -295,15 +295,15 @@ const getPercentageColor = (percentage: number) => {
 
     <!-- Charts Placeholder -->
     <div class="grid lg:grid-cols-2 gap-6">
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <h3 class="text-lg font-semibold text-slate-900 mb-4">
+          <h3 class="text-lg font-semibold text-foreground mb-4">
             Daily Attendance Trend
           </h3>
           <div
-            class="h-64 flex items-center justify-center bg-slate-50 rounded-lg border border-slate-200"
+            class="h-64 flex items-center justify-center bg-muted rounded-lg border border-border"
           >
-            <div class="text-center text-slate-400">
+            <div class="text-center text-muted-foreground">
               <svg
                 class="h-12 w-12 mx-auto mb-2"
                 fill="none"
@@ -323,15 +323,15 @@ const getPercentageColor = (percentage: number) => {
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <h3 class="text-lg font-semibold text-slate-900 mb-4">
+          <h3 class="text-lg font-semibold text-foreground mb-4">
             Department Comparison
           </h3>
           <div
-            class="h-64 flex items-center justify-center bg-slate-50 rounded-lg border border-slate-200"
+            class="h-64 flex items-center justify-center bg-muted rounded-lg border border-border"
           >
-            <div class="text-center text-slate-400">
+            <div class="text-center text-muted-foreground">
               <svg
                 class="h-12 w-12 mx-auto mb-2"
                 fill="none"

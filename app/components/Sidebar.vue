@@ -27,6 +27,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 defineProps<{
   collapsed: boolean;
@@ -145,13 +146,13 @@ const navigationItems = [
 <template>
   <aside
     :class="[
-      'bg-white border-r border-slate-200 transition-all duration-300 flex flex-col h-screen',
+      'bg-background border-r border-border transition-all duration-300 flex flex-col h-screen',
       collapsed ? 'w-20' : 'w-64',
     ]"
   >
     <!-- Logo -->
     <div
-      class="h-16 flex items-center justify-center border-b border-slate-200 px-4 flex-shrink-0"
+      class="h-16 flex items-center justify-center border-b border-border px-4 flex-shrink-0"
     >
       <div v-if="!collapsed" class="flex items-center gap-2">
         <div
@@ -171,7 +172,7 @@ const navigationItems = [
             />
           </svg>
         </div>
-        <span class="font-bold text-slate-900">WorkFlow</span>
+        <span class="font-bold text-foreground">WorkFlow</span>
       </div>
       <div
         v-else
@@ -196,44 +197,44 @@ const navigationItems = [
     <!-- Enhanced workspace switcher with seamless transitions -->
     <div
       v-if="!collapsed"
-      class="px-3 py-3 border-b border-slate-200 flex-shrink-0"
+      class="px-3 py-3 border-b border-border flex-shrink-0"
     >
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button
             variant="outline"
-            class="w-full justify-between h-auto py-2.5 hover:bg-slate-50 transition-all"
+            class="w-full justify-between h-auto py-2.5 hover:bg-muted transition-all"
             :disabled="isSwitching"
           >
             <div class="flex items-center gap-2.5 min-w-0">
               <Avatar class="h-7 w-7 flex-shrink-0">
                 <AvatarFallback
-                  class="bg-blue-100 text-blue-700 text-xs font-semibold"
+                  class="bg-primary/10 text-primary text-xs font-semibold"
                 >
                   {{ getInitials(currentWorkspace.name) }}
                 </AvatarFallback>
               </Avatar>
               <div class="flex flex-col items-start min-w-0">
                 <span
-                  class="text-sm font-semibold text-slate-900 truncate w-full"
+                  class="text-sm font-semibold text-foreground truncate w-full"
                 >
                   {{ currentWorkspace.name }}
                 </span>
-                <span class="text-xs text-slate-500">{{
+                <span class="text-xs text-muted-foreground">{{
                   currentWorkspace.subdomain
                 }}</span>
               </div>
             </div>
             <ChevronDown
-              :class="[
-                'h-4 w-4 text-slate-400 flex-shrink-0 ml-2 transition-transform',
+:class="[
+                'h-4 w-4 text-muted-foreground',
                 isSwitching && 'animate-spin',
               ]"
             />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent class="w-64" align="start">
-          <DropdownMenuLabel class="text-xs text-slate-500 font-normal">
+          <DropdownMenuLabel class="text-xs text-muted-foreground font-normal">
             Current Workspace
           </DropdownMenuLabel>
 
@@ -242,26 +243,26 @@ const navigationItems = [
             <div class="flex items-center gap-3 w-full">
               <Avatar class="h-9 w-9">
                 <AvatarFallback
-                  class="bg-blue-100 text-blue-700 text-sm font-semibold"
+                  class="bg-primary/10 text-primary text-sm font-semibold"
                 >
                   {{ getInitials(currentWorkspace.name) }}
                 </AvatarFallback>
               </Avatar>
               <div class="flex-1 min-w-0">
-                <div class="text-sm font-semibold text-slate-900 truncate">
+                <div class="text-sm font-semibold text-foreground truncate">
                   {{ currentWorkspace.name }}
                 </div>
-                <div class="text-xs text-slate-500">
+                <div class="text-xs text-muted-foreground">
                   {{ currentWorkspace.subdomain }}
                 </div>
               </div>
-              <Check class="h-4 w-4 text-blue-600" />
+              <Check class="h-4 w-4 text-primary" />
             </div>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuLabel class="text-xs text-slate-500 font-normal">
+          <DropdownMenuLabel class="text-xs text-muted-foreground font-normal">
             Switch to
           </DropdownMenuLabel>
 
@@ -277,16 +278,16 @@ const navigationItems = [
             <div class="flex items-center gap-3 w-full">
               <Avatar class="h-9 w-9">
                 <AvatarFallback
-                  class="bg-slate-100 text-slate-700 text-sm font-semibold"
+                  class="bg-muted text-muted-foreground text-sm font-semibold"
                 >
                   {{ getInitials(workspace.name) }}
                 </AvatarFallback>
               </Avatar>
               <div class="flex-1 min-w-0">
-                <div class="text-sm font-medium text-slate-900 truncate">
+<div class="text-sm font-medium text-foreground truncate">
                   {{ workspace.name }}
                 </div>
-                <div class="text-xs text-slate-500">
+                <div class="text-xs text-muted-foreground">
                   {{ workspace.subdomain }}
                 </div>
               </div>
@@ -299,8 +300,8 @@ const navigationItems = [
             @click="navigateTo('/onboarding/step-1')"
             class="py-2.5"
           >
-            <Plus class="h-4 w-4 mr-2 text-blue-600" />
-            <span class="font-medium text-blue-600">Create Workspace</span>
+            <Plus class="h-4 w-4 mr-2 text-primary" />
+            <span class="font-medium text-primary">Create Workspace</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -315,19 +316,19 @@ const navigationItems = [
             <Button
               variant="ghost"
               :class="[
-                'w-full justify-start hover:bg-slate-100',
+'w-full justify-start hover:bg-muted',
                 collapsed && 'justify-center px-2',
               ]"
               @click="toggleSection(item.name)"
             >
               <component
                 :is="item.icon"
-                class="h-5 w-5 text-slate-600"
+                class="h-5 w-5 text-muted-foreground"
                 :class="collapsed ? '' : 'mr-3'"
               />
               <template v-if="!collapsed">
                 <span
-                  class="flex-1 text-left text-sm font-medium text-slate-700"
+class="flex-1 text-left text-sm font-medium text-foreground"
                   >{{ item.name }}</span
                 >
                 <component
@@ -346,7 +347,7 @@ const navigationItems = [
                 v-for="child in item.children"
                 :key="child.name"
                 variant="ghost"
-                class="w-full justify-start text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                class="w-full justify-start text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
                 @click="navigateTo(child.href)"
               >
                 {{ child.name }}
@@ -359,7 +360,7 @@ const navigationItems = [
             v-else
             variant="ghost"
             :class="[
-              'w-full justify-start hover:bg-slate-100',
+              'w-full justify-start hover:bg-muted',
               collapsed && 'justify-center px-2',
             ]"
             @click="navigateTo(item.href)"
@@ -367,7 +368,7 @@ const navigationItems = [
             <div class="relative">
               <component
                 :is="item.icon"
-                class="h-5 w-5 text-slate-600"
+                class="h-5 w-5 text-muted-foreground"
                 :class="collapsed ? '' : 'mr-3'"
               />
               <Badge
@@ -380,7 +381,7 @@ const navigationItems = [
             </div>
             <template v-if="!collapsed">
               <span
-                class="flex-1 text-left text-sm font-medium text-slate-700"
+                 class="flex-1 text-left text-sm font-medium text-foreground"
                 >{{ item.name }}</span
               >
               <Badge v-if="item.badge" variant="destructive" class="ml-auto">{{
@@ -395,22 +396,22 @@ const navigationItems = [
     <Separator />
 
     <!-- User Section -->
-    <div class="border-t border-slate-200 p-4 flex-shrink-0">
+    <div class="border-t border-border p-4 flex-shrink-0">
       <div v-if="!collapsed" class="flex items-center gap-3">
         <Avatar class="h-10 w-10">
           <AvatarImage src="/placeholder-user.jpg" />
-          <AvatarFallback class="bg-blue-100 text-blue-700">AD</AvatarFallback>
+<AvatarFallback class="bg-primary/10 text-primary">AD</AvatarFallback>
         </Avatar>
         <div class="flex-1 min-w-0">
-          <div class="text-sm font-medium text-slate-900 truncate">
+          <div class="text-sm font-medium text-foreground truncate">
             Admin User
           </div>
-          <div class="text-xs text-slate-500 truncate">admin@company.com</div>
+          <div class="text-xs text-muted-foreground truncate">admin@company.com</div>
         </div>
       </div>
       <Avatar v-else class="h-10 w-10 mx-auto">
         <AvatarImage src="/placeholder-user.jpg" />
-        <AvatarFallback class="bg-blue-100 text-blue-700">AD</AvatarFallback>
+        <AvatarFallback class="bg-primary/10 text-primary">AD</AvatarFallback>
       </Avatar>
     </div>
   </aside>

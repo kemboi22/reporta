@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import ThemeToggle from "@/components/ThemeToggle.vue";
 import {
   Clock,
   Users,
@@ -60,7 +61,7 @@ const features = [
     icon: Shield,
     title: "Compliance",
     description: "Audit trails and security controls",
-    color: "text-slate-600",
+    color: "text-muted-foreground",
   },
 ];
 
@@ -73,10 +74,10 @@ const stats = [
 </script>
 
 <template>
-  <div class="min-h-screen bg-white">
+  <div class="min-h-screen bg-background">
     <!-- Improved navigation bar -->
     <nav
-      class="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50"
+      class="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50"
     >
       <div class="container mx-auto px-6 py-4">
         <div class="flex items-center justify-between">
@@ -86,7 +87,7 @@ const stats = [
             >
               <Shield class="w-5 h-5 text-white" />
             </div>
-            <span class="text-xl font-semibold text-slate-900"
+            <span class="text-xl font-semibold text-foreground"
               >WorkForce Pro</span
             >
           </NuxtLink>
@@ -94,27 +95,28 @@ const stats = [
           <div class="hidden md:flex items-center gap-6">
             <NuxtLink
               to="/features"
-              class="text-sm font-medium text-slate-600 hover:text-slate-900"
+              class="text-sm font-medium text-muted-foreground hover:text-foreground"
               >Features</NuxtLink
             >
             <NuxtLink
               to="/pricing"
-              class="text-sm font-medium text-slate-600 hover:text-slate-900"
+              class="text-sm font-medium text-muted-foreground hover:text-foreground"
               >Pricing</NuxtLink
             >
             <NuxtLink
               to="/about"
-              class="text-sm font-medium text-slate-600 hover:text-slate-900"
+              class="text-sm font-medium text-muted-foreground hover:text-foreground"
               >About</NuxtLink
             >
             <NuxtLink
               to="/contact"
-              class="text-sm font-medium text-slate-600 hover:text-slate-900"
+              class="text-sm font-medium text-muted-foreground hover:text-foreground"
               >Contact</NuxtLink
             >
           </div>
 
           <div class="flex items-center gap-3">
+            <ThemeToggle />
             <Button variant="ghost" size="sm" @click="navigateTo('/auth/login')"
               >Sign In</Button
             >
@@ -127,7 +129,7 @@ const stats = [
     </nav>
 
     <!-- Enhanced hero section -->
-    <section class="py-20 md:py-32 bg-gradient-to-b from-slate-50 to-white">
+    <section class="py-20 md:py-32 bg-gradient-to-b from-muted to-background">
       <div class="container mx-auto px-6">
         <div class="max-w-4xl mx-auto text-center">
           <Badge variant="secondary" class="mb-6">
@@ -143,12 +145,12 @@ const stats = [
           </Badge>
 
           <h1
-            class="text-5xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight"
+            class="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight"
           >
             Complete Operations Management Platform
           </h1>
 
-          <p class="text-xl text-slate-600 mb-10 max-w-2xl mx-auto">
+          <p class="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
             Streamline attendance, tasks, HR operations, and compliance
             reporting in one powerful workspace-based platform.
           </p>
@@ -166,7 +168,7 @@ const stats = [
             </Button>
           </div>
 
-          <p class="text-sm text-slate-500 mt-6">
+          <p class="text-sm text-muted-foreground mt-6">
             14-day free trial • No credit card • Cancel anytime
           </p>
         </div>
@@ -174,13 +176,13 @@ const stats = [
     </section>
 
     <!-- Features Section -->
-    <section class="py-24 bg-slate-50">
+    <section class="py-24 bg-muted">
       <div class="container mx-auto px-6">
         <div class="text-center mb-16">
-          <h2 class="text-4xl font-bold text-slate-900 mb-4">
+          <h2 class="text-4xl font-bold text-foreground mb-4">
             Everything You Need
           </h2>
-          <p class="text-xl text-slate-600 max-w-2xl mx-auto">
+          <p class="text-xl text-muted-foreground max-w-2xl mx-auto">
             Powerful features designed for modern workforce management
           </p>
         </div>
@@ -189,7 +191,7 @@ const stats = [
           <Card
             v-for="feature in features"
             :key="feature.title"
-            class="border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all"
+            class="border-border hover:border-primary hover:shadow-lg transition-all"
           >
             <CardContent class="p-6">
               <div class="mb-4">
@@ -205,10 +207,10 @@ const stats = [
                   />
                 </div>
               </div>
-              <h3 class="text-lg font-semibold text-slate-900 mb-2">
+              <h3 class="text-lg font-semibold text-foreground mb-2">
                 {{ feature.title }}
               </h3>
-              <p class="text-sm text-slate-600 leading-relaxed">
+              <p class="text-sm text-muted-foreground leading-relaxed">
                 {{ feature.description }}
               </p>
             </CardContent>
@@ -245,11 +247,11 @@ const stats = [
     </section>
 
     <!-- How It Works -->
-    <section class="py-24 bg-slate-50">
+    <section class="py-24 bg-muted">
       <div class="container mx-auto px-6">
         <div class="text-center mb-16">
-          <h2 class="text-4xl font-bold text-slate-900 mb-4">How It Works</h2>
-          <p class="text-xl text-slate-600">
+          <h2 class="text-4xl font-bold text-foreground mb-4">How It Works</h2>
+          <p class="text-xl text-muted-foreground">
             Get started in minutes, not hours
           </p>
         </div>
@@ -261,8 +263,8 @@ const stats = [
             >
               1
             </div>
-            <h3 class="text-xl font-semibold text-slate-900 mb-2">Sign Up</h3>
-            <p class="text-slate-600">
+            <h3 class="text-xl font-semibold text-foreground mb-2">Sign Up</h3>
+            <p class="text-muted-foreground">
               Create your organization account in under 2 minutes
             </p>
           </div>
@@ -272,10 +274,10 @@ const stats = [
             >
               2
             </div>
-            <h3 class="text-xl font-semibold text-slate-900 mb-2">
+            <h3 class="text-xl font-semibold text-foreground mb-2">
               Add Your Team
             </h3>
-            <p class="text-slate-600">
+            <p class="text-muted-foreground">
               Import staff, set departments, and configure workflows
             </p>
           </div>
@@ -285,10 +287,10 @@ const stats = [
             >
               3
             </div>
-            <h3 class="text-xl font-semibold text-slate-900 mb-2">
+            <h3 class="text-xl font-semibold text-foreground mb-2">
               Start Managing
             </h3>
-            <p class="text-slate-600">
+            <p class="text-muted-foreground">
               Track attendance, assign tasks, and generate reports
             </p>
           </div>
@@ -297,12 +299,12 @@ const stats = [
     </section>
 
     <!-- CTA Section -->
-    <section class="py-24 border-t border-slate-200">
+    <section class="py-24 border-t border-border">
       <div class="container mx-auto px-6 text-center">
-        <h2 class="text-4xl font-bold text-slate-900 mb-6">
+        <h2 class="text-4xl font-bold text-foreground mb-6">
           Ready to Transform Your Operations?
         </h2>
-        <p class="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
+        <p class="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
           Start your 14-day free trial. No credit card required.
         </p>
         <Button
@@ -316,13 +318,13 @@ const stats = [
     </section>
 
     <!-- Improved footer -->
-    <footer class="bg-slate-900 text-slate-400 py-12">
+    <footer class="bg-card text-muted-foreground py-12">
       <div class="container mx-auto px-6">
         <div class="grid md:grid-cols-4 gap-8 mb-8">
           <div>
             <div class="flex items-center gap-2 mb-4">
               <div class="w-8 h-8 bg-blue-600 rounded-lg"></div>
-              <span class="text-lg font-semibold text-white"
+              <span class="text-lg font-semibold text-foreground"
                 >WorkForce Pro</span
               >
             </div>
@@ -331,7 +333,7 @@ const stats = [
             </p>
           </div>
           <div>
-            <h4 class="font-semibold text-white mb-3">Product</h4>
+            <h4 class="font-semibold text-foreground mb-3">Product</h4>
             <div class="space-y-2 text-sm">
               <NuxtLink to="/features" class="block hover:text-white"
                 >Features</NuxtLink
@@ -342,7 +344,7 @@ const stats = [
             </div>
           </div>
           <div>
-            <h4 class="font-semibold text-white mb-3">Company</h4>
+            <h4 class="font-semibold text-foreground mb-3">Company</h4>
             <div class="space-y-2 text-sm">
               <NuxtLink to="/about" class="block hover:text-white"
                 >About</NuxtLink
@@ -353,14 +355,14 @@ const stats = [
             </div>
           </div>
           <div>
-            <h4 class="font-semibold text-white mb-3">Legal</h4>
+            <h4 class="font-semibold text-foreground mb-3">Legal</h4>
             <div class="space-y-2 text-sm">
               <a href="#" class="block hover:text-white">Privacy</a>
               <a href="#" class="block hover:text-white">Terms</a>
             </div>
           </div>
         </div>
-        <div class="border-t border-slate-800 pt-8 text-center text-sm">
+        <div class="border-t border-border pt-8 text-center text-sm">
           © 2025 WorkForce Pro. All rights reserved.
         </div>
       </div>

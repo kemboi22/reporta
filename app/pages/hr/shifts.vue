@@ -37,7 +37,7 @@ const shiftTemplates = [
     id: 3,
     name: "Night Shift",
     time: "10 PM - 6 AM",
-    color: "bg-slate-100 text-slate-700",
+    color: "bg-muted text-muted-foreground",
   },
 ];
 
@@ -69,7 +69,7 @@ const weekSchedule = [
       {
         type: "Night Shift",
         staff: ["Robert Taylor"],
-        color: "bg-slate-100 border-slate-300",
+        color: "bg-muted border-border",
       },
     ],
   },
@@ -90,7 +90,7 @@ const weekSchedule = [
       {
         type: "Night Shift",
         staff: ["James Wilson"],
-        color: "bg-slate-100 border-slate-300",
+        color: "bg-muted border-border",
       },
     ],
   },
@@ -109,8 +109,8 @@ const getInitials = (name: string) => {
     <!-- Page Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-slate-900">Shifts & Schedules</h1>
-        <p class="text-slate-600 mt-1">
+        <h1 class="text-3xl font-bold text-foreground">Shifts & Schedules</h1>
+        <p class="text-muted-foreground mt-1">
           Manage staff shifts and work schedules
         </p>
       </div>
@@ -128,7 +128,7 @@ const getInitials = (name: string) => {
     </div>
 
     <!-- Calendar Navigation -->
-    <Card class="border-slate-200">
+    <Card class="border-border">
       <CardContent class="p-6">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
@@ -136,10 +136,10 @@ const getInitials = (name: string) => {
               <ChevronLeft class="h-4 w-4" />
             </Button>
             <div class="text-center">
-              <h2 class="text-lg font-semibold text-slate-900">
+              <h2 class="text-lg font-semibold text-foreground">
                 December 23-29, 2024
               </h2>
-              <p class="text-sm text-slate-500">Week 52</p>
+              <p class="text-sm text-muted-foreground">Week 52</p>
             </div>
             <Button variant="outline" size="icon">
               <ChevronRight class="h-4 w-4" />
@@ -150,7 +150,7 @@ const getInitials = (name: string) => {
             <Button
               variant="outline"
               size="sm"
-              :class="viewMode === 'week' && 'bg-slate-100'"
+              :class="viewMode === 'week' && 'bg-muted'"
               @click="viewMode = 'week'"
             >
               Week
@@ -158,7 +158,7 @@ const getInitials = (name: string) => {
             <Button
               variant="outline"
               size="sm"
-              :class="viewMode === 'month' && 'bg-slate-100'"
+              :class="viewMode === 'month' && 'bg-muted'"
               @click="viewMode = 'month'"
             >
               Month
@@ -170,9 +170,9 @@ const getInitials = (name: string) => {
     </Card>
 
     <!-- Shift Templates -->
-    <Card class="border-slate-200">
+    <Card class="border-border">
       <CardContent class="p-6">
-        <h3 class="text-lg font-semibold text-slate-900 mb-4">
+        <h3 class="text-lg font-semibold text-foreground mb-4">
           Shift Templates
         </h3>
         <div class="grid md:grid-cols-3 gap-4">
@@ -199,12 +199,12 @@ const getInitials = (name: string) => {
     <!-- Weekly Schedule -->
     <div class="space-y-4">
       <div v-for="schedule in weekSchedule" :key="schedule.day">
-        <Card class="border-slate-200">
+        <Card class="border-border">
           <CardContent class="p-6">
             <div class="flex items-center gap-4 mb-4">
               <div class="w-24">
-                <h3 class="font-semibold text-slate-900">{{ schedule.day }}</h3>
-                <p class="text-sm text-slate-500">{{ schedule.date }}</p>
+              <h3 class="font-semibold text-foreground">{{ schedule.day }}</h3>
+              <p class="text-sm text-muted-foreground">{{ schedule.date }}</p>
               </div>
 
               <div class="flex-1 grid md:grid-cols-3 gap-4">
@@ -224,16 +224,16 @@ const getInitials = (name: string) => {
                     <Avatar
                       v-for="(staffName, staffIndex) in shift.staff.slice(0, 3)"
                       :key="staffIndex"
-                      class="h-8 w-8 border-2 border-white"
+                      class="h-8 w-8 border-2 border-background"
                     >
                       <AvatarImage src="/placeholder-user.jpg" />
-                      <AvatarFallback class="bg-white text-slate-700 text-xs">
+                      <AvatarFallback class="bg-background text-foreground text-xs">
                         {{ getInitials(staffName) }}
                       </AvatarFallback>
                     </Avatar>
                     <div
                       v-if="shift.staff.length > 3"
-                      class="h-8 w-8 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-xs font-medium text-slate-600"
+                      class="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium text-muted-foreground"
                     >
                       +{{ shift.staff.length - 3 }}
                     </div>
@@ -248,27 +248,27 @@ const getInitials = (name: string) => {
 
     <!-- Shift Statistics -->
     <div class="grid md:grid-cols-3 gap-6">
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <div class="text-sm text-slate-600 mb-1">Total Scheduled Hours</div>
-          <div class="text-3xl font-bold text-slate-900">320</div>
-          <p class="text-sm text-slate-500 mt-2">This week</p>
+          <div class="text-sm text-muted-foreground mb-1">Total Scheduled Hours</div>
+          <div class="text-3xl font-bold text-foreground">320</div>
+          <p class="text-sm text-muted-foreground mt-2">This week</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <div class="text-sm text-slate-600 mb-1">Coverage Rate</div>
+          <div class="text-sm text-muted-foreground mb-1">Coverage Rate</div>
           <div class="text-3xl font-bold text-emerald-600">95%</div>
-          <p class="text-sm text-slate-500 mt-2">All shifts covered</p>
+          <p class="text-sm text-muted-foreground mt-2">All shifts covered</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <div class="text-sm text-slate-600 mb-1">Conflicts</div>
+          <div class="text-sm text-muted-foreground mb-1">Conflicts</div>
           <div class="text-3xl font-bold text-amber-600">2</div>
-          <p class="text-sm text-slate-500 mt-2">Require attention</p>
+          <p class="text-sm text-muted-foreground mt-2">Require attention</p>
         </CardContent>
       </Card>
     </div>

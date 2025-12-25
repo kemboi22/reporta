@@ -74,7 +74,7 @@ const getRoleBadgeClass = (role: string) => {
     case "Manager":
       return "bg-blue-100 text-blue-700";
     default:
-      return "bg-slate-100 text-slate-700";
+      return "bg-muted text-foreground";
   }
 };
 </script>
@@ -84,8 +84,8 @@ const getRoleBadgeClass = (role: string) => {
     <div class="p-6 max-w-6xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-slate-900 mb-2">Switch Workspace</h1>
-        <p class="text-slate-600">
+        <h1 class="text-3xl font-bold text-foreground mb-2">Switch Workspace</h1>
+        <p class="text-muted-foreground">
           Select a workspace to continue working, or create a new one
         </p>
       </div>
@@ -122,7 +122,7 @@ const getRoleBadgeClass = (role: string) => {
           </CardHeader>
           <CardContent>
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2 text-sm text-slate-600">
+              <div class="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users class="h-4 w-4" />
                 <span>{{ workspace.members }} members</span>
               </div>
@@ -156,22 +156,22 @@ const getRoleBadgeClass = (role: string) => {
 
       <!-- Enhanced create workspace card -->
       <Card
-        class="border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50/50 transition-all cursor-pointer group"
+        class="border-2 border-dashed border-border hover:border-blue-400 hover:bg-blue-500/10 transition-all cursor-pointer group"
         @click="createNewWorkspace"
       >
         <CardContent class="flex items-center justify-center py-8">
           <div class="text-center">
             <div
-              class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 group-hover:bg-blue-100 transition-colors mb-3"
+              class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-muted group-hover:bg-blue-100 transition-colors mb-3"
             >
               <Plus
-                class="h-6 w-6 text-slate-600 group-hover:text-blue-600 transition-colors"
+                class="h-6 w-6 text-muted-foreground group-hover:text-blue-600 transition-colors"
               />
             </div>
-            <h3 class="text-lg font-semibold text-slate-900 mb-1">
+            <h3 class="text-lg font-semibold text-foreground mb-1">
               Create New Workspace
             </h3>
-            <p class="text-sm text-slate-600">
+            <p class="text-sm text-muted-foreground">
               Set up a new organization workspace
             </p>
           </div>

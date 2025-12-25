@@ -136,11 +136,11 @@ const staffMembers = [
 
 const getStatusColor = (status: string) => {
   const colors: Record<string, string> = {
-    Active: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100",
-    "On Leave": "bg-amber-100 text-amber-700 hover:bg-amber-100",
-    Suspended: "bg-red-100 text-red-700 hover:bg-red-100",
+    Active: "bg-emerald-50 text-emerald-500 hover:bg-emerald-50",
+    "On Leave": "bg-amber-50 text-amber-500 hover:bg-amber-50",
+    Suspended: "bg-red-50 text-red-500 hover:bg-red-50",
   };
-  return colors[status] || "bg-slate-100 text-slate-700";
+  return colors[status] || "bg-muted text-muted-foreground";
 };
 
 const getInitials = (name: string) => {
@@ -156,8 +156,8 @@ const getInitials = (name: string) => {
     <!-- Page Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-slate-900">Staff Directory</h1>
-        <p class="text-slate-600 mt-1">Manage your organization's workforce</p>
+        <h1 class="text-3xl font-bold text-foreground">Staff Directory</h1>
+        <p class="text-muted-foreground mt-1">Manage your organization's workforce</p>
       </div>
 
       <Dialog v-model:open="showAddStaffDialog">
@@ -232,13 +232,13 @@ const getInitials = (name: string) => {
     </div>
 
     <!-- Filters and Search -->
-    <Card class="border-slate-200">
+    <Card class="border-border">
       <CardContent class="p-6">
         <div class="flex flex-col md:flex-row gap-4">
           <!-- Search -->
           <div class="relative flex-1">
             <Search
-              class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
+              class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
             />
             <Input
               v-model="searchQuery"
@@ -280,11 +280,11 @@ const getInitials = (name: string) => {
             </Select>
 
             <!-- View Toggle -->
-            <div class="flex border border-slate-200 rounded-lg">
+            <div class="flex border border-border rounded-lg">
               <Button
                 variant="ghost"
                 size="icon"
-                :class="viewMode === 'grid' && 'bg-slate-100'"
+                :class="viewMode === 'grid' && 'bg-muted'"
                 @click="viewMode = 'grid'"
               >
                 <Grid3x3 class="h-4 w-4" />
@@ -292,7 +292,7 @@ const getInitials = (name: string) => {
               <Button
                 variant="ghost"
                 size="icon"
-                :class="viewMode === 'list' && 'bg-slate-100'"
+                :class="viewMode === 'list' && 'bg-muted'"
                 @click="viewMode = 'list'"
               >
                 <List class="h-4 w-4" />
@@ -311,13 +311,13 @@ const getInitials = (name: string) => {
       <Card
         v-for="staff in staffMembers"
         :key="staff.id"
-        class="border-slate-200 hover:shadow-lg transition-all cursor-pointer"
+        class="border-border hover:shadow-lg transition-all cursor-pointer"
       >
         <CardContent class="p-6">
           <div class="flex items-start justify-between mb-4">
             <Avatar class="h-16 w-16">
               <AvatarImage :src="staff.photo" />
-              <AvatarFallback class="bg-blue-100 text-blue-700 text-lg">
+              <AvatarFallback class="bg-primary/10 text-primary text-lg">
                 {{ getInitials(staff.name) }}
               </AvatarFallback>
             </Avatar>
@@ -328,14 +328,14 @@ const getInitials = (name: string) => {
 
           <div class="space-y-3">
             <div>
-              <h3 class="text-lg font-semibold text-slate-900">
+              <h3 class="text-lg font-semibold text-foreground">
                 {{ staff.name }}
               </h3>
-              <p class="text-sm text-slate-500">{{ staff.employeeId }}</p>
+              <p class="text-sm text-muted-foreground">{{ staff.employeeId }}</p>
             </div>
 
             <div class="flex items-center gap-2">
-              <Badge class="bg-blue-100 text-blue-700 hover:bg-blue-100">{{
+              <Badge class="bg-primary/10 text-primary hover:bg-primary/20">{{
                 staff.department
               }}</Badge>
               <Badge :class="getStatusColor(staff.status)">{{
@@ -343,12 +343,12 @@ const getInitials = (name: string) => {
               }}</Badge>
             </div>
 
-            <div class="space-y-2 pt-2 border-t border-slate-100">
-              <div class="flex items-center gap-2 text-sm text-slate-600">
+            <div class="space-y-2 pt-2 border-t border-border">
+              <div class="flex items-center gap-2 text-sm text-muted-foreground">
                 <Mail class="h-4 w-4" />
                 <span class="truncate">{{ staff.email }}</span>
               </div>
-              <div class="flex items-center gap-2 text-sm text-slate-600">
+              <div class="flex items-center gap-2 text-sm text-muted-foreground">
                 <Phone class="h-4 w-4" />
                 <span>{{ staff.phone }}</span>
               </div>
@@ -373,82 +373,82 @@ const getInitials = (name: string) => {
     </div>
 
     <!-- Staff List View -->
-    <Card v-else class="border-slate-200">
+    <Card v-else class="border-border">
       <CardContent class="p-0">
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-slate-50 border-b border-slate-200">
+            <thead class="bg-muted border-b border-border">
               <tr>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 >
                   Staff
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 >
                   Employee ID
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 >
                   Department
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 >
                   Role
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 >
                   Status
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 >
                   Contact
                 </th>
                 <th
-                  class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  class="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 >
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-slate-200">
+            <tbody class="bg-background divide-y divide-border">
               <tr
                 v-for="staff in staffMembers"
                 :key="staff.id"
-                class="hover:bg-slate-50 transition-colors"
+                class="hover:bg-muted transition-colors"
               >
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center gap-3">
                     <Avatar class="h-10 w-10">
                       <AvatarImage :src="staff.photo" />
-                      <AvatarFallback class="bg-blue-100 text-blue-700">
+                      <AvatarFallback class="bg-primary/10 text-primary">
                         {{ getInitials(staff.name) }}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <div class="text-sm font-medium text-slate-900">
+                      <div class="text-sm font-medium text-foreground">
                         {{ staff.name }}
                       </div>
-                      <div class="text-sm text-slate-500">
+                      <div class="text-sm text-muted-foreground">
                         {{ staff.shift }} Shift
                       </div>
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                   {{ staff.employeeId }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <Badge class="bg-blue-100 text-blue-700 hover:bg-blue-100">{{
+                  <Badge class="bg-primary/10 text-primary hover:bg-primary/20">{{
                     staff.department
                   }}</Badge>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                   {{ staff.role }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -456,9 +456,9 @@ const getInitials = (name: string) => {
                     staff.status
                   }}</Badge>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                   <div>{{ staff.email }}</div>
-                  <div class="text-slate-400">{{ staff.phone }}</div>
+                  <div class="text-muted-foreground">{{ staff.phone }}</div>
                 </td>
                 <td
                   class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"

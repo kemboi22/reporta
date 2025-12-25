@@ -103,10 +103,10 @@ const addComment = () => {
             <ArrowLeft class="h-4 w-4" />
           </Button>
           <div>
-            <h1 class="text-3xl font-bold text-slate-900">
+            <h1 class="text-3xl font-bold text-foreground">
               {{ report.templateName }}
             </h1>
-            <p class="text-slate-600 mt-1">
+            <p class="text-muted-foreground mt-1">
               Submitted on {{ report.submittedAt }}
             </p>
           </div>
@@ -155,15 +155,15 @@ const addComment = () => {
                   <TableRow
                     v-for="(item, index) in report.fields"
                     :key="index"
-                    class="hover:bg-slate-50"
+                    class="hover:bg-muted"
                   >
-                    <TableCell class="font-medium text-slate-700">
+                    <TableCell class="font-medium text-foreground">
                       {{ item.field }}
                     </TableCell>
                     <TableCell>
                       <div
                         v-if="item.type === 'textarea'"
-                        class="text-slate-900 whitespace-pre-line max-w-2xl"
+                        class="text-foreground whitespace-pre-line max-w-2xl"
                       >
                         {{ item.value }}
                       </div>
@@ -176,7 +176,7 @@ const addComment = () => {
                           class="h-5 w-5 text-emerald-600"
                         />
                         <XCircle v-else class="h-5 w-5 text-red-600" />
-                        <span class="text-slate-900 font-medium">{{
+                        <span class="text-foreground font-medium">{{
                           item.value
                         }}</span>
                       </div>
@@ -186,7 +186,7 @@ const addComment = () => {
                       >
                         {{ item.value }}
                       </Badge>
-                      <span v-else class="text-slate-900 font-medium">
+                      <span v-else class="text-foreground font-medium">
                         {{ item.value }}
                       </span>
                     </TableCell>
@@ -228,9 +228,9 @@ const addComment = () => {
 
                 <Separator />
 
-                <div class="text-center py-8 text-slate-500">
+                <div class="text-center py-8 text-muted-foreground">
                   <MessageSquare
-                    class="h-12 w-12 mx-auto mb-3 text-slate-400"
+                    class="h-12 w-12 mx-auto mb-3 text-muted-foreground"
                   />
                   <p class="font-medium">No comments yet</p>
                   <p class="text-sm">Be the first to add a comment</p>
@@ -255,10 +255,10 @@ const addComment = () => {
                   }}</span>
                 </div>
                 <div>
-                  <p class="font-semibold text-slate-900">
+                  <p class="font-semibold text-foreground">
                     {{ report.submittedBy.name }}
                   </p>
-                  <p class="text-sm text-slate-600">
+                  <p class="text-sm text-muted-foreground">
                     {{ report.submittedBy.role }}
                   </p>
                 </div>
@@ -277,15 +277,15 @@ const addComment = () => {
                   <span class="font-semibold">Approved</span>
                 </div>
                 <div class="space-y-1">
-                  <p class="text-slate-600">
+                  <p class="text-muted-foreground">
                     By:
-                    <span class="text-slate-900 font-medium">{{
+                    <span class="text-foreground font-medium">{{
                       report.approvedBy
                     }}</span>
                   </p>
-                  <p class="text-slate-600">
+                  <p class="text-muted-foreground">
                     On:
-                    <span class="text-slate-900 font-medium">{{
+                    <span class="text-foreground font-medium">{{
                       report.approvedAt
                     }}</span>
                   </p>
@@ -326,22 +326,22 @@ const addComment = () => {
             <CardContent>
               <div class="space-y-3 text-sm">
                 <div class="flex items-center justify-between">
-                  <span class="text-slate-600">Template:</span>
-                  <span class="font-medium text-slate-900 text-right">{{
+                  <span class="text-muted-foreground">Template:</span>
+                  <span class="font-medium text-foreground text-right">{{
                     report.templateName
                   }}</span>
                 </div>
                 <Separator />
                 <div class="flex items-center justify-between">
-                  <span class="text-slate-600">Department:</span>
+                  <span class="text-muted-foreground">Department:</span>
                   <Badge class="bg-blue-100 text-blue-700 hover:bg-blue-100">
                     {{ report.department }}
                   </Badge>
                 </div>
                 <Separator />
                 <div class="flex items-center justify-between">
-                  <span class="text-slate-600">Total Fields:</span>
-                  <span class="font-medium text-slate-900">{{
+                  <span class="text-muted-foreground">Total Fields:</span>
+                  <span class="font-medium text-foreground">{{
                     report.fields.length
                   }}</span>
                 </div>

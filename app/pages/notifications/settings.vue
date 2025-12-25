@@ -74,8 +74,8 @@ const saveSettings = () => {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-slate-900">Notification Settings</h1>
-        <p class="text-slate-600 mt-1">Manage how you receive notifications</p>
+        <h1 class="text-3xl font-bold text-foreground">Notification Settings</h1>
+        <p class="text-muted-foreground mt-1">Manage how you receive notifications</p>
       </div>
       <Button @click="saveSettings">
         <Save class="h-4 w-4 mr-2" />
@@ -105,7 +105,7 @@ const saveSettings = () => {
           <div class="flex items-center justify-between">
             <div class="space-y-0.5">
               <Label>Task Assignments</Label>
-              <p class="text-sm text-slate-600">
+              <p class="text-sm text-muted-foreground">
                 Receive emails when tasks are assigned to you
               </p>
             </div>
@@ -117,7 +117,7 @@ const saveSettings = () => {
           <div class="flex items-center justify-between">
             <div class="space-y-0.5">
               <Label>Task Due Reminders</Label>
-              <p class="text-sm text-slate-600">
+              <p class="text-sm text-muted-foreground">
                 1 day before and 1 hour before due date
               </p>
             </div>
@@ -129,7 +129,7 @@ const saveSettings = () => {
           <div class="flex items-center justify-between">
             <div class="space-y-0.5">
               <Label>Report Submissions</Label>
-              <p class="text-sm text-slate-600">
+              <p class="text-sm text-muted-foreground">
                 Notifications about report status changes
               </p>
             </div>
@@ -141,7 +141,7 @@ const saveSettings = () => {
           <div class="flex items-center justify-between">
             <div class="space-y-0.5">
               <Label>Daily Digest</Label>
-              <p class="text-sm text-slate-600">Summary of daily activity</p>
+              <p class="text-sm text-muted-foreground">Summary of daily activity</p>
             </div>
             <Switch v-model:checked="emailSettings.dailyDigest" />
           </div>
@@ -151,7 +151,7 @@ const saveSettings = () => {
           <div class="flex items-center justify-between">
             <div class="space-y-0.5">
               <Label>Urgent Alerts Only</Label>
-              <p class="text-sm text-slate-600">
+              <p class="text-sm text-muted-foreground">
                 Only receive critical notifications
               </p>
             </div>
@@ -327,7 +327,7 @@ const saveSettings = () => {
           >
             <div class="space-y-0.5">
               <Label>Except Urgent Alerts</Label>
-              <p class="text-sm text-slate-600">
+              <p class="text-sm text-muted-foreground">
                 Allow critical notifications during quiet hours
               </p>
             </div>

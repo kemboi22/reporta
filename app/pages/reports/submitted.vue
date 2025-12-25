@@ -121,8 +121,8 @@ const viewReport = (reportId: number) => {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-slate-900">Submitted Reports</h1>
-        <p class="text-slate-600 mt-1">View and manage all submitted reports</p>
+        <h1 class="text-3xl font-bold text-foreground">Submitted Reports</h1>
+        <p class="text-muted-foreground mt-1">View and manage all submitted reports</p>
       </div>
 
       <Button class="bg-blue-600 hover:bg-blue-700 text-white">
@@ -132,12 +132,12 @@ const viewReport = (reportId: number) => {
     </div>
 
     <!-- Filters -->
-    <Card class="border-slate-200">
+    <Card class="border-border">
       <CardContent class="p-6">
         <div class="flex flex-col md:flex-row gap-4">
           <div class="relative flex-1">
             <Search
-              class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
+              class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
             />
             <Input
               v-model="searchQuery"
@@ -190,7 +190,7 @@ const viewReport = (reportId: number) => {
       <Card
         v-for="report in reports"
         :key="report.id"
-        class="border-slate-200 hover:shadow-md transition-all cursor-pointer"
+        class="border-border hover:shadow-md transition-all cursor-pointer"
         @click="viewReport(report.id)"
       >
         <CardContent class="p-6">
@@ -205,11 +205,11 @@ const viewReport = (reportId: number) => {
               <div class="flex-1 min-w-0">
                 <div class="flex items-start justify-between mb-2">
                   <div>
-                    <h3 class="text-lg font-semibold text-slate-900">
+                    <h3 class="text-lg font-semibold text-foreground">
                       {{ report.templateName }}
                     </h3>
                     <div
-                      class="flex items-center gap-4 mt-1 text-sm text-slate-600"
+                      class="flex items-center gap-4 mt-1 text-sm text-muted-foreground"
                     >
                       <div class="flex items-center gap-1.5">
                         <User class="h-4 w-4" />
@@ -234,10 +234,10 @@ const viewReport = (reportId: number) => {
                 </div>
 
                 <!-- Report Data Preview -->
-                <div class="grid grid-cols-3 gap-4 p-4 bg-slate-50 rounded-lg">
+                <div class="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
                   <div v-for="(value, key) in report.data" :key="key">
-                    <p class="text-xs text-slate-500 mb-1">{{ key }}</p>
-                    <p class="text-sm font-semibold text-slate-900">
+                    <p class="text-xs text-muted-foreground mb-1">{{ key }}</p>
+                    <p class="text-sm font-semibold text-foreground">
                       {{ value }}
                     </p>
                   </div>
@@ -266,33 +266,33 @@ const viewReport = (reportId: number) => {
 
     <!-- Stats -->
     <div class="grid md:grid-cols-4 gap-6">
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Total Submitted</p>
-          <p class="text-3xl font-bold text-slate-900">156</p>
+          <p class="text-sm text-muted-foreground mb-1">Total Submitted</p>
+          <p class="text-3xl font-bold text-foreground">156</p>
           <p class="text-sm text-emerald-600 mt-2">+12% this week</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Approved</p>
+          <p class="text-sm text-muted-foreground mb-1">Approved</p>
           <p class="text-3xl font-bold text-emerald-600">142</p>
-          <p class="text-sm text-slate-500 mt-2">91% approval rate</p>
+          <p class="text-sm text-muted-foreground mt-2">91% approval rate</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Pending Review</p>
+          <p class="text-sm text-muted-foreground mb-1">Pending Review</p>
           <p class="text-3xl font-bold text-amber-600">8</p>
-          <p class="text-sm text-slate-500 mt-2">Awaiting action</p>
+          <p class="text-sm text-muted-foreground mt-2">Awaiting action</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Avg Response Time</p>
+          <p class="text-sm text-muted-foreground mb-1">Avg Response Time</p>
           <p class="text-3xl font-bold text-blue-600">2.4h</p>
           <p class="text-sm text-emerald-600 mt-2">-15% faster</p>
         </CardContent>

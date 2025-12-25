@@ -55,8 +55,8 @@ const plans = [
 </script>
 
 <template>
-  <div class="min-h-screen bg-white">
-    <nav class="border-b border-slate-200">
+  <div class="min-h-screen bg-background">
+    <nav class="border-b border-border">
       <div class="container mx-auto px-6 py-4">
         <div class="flex items-center justify-between">
           <NuxtLink to="/" class="flex items-center gap-3">
@@ -70,13 +70,13 @@ const plans = [
       </div>
     </nav>
 
-    <section class="py-20 bg-slate-50">
+    <section class="py-20 bg-muted">
       <div class="container mx-auto px-6">
         <div class="max-w-3xl mx-auto text-center mb-16">
-          <h1 class="text-5xl font-bold text-slate-900 mb-6">
+          <h1 class="text-5xl font-bold text-foreground mb-6">
             Simple, Transparent Pricing
           </h1>
-          <p class="text-xl text-slate-600">
+          <p class="text-xl text-muted-foreground">
             Choose the perfect plan for your organization. All plans include a
             14-day free trial.
           </p>
@@ -95,10 +95,10 @@ const plans = [
               </div>
               <CardDescription>{{ plan.description }}</CardDescription>
               <div class="mt-4">
-                <span class="text-4xl font-bold text-slate-900"
+                <span class="text-4xl font-bold text-foreground"
                   >${{ plan.price }}</span
                 >
-                <span v-if="plan.price !== 'Custom'" class="text-slate-600"
+                <span v-if="plan.price !== 'Custom'" class="text-muted-foreground"
                   >/month</span
                 >
               </div>
@@ -111,7 +111,7 @@ const plans = [
                   class="flex items-start gap-2"
                 >
                   <Check class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span class="text-slate-600">{{ feature }}</span>
+                  <span class="text-muted-foreground">{{ feature }}</span>
                 </li>
               </ul>
             </CardContent>

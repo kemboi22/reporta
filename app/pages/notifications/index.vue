@@ -160,7 +160,7 @@ const getPriorityColor = (priority: string) => {
     case "high":
       return "bg-orange-100 text-orange-700 border-orange-200";
     default:
-      return "bg-slate-100 text-slate-700 border-slate-200";
+      return "bg-muted text-foreground border-border";
   }
 };
 </script>
@@ -170,8 +170,8 @@ const getPriorityColor = (priority: string) => {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-slate-900">Notifications</h1>
-        <p class="text-slate-600 mt-1">
+        <h1 class="text-3xl font-bold text-foreground">Notifications</h1>
+        <p class="text-muted-foreground mt-1">
           Stay updated with your workspace activity
         </p>
       </div>
@@ -205,8 +205,8 @@ const getPriorityColor = (priority: string) => {
         <CardContent class="p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-slate-600">Total</p>
-              <p class="text-2xl font-bold text-slate-900">
+              <p class="text-sm text-muted-foreground">Total</p>
+              <p class="text-2xl font-bold text-foreground">
                 {{ notifications.length }}
               </p>
             </div>
@@ -223,7 +223,7 @@ const getPriorityColor = (priority: string) => {
         <CardContent class="p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-slate-600">Unread</p>
+              <p class="text-sm text-muted-foreground">Unread</p>
               <p class="text-2xl font-bold text-orange-600">
                 {{ unreadCount }}
               </p>
@@ -241,7 +241,7 @@ const getPriorityColor = (priority: string) => {
         <CardContent class="p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-slate-600">High Priority</p>
+              <p class="text-sm text-muted-foreground">High Priority</p>
               <p class="text-2xl font-bold text-red-600">3</p>
             </div>
             <div
@@ -257,7 +257,7 @@ const getPriorityColor = (priority: string) => {
         <CardContent class="p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-slate-600">Today</p>
+              <p class="text-sm text-muted-foreground">Today</p>
               <p class="text-2xl font-bold text-green-600">12</p>
             </div>
             <div
@@ -283,12 +283,12 @@ const getPriorityColor = (priority: string) => {
         </Tabs>
       </CardHeader>
       <CardContent class="p-0">
-        <div class="divide-y divide-slate-200">
+        <div class="divide-y divide-border">
           <div
             v-for="notification in filteredNotifications"
             :key="notification.id"
             :class="[
-              'p-4 hover:bg-slate-50 transition-colors cursor-pointer flex items-start gap-4',
+              'p-4 hover:bg-muted transition-colors cursor-pointer flex items-start gap-4',
               notification.unread && 'bg-blue-50/50',
             ]"
           >
@@ -301,14 +301,14 @@ const getPriorityColor = (priority: string) => {
             <div
               :class="[
                 'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-                notification.unread ? 'bg-blue-100' : 'bg-slate-100',
+                notification.unread ? 'bg-blue-100' : 'bg-muted',
               ]"
             >
               <component
                 :is="notification.icon"
                 :class="[
                   'h-5 w-5',
-                  notification.unread ? 'text-blue-600' : 'text-slate-600',
+                  notification.unread ? 'text-blue-600' : 'text-muted-foreground',
                 ]"
               />
             </div>
@@ -319,12 +319,12 @@ const getPriorityColor = (priority: string) => {
                   <p
                     :class="[
                       'text-sm font-medium',
-                      notification.unread ? 'text-slate-900' : 'text-slate-700',
+                      notification.unread ? 'text-foreground' : 'text-muted-foreground',
                     ]"
                   >
                     {{ notification.title }}
                   </p>
-                  <p class="text-sm text-slate-600 mt-1">
+                  <p class="text-sm text-muted-foreground mt-1">
                     {{ notification.description }}
                   </p>
                 </div>
@@ -337,7 +337,7 @@ const getPriorityColor = (priority: string) => {
                   >
                     {{ notification.priority }}
                   </Badge>
-                  <span class="text-xs text-slate-500 whitespace-nowrap">
+                   <span class="text-xs text-muted-foreground whitespace-nowrap">
                     {{ notification.time }}
                   </span>
                 </div>
@@ -360,12 +360,12 @@ const getPriorityColor = (priority: string) => {
             class="p-12 text-center"
           >
             <div
-              class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"
+              class="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4"
             >
-              <Bell class="h-8 w-8 text-slate-400" />
+              <Bell class="h-8 w-8 text-muted-foreground" />
             </div>
-            <p class="text-slate-600 font-medium">No notifications</p>
-            <p class="text-sm text-slate-500 mt-1">You're all caught up!</p>
+            <p class="text-foreground font-medium">No notifications</p>
+            <p class="text-sm text-muted-foreground mt-1">You're all caught up!</p>
           </div>
         </div>
       </CardContent>

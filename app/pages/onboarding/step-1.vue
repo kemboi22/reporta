@@ -65,16 +65,16 @@ const nextStep = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+  <div class="min-h-screen bg-muted flex items-center justify-center p-4">
     <div class="w-full max-w-2xl">
       <!-- Simplified progress bar at top -->
       <div class="mb-6 flex items-center justify-between text-sm">
-        <span class="font-medium text-slate-900">Step 1 of 4</span>
+        <span class="font-medium text-foreground">Step 1 of 4</span>
         <div class="flex items-center gap-2">
           <div class="w-24 h-1.5 bg-blue-600 rounded-full"></div>
-          <div class="w-24 h-1.5 bg-slate-200 rounded-full"></div>
-          <div class="w-24 h-1.5 bg-slate-200 rounded-full"></div>
-          <div class="w-24 h-1.5 bg-slate-200 rounded-full"></div>
+          <div class="w-24 h-1.5 bg-muted rounded-full"></div>
+          <div class="w-24 h-1.5 bg-muted rounded-full"></div>
+          <div class="w-24 h-1.5 bg-muted rounded-full"></div>
         </div>
       </div>
 
@@ -135,7 +135,7 @@ const nextStep = () => {
                 </div>
               </div>
               <span
-                class="flex items-center text-sm text-slate-500 whitespace-nowrap"
+                class="flex items-center text-sm text-muted-foreground whitespace-nowrap"
                 >.workforcepro.com</span
               >
             </div>
@@ -163,12 +163,12 @@ const nextStep = () => {
         </CardContent>
 
         <CardFooter class="flex justify-between">
-          <NuxtLink
-            to="/auth/login"
-            class="text-sm text-slate-600 hover:text-slate-900"
-          >
-            Sign in instead
-          </NuxtLink>
+            <NuxtLink
+             to="/auth/login"
+             class="text-sm text-muted-foreground hover:text-foreground"
+           >
+             Sign in instead
+           </NuxtLink>
           <Button @click="nextStep" :disabled="!isFormValid"> Continue </Button>
         </CardFooter>
       </Card>

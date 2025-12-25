@@ -19,25 +19,25 @@ const getInitials = (name: string) => {
 </script>
 
 <template>
-  <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
-    <Avatar class="h-10 w-10 ring-2 ring-white">
+  <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors cursor-pointer">
+    <Avatar class="h-10 w-10 ring-2 ring-background">
       <AvatarImage :src="attendance.photo" />
-      <AvatarFallback class="bg-blue-100 text-blue-700">{{ getInitials(attendance.name) }}</AvatarFallback>
+      <AvatarFallback class="bg-primary/10 text-primary">{{ getInitials(attendance.name) }}</AvatarFallback>
     </Avatar>
     
     <div class="flex-1 min-w-0">
-      <p class="text-sm font-medium text-slate-900 truncate">{{ attendance.name }}</p>
-      <p class="text-xs text-slate-500">{{ attendance.department }}</p>
+      <p class="text-sm font-medium text-foreground truncate">{{ attendance.name }}</p>
+      <p class="text-xs text-muted-foreground">{{ attendance.department }}</p>
     </div>
     
     <div class="flex items-center gap-2">
       <Badge 
-        :class="attendance.status === 'in' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : 'bg-slate-100 text-slate-700 hover:bg-slate-100'" 
+        :class="attendance.status === 'in' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 hover:bg-emerald-100' : 'bg-muted text-muted-foreground hover:bg-muted'" 
         class="text-xs"
       >
         {{ attendance.status === 'in' ? 'In' : 'Out' }}
       </Badge>
-      <span class="text-xs text-slate-400 whitespace-nowrap">{{ attendance.time }}</span>
+      <span class="text-xs text-muted-foreground whitespace-nowrap">{{ attendance.time }}</span>
     </div>
   </div>
 </template>

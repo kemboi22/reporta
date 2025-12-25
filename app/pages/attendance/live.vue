@@ -119,16 +119,16 @@ const getInitials = (name: string) => {
     <!-- Page Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-slate-900">Live Attendance</h1>
-        <p class="text-slate-600 mt-1">Real-time staff attendance monitoring</p>
+        <h1 class="text-3xl font-bold text-foreground">Live Attendance</h1>
+        <p class="text-muted-foreground mt-1">Real-time staff attendance monitoring</p>
       </div>
 
       <div class="flex items-center gap-3">
         <div class="text-right">
-          <p class="text-sm text-slate-500">Current Time</p>
-          <p class="text-lg font-semibold text-slate-900">08:45 AM</p>
+          <p class="text-sm text-muted-foreground">Current Time</p>
+          <p class="text-lg font-semibold text-foreground">08:45 AM</p>
         </div>
-        <Button class="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button class="bg-blue-500 hover:bg-blue-600 text-white">
           <Clock class="h-4 w-4 mr-2" />
           Manual Clock In
         </Button>
@@ -137,95 +137,95 @@ const getInitials = (name: string) => {
 
     <!-- Top Metrics -->
     <div class="grid md:grid-cols-4 gap-6">
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
           <div class="flex items-start justify-between">
             <div>
-              <p class="text-sm text-slate-600 mb-1">Staff On Duty</p>
+              <p class="text-sm text-muted-foreground mb-1">Staff On Duty</p>
               <div class="flex items-baseline gap-2">
-                <p class="text-3xl font-bold text-emerald-600">60</p>
-                <span class="text-lg text-slate-400">/ 71</span>
+                <p class="text-3xl font-bold text-emerald-500">60</p>
+                <span class="text-lg text-muted-foreground">/ 71</span>
               </div>
             </div>
             <div
-              class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center"
+              class="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center"
             >
-              <Users class="h-6 w-6 text-emerald-600" />
+              <Users class="h-6 w-6 text-emerald-500" />
             </div>
           </div>
           <div class="mt-4">
             <Progress :value="(60 / 71) * 100" class="h-2" />
-            <p class="text-sm text-slate-500 mt-2">84.5% present</p>
+            <p class="text-sm text-muted-foreground mt-2">84.5% present</p>
           </div>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
           <div class="flex items-start justify-between">
             <div>
-              <p class="text-sm text-slate-600 mb-1">Late Arrivals</p>
-              <p class="text-3xl font-bold text-amber-600">1</p>
+              <p class="text-sm text-muted-foreground mb-1">Late Arrivals</p>
+              <p class="text-3xl font-bold text-amber-500">1</p>
             </div>
             <div
-              class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center"
+              class="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center"
             >
-              <Clock class="h-6 w-6 text-amber-600" />
+              <Clock class="h-6 w-6 text-amber-500" />
             </div>
           </div>
-          <p class="text-sm text-slate-500 mt-4">Average delay: 35 min</p>
+          <p class="text-sm text-muted-foreground mt-4">Average delay: 35 min</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
           <div class="flex items-start justify-between">
             <div>
-              <p class="text-sm text-slate-600 mb-1">Absent Today</p>
-              <p class="text-3xl font-bold text-red-600">2</p>
+              <p class="text-sm text-muted-foreground mb-1">Absent Today</p>
+              <p class="text-3xl font-bold text-red-500">2</p>
             </div>
             <div
-              class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center"
+              class="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center"
             >
-              <AlertCircle class="h-6 w-6 text-red-600" />
+              <AlertCircle class="h-6 w-6 text-red-500" />
             </div>
           </div>
-          <p class="text-sm text-slate-500 mt-4">2.8% absence rate</p>
+          <p class="text-sm text-muted-foreground mt-4">2.8% absence rate</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
           <div class="flex items-start justify-between">
             <div>
-              <p class="text-sm text-slate-600 mb-1">On Time Rate</p>
-              <p class="text-3xl font-bold text-blue-600">98%</p>
+              <p class="text-sm text-muted-foreground mb-1">On Time Rate</p>
+              <p class="text-3xl font-bold text-blue-500">98%</p>
             </div>
             <div
-              class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center"
+              class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center"
             >
-              <TrendingUp class="h-6 w-6 text-blue-600" />
+              <TrendingUp class="h-6 w-6 text-blue-500" />
             </div>
           </div>
-          <p class="text-sm text-emerald-600 mt-4">+5% from yesterday</p>
+          <p class="text-sm text-emerald-500 mt-4">+5% from yesterday</p>
         </CardContent>
       </Card>
     </div>
 
     <!-- Department Breakdown -->
-    <Card class="border-slate-200">
+    <Card class="border-border">
       <CardContent class="p-6">
-        <h2 class="text-lg font-semibold text-slate-900 mb-6">
+        <h2 class="text-lg font-semibold text-foreground mb-6">
           Department Attendance
         </h2>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div
             v-for="dept in departments"
             :key="dept.name"
-            class="p-4 border border-slate-200 rounded-lg hover:shadow-md transition-all cursor-pointer"
+            class="p-4 border border-border rounded-lg hover:shadow-md transition-all cursor-pointer"
           >
             <div class="flex items-center justify-between mb-3">
-              <h3 class="font-medium text-slate-900">{{ dept.name }}</h3>
+              <h3 class="font-medium text-foreground">{{ dept.name }}</h3>
               <Badge variant="secondary"
                 >{{ dept.onDuty }}/{{ dept.total }}</Badge
               >
@@ -237,8 +237,8 @@ const getInitials = (name: string) => {
             />
 
             <div class="flex justify-between text-sm">
-              <span class="text-slate-600">On Duty</span>
-              <span class="font-medium text-slate-900"
+              <span class="text-muted-foreground">On Duty</span>
+              <span class="font-medium text-foreground"
                 >{{ Math.round((dept.onDuty / dept.total) * 100) }}%</span
               >
             </div>
@@ -250,11 +250,11 @@ const getInitials = (name: string) => {
     <!-- Main Content -->
     <div class="grid lg:grid-cols-3 gap-6">
       <!-- Live Feed -->
-      <Card class="lg:col-span-2 border-slate-200">
+      <Card class="lg:col-span-2 border-border">
         <CardContent class="p-6">
           <div class="flex items-center justify-between mb-6">
             <h2
-              class="text-lg font-semibold text-slate-900 flex items-center gap-2"
+              class="text-lg font-semibold text-foreground flex items-center gap-2"
             >
               <span class="relative flex h-3 w-3">
                 <span
@@ -269,7 +269,7 @@ const getInitials = (name: string) => {
 
             <div class="relative w-64">
               <Search
-                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
+                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
               />
               <Input placeholder="Search..." class="pl-10" />
             </div>
@@ -279,29 +279,29 @@ const getInitials = (name: string) => {
             <div
               v-for="record in liveAttendance"
               :key="record.id"
-              class="flex items-center gap-4 p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              class="flex items-center gap-4 p-4 border border-border rounded-lg hover:bg-muted transition-colors"
             >
               <Avatar class="h-12 w-12">
                 <AvatarImage :src="record.photo" />
-                <AvatarFallback class="bg-blue-100 text-blue-700">
+                <AvatarFallback class="bg-blue-50 text-blue-600">
                   {{ getInitials(record.name) }}
                 </AvatarFallback>
               </Avatar>
 
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-1">
-                  <h3 class="font-medium text-slate-900">{{ record.name }}</h3>
+                  <h3 class="font-medium text-foreground">{{ record.name }}</h3>
                   <Badge
                     :class="
                       record.status === 'in'
-                        ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-100'
+                        ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                        : 'bg-muted text-muted-foreground hover:bg-muted'
                     "
                   >
                     {{ record.status === "in" ? "Clocked In" : "Clocked Out" }}
                   </Badge>
                 </div>
-                <div class="flex items-center gap-3 text-sm text-slate-600">
+                <div class="flex items-center gap-3 text-sm text-muted-foreground">
                   <span>{{ record.employeeId }}</span>
                   <span>•</span>
                   <span>{{ record.department }}</span>
@@ -311,13 +311,13 @@ const getInitials = (name: string) => {
               </div>
 
               <div class="text-right">
-                <div class="text-sm font-medium text-slate-900">
+                <div class="text-sm font-medium text-foreground">
                   {{ record.location }}
                 </div>
-                <div class="text-xs text-slate-500">
+                <div class="text-xs text-muted-foreground">
                   {{ record.verification }}
                 </div>
-                <div class="text-xs text-slate-400 mt-1">{{ record.time }}</div>
+                <div class="text-xs text-muted-foreground mt-1">{{ record.time }}</div>
               </div>
             </div>
           </div>
@@ -327,7 +327,7 @@ const getInitials = (name: string) => {
       <!-- Alerts Sidebar -->
       <div class="space-y-6">
         <!-- Late Arrivals -->
-        <Card class="border-amber-200 bg-amber-50">
+        <Card class="border-amber-300 bg-amber-50">
           <CardContent class="p-6">
             <div class="flex items-center gap-2 mb-4">
               <Clock class="h-5 w-5 text-amber-600" />
@@ -338,7 +338,7 @@ const getInitials = (name: string) => {
               <div
                 v-for="person in lateArrivals"
                 :key="person.employeeId"
-                class="p-3 bg-white border border-amber-200 rounded-lg"
+                class="p-3 bg-background border border-amber-300 rounded-lg"
               >
                 <div class="flex items-start gap-3">
                   <Avatar class="h-10 w-10">
@@ -348,14 +348,14 @@ const getInitials = (name: string) => {
                     </AvatarFallback>
                   </Avatar>
                   <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-slate-900 truncate">
+                    <p class="text-sm font-medium text-foreground truncate">
                       {{ person.name }}
                     </p>
-                    <p class="text-xs text-slate-500">
+                    <p class="text-xs text-muted-foreground">
                       {{ person.employeeId }}
                     </p>
                     <div class="mt-2 text-xs">
-                      <span class="text-slate-600"
+                      <span class="text-muted-foreground"
                         >Expected: {{ person.expectedTime }}</span
                       >
                       <br />
@@ -371,7 +371,7 @@ const getInitials = (name: string) => {
         </Card>
 
         <!-- Absent Staff -->
-        <Card class="border-red-200 bg-red-50">
+        <Card class="border-red-300 bg-red-50">
           <CardContent class="p-6">
             <div class="flex items-center gap-2 mb-4">
               <AlertCircle class="h-5 w-5 text-red-600" />
@@ -382,7 +382,7 @@ const getInitials = (name: string) => {
               <div
                 v-for="person in absentToday"
                 :key="person.employeeId"
-                class="p-3 bg-white border border-red-200 rounded-lg"
+                class="p-3 bg-background border border-red-300 rounded-lg"
               >
                 <div class="flex items-start gap-3">
                   <Avatar class="h-10 w-10">
@@ -392,13 +392,13 @@ const getInitials = (name: string) => {
                     </AvatarFallback>
                   </Avatar>
                   <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-slate-900 truncate">
+                    <p class="text-sm font-medium text-foreground truncate">
                       {{ person.name }}
                     </p>
-                    <p class="text-xs text-slate-500">
+                    <p class="text-xs text-muted-foreground">
                       {{ person.employeeId }}
                     </p>
-                    <p class="text-xs text-slate-600 mt-1">
+                    <p class="text-xs text-muted-foreground mt-1">
                       {{ person.department }}
                     </p>
                     <p class="text-xs text-red-700 mt-1">
@@ -412,25 +412,25 @@ const getInitials = (name: string) => {
         </Card>
 
         <!-- Shift Status -->
-        <Card class="border-slate-200">
+        <Card class="border-border">
           <CardContent class="p-6">
-            <h3 class="font-semibold text-slate-900 mb-4">Current Shift</h3>
+            <h3 class="font-semibold text-foreground mb-4">Current Shift</h3>
             <div class="space-y-4">
               <div>
                 <div class="flex justify-between text-sm mb-2">
-                  <span class="text-slate-600">Morning Shift</span>
-                  <span class="font-medium text-slate-900">6 AM - 2 PM</span>
+                  <span class="text-muted-foreground">Morning Shift</span>
+                  <span class="font-medium text-foreground">6 AM - 2 PM</span>
                 </div>
                 <Progress :value="75" class="h-2" />
-                <p class="text-xs text-slate-500 mt-1">
+                <p class="text-xs text-muted-foreground mt-1">
                   5 hours 15 minutes remaining
                 </p>
               </div>
 
-              <div class="pt-3 border-t border-slate-200">
-                <p class="text-sm text-slate-600 mb-2">Next Handover</p>
-                <p class="text-lg font-semibold text-slate-900">2:00 PM</p>
-                <p class="text-xs text-slate-500">Afternoon Shift</p>
+              <div class="pt-3 border-t border-border">
+                <p class="text-sm text-muted-foreground mb-2">Next Handover</p>
+                <p class="text-lg font-semibold text-foreground">2:00 PM</p>
+                <p class="text-xs text-muted-foreground">Afternoon Shift</p>
               </div>
             </div>
           </CardContent>

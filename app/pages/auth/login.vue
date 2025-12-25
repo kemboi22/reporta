@@ -56,7 +56,7 @@ const handleLogin = async () => {
       <div class="relative z-10">
         <NuxtLink to="/" class="flex items-center gap-2 text-white">
           <div
-            class="w-10 h-10 bg-white rounded-lg flex items-center justify-center"
+            class="w-10 h-10 bg-background rounded-lg flex items-center justify-center"
           >
             <svg
               class="w-6 h-6 text-primary"
@@ -84,15 +84,15 @@ const handleLogin = async () => {
         </p>
 
         <div class="grid grid-cols-3 gap-6">
-          <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+          <div class="bg-background/10 backdrop-blur-sm rounded-lg p-4">
             <div class="text-3xl font-bold mb-1">5K+</div>
             <div class="text-sm text-blue-100">Active Users</div>
           </div>
-          <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+          <div class="bg-background/10 backdrop-blur-sm rounded-lg p-4">
             <div class="text-3xl font-bold mb-1">99.9%</div>
             <div class="text-sm text-blue-100">Uptime</div>
           </div>
-          <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+          <div class="bg-background/10 backdrop-blur-sm rounded-lg p-4">
             <div class="text-3xl font-bold mb-1">24/7</div>
             <div class="text-sm text-blue-100">Support</div>
           </div>

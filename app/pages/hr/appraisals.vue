@@ -116,7 +116,7 @@ const getStatusColor = (status: string) => {
     case "pending":
       return "bg-orange-100 text-orange-700 border-orange-200";
     default:
-      return "bg-slate-100 text-slate-700 border-slate-200";
+      return "bg-muted text-foreground border-border";
   }
 };
 
@@ -135,10 +135,10 @@ const getScoreColor = (score: number) => {
       class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
     >
       <div>
-        <h1 class="text-3xl font-bold text-slate-900">
+        <h1 class="text-3xl font-bold text-foreground">
           Performance Appraisals
         </h1>
-        <p class="text-slate-600 mt-1">
+        <p class="text-muted-foreground mt-1">
           Track and manage employee performance reviews
         </p>
       </div>
@@ -154,8 +154,8 @@ const getScoreColor = (score: number) => {
         <CardContent class="p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-slate-600">Total Reviews</p>
-              <p class="text-2xl font-bold text-slate-900">248</p>
+              <p class="text-sm text-muted-foreground">Total Reviews</p>
+              <p class="text-2xl font-bold text-foreground">248</p>
             </div>
             <div
               class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center"
@@ -170,7 +170,7 @@ const getScoreColor = (score: number) => {
         <CardContent class="p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-slate-600">Completed</p>
+              <p class="text-sm text-muted-foreground">Completed</p>
               <p class="text-2xl font-bold text-green-600">186</p>
             </div>
             <div
@@ -186,7 +186,7 @@ const getScoreColor = (score: number) => {
         <CardContent class="p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-slate-600">In Progress</p>
+              <p class="text-sm text-muted-foreground">In Progress</p>
               <p class="text-2xl font-bold text-blue-600">42</p>
             </div>
             <div
@@ -202,7 +202,7 @@ const getScoreColor = (score: number) => {
         <CardContent class="p-6">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-slate-600">Avg Score</p>
+              <p class="text-sm text-muted-foreground">Avg Score</p>
               <p class="text-2xl font-bold text-purple-600">4.3</p>
             </div>
             <div
@@ -221,7 +221,7 @@ const getScoreColor = (score: number) => {
         <div class="flex flex-col sm:flex-row gap-4">
           <div class="relative flex-1">
             <Search
-              class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
+              class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
             />
             <Input
               v-model="searchQuery"
@@ -265,10 +265,10 @@ const getScoreColor = (score: number) => {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p class="font-semibold text-slate-900">
+                <p class="font-semibold text-foreground">
                   {{ appraisal.employee.name }}
                 </p>
-                <p class="text-sm text-slate-600">
+                <p class="text-sm text-muted-foreground">
                   {{ appraisal.employee.role }}
                 </p>
               </div>
@@ -280,22 +280,22 @@ const getScoreColor = (score: number) => {
         </CardHeader>
         <CardContent class="space-y-4">
           <div class="flex items-center justify-between text-sm">
-            <span class="text-slate-600">Period</span>
-            <span class="font-medium text-slate-900">{{
-              appraisal.period
-            }}</span>
+              <span class="text-muted-foreground">Period</span>
+              <span class="font-medium text-foreground">{{
+                appraisal.period
+              }}</span>
           </div>
 
           <div class="flex items-center justify-between text-sm">
-            <span class="text-slate-600">Reviewer</span>
-            <span class="font-medium text-slate-900">{{
-              appraisal.reviewer
-            }}</span>
+              <span class="text-muted-foreground">Reviewer</span>
+              <span class="font-medium text-foreground">{{
+                appraisal.reviewer
+              }}</span>
           </div>
 
           <div v-if="appraisal.score" class="space-y-2">
             <div class="flex items-center justify-between text-sm">
-              <span class="text-slate-600">Overall Score</span>
+              <span class="text-muted-foreground">Overall Score</span>
               <div class="flex items-center gap-1">
                 <Star class="h-4 w-4 fill-yellow-400 text-yellow-400" />
                 <span
@@ -303,15 +303,15 @@ const getScoreColor = (score: number) => {
                 >
                   {{ appraisal.score }}
                 </span>
-                <span class="text-slate-400">/5.0</span>
+                  <span class="text-muted-foreground">/5.0</span>
               </div>
             </div>
           </div>
 
           <div class="space-y-2">
             <div class="flex items-center justify-between text-sm">
-              <span class="text-slate-600">Goals Progress</span>
-              <span class="font-medium text-slate-900">
+              <span class="text-muted-foreground">Goals Progress</span>
+              <span class="font-medium text-foreground">
                 {{ appraisal.goalsCompleted }}/{{ appraisal.goals }}
               </span>
             </div>
@@ -323,7 +323,7 @@ const getScoreColor = (score: number) => {
 
           <div
             v-if="appraisal.completedDate"
-            class="flex items-center gap-2 text-sm text-slate-600"
+            class="flex items-center gap-2 text-sm text-muted-foreground"
           >
             <Calendar class="h-4 w-4" />
             <span>Completed {{ appraisal.completedDate }}</span>

@@ -87,16 +87,16 @@ const nextStep = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+  <div class="min-h-screen bg-muted flex items-center justify-center p-4">
     <div class="w-full max-w-2xl">
       <!-- Compact progress bar -->
       <div class="mb-6 flex items-center justify-between text-sm">
-        <span class="font-medium text-slate-900">Step 3 of 4</span>
+        <span class="font-medium text-foreground">Step 3 of 4</span>
         <div class="flex items-center gap-2">
           <div class="w-24 h-1.5 bg-blue-600 rounded-full"></div>
           <div class="w-24 h-1.5 bg-blue-600 rounded-full"></div>
           <div class="w-24 h-1.5 bg-blue-600 rounded-full"></div>
-          <div class="w-24 h-1.5 bg-slate-200 rounded-full"></div>
+          <div class="w-24 h-1.5 bg-muted rounded-full"></div>
         </div>
       </div>
 
@@ -179,8 +179,8 @@ const nextStep = () => {
               <div
                 class="border-2 border-dashed rounded-lg p-4 text-center hover:border-blue-400 transition-colors"
               >
-                <Upload class="w-6 h-6 mx-auto text-slate-400 mb-1" />
-                <p class="text-sm text-slate-600">Upload your logo</p>
+                <Upload class="w-6 h-6 mx-auto text-muted-foreground mb-1" />
+                <p class="text-sm text-muted-foreground">Upload your logo</p>
               </div>
               <input
                 type="file"

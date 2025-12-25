@@ -65,8 +65,8 @@ const devices = [
 
 const getStatusColor = (status: string) => {
   return status === "Online"
-    ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
-    : "bg-red-100 text-red-700 hover:bg-red-100";
+    ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+    : "bg-red-50 text-red-600 hover:bg-red-100";
 };
 
 const getDeviceIcon = (type: string) => {
@@ -79,13 +79,13 @@ const getDeviceIcon = (type: string) => {
     <!-- Page Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-slate-900">Biometric Devices</h1>
-        <p class="text-slate-600 mt-1">Manage attendance tracking devices</p>
+        <h1 class="text-3xl font-bold text-foreground">Biometric Devices</h1>
+        <p class="text-muted-foreground mt-1">Manage attendance tracking devices</p>
       </div>
 
       <Dialog v-model:open="showAddDeviceDialog">
         <DialogTrigger as-child>
-          <Button class="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button class="bg-blue-500 hover:bg-blue-600 text-white">
             <Plus class="h-4 w-4 mr-2" />
             Add Device
           </Button>
@@ -118,7 +118,7 @@ const getDeviceIcon = (type: string) => {
               <Button variant="outline" @click="showAddDeviceDialog = false"
                 >Cancel</Button
               >
-              <Button class="bg-blue-600 hover:bg-blue-700 text-white"
+              <Button class="bg-blue-500 hover:bg-blue-600 text-white"
                 >Add Device</Button
               >
             </div>
@@ -129,35 +129,35 @@ const getDeviceIcon = (type: string) => {
 
     <!-- Stats -->
     <div class="grid md:grid-cols-4 gap-6">
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Total Devices</p>
-          <p class="text-3xl font-bold text-slate-900">4</p>
-          <p class="text-sm text-emerald-600 mt-2">All configured</p>
+          <p class="text-sm text-muted-foreground mb-1">Total Devices</p>
+          <p class="text-3xl font-bold text-foreground">4</p>
+          <p class="text-sm text-emerald-500 mt-2">All configured</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Online</p>
-          <p class="text-3xl font-bold text-emerald-600">3</p>
-          <p class="text-sm text-slate-500 mt-2">75% uptime</p>
+          <p class="text-sm text-muted-foreground mb-1">Online</p>
+          <p class="text-3xl font-bold text-emerald-500">3</p>
+          <p class="text-sm text-muted-foreground mt-2">75% uptime</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Today's Scans</p>
-          <p class="text-3xl font-bold text-blue-600">333</p>
-          <p class="text-sm text-slate-500 mt-2">Clock ins/outs</p>
+          <p class="text-sm text-muted-foreground mb-1">Today's Scans</p>
+          <p class="text-3xl font-bold text-blue-500">333</p>
+          <p class="text-sm text-muted-foreground mt-2">Clock ins/outs</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Offline</p>
-          <p class="text-3xl font-bold text-red-600">1</p>
-          <p class="text-sm text-slate-500 mt-2">Requires attention</p>
+          <p class="text-sm text-muted-foreground mb-1">Offline</p>
+          <p class="text-3xl font-bold text-red-500">1</p>
+          <p class="text-sm text-muted-foreground mt-2">Requires attention</p>
         </CardContent>
       </Card>
     </div>
@@ -168,26 +168,26 @@ const getDeviceIcon = (type: string) => {
         v-for="device in devices"
         :key="device.id"
         :class="[
-          'border-slate-200',
-          device.status === 'Offline' && 'border-red-200',
+          'border-border',
+          device.status === 'Offline' && 'border-red-300',
         ]"
       >
         <CardContent class="p-6">
           <div class="flex items-start justify-between mb-4">
             <div class="flex items-start gap-4">
               <div
-                class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center"
+                class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center"
               >
                 <component
                   :is="getDeviceIcon(device.type)"
-                  class="h-6 w-6 text-blue-600"
+                  class="h-6 w-6 text-blue-500"
                 />
               </div>
               <div>
-                <h3 class="font-semibold text-slate-900">{{ device.name }}</h3>
-                <p class="text-sm text-slate-500">{{ device.deviceId }}</p>
+                <h3 class="font-semibold text-foreground">{{ device.name }}</h3>
+                <p class="text-sm text-muted-foreground">{{ device.deviceId }}</p>
                 <Badge
-                  class="mt-2 bg-blue-100 text-blue-700 hover:bg-blue-100"
+                  class="mt-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
                   >{{ device.type }}</Badge
                 >
               </div>
@@ -202,32 +202,32 @@ const getDeviceIcon = (type: string) => {
             </Badge>
           </div>
 
-          <div class="space-y-3 pt-4 border-t border-slate-200">
+          <div class="space-y-3 pt-4 border-t border-border">
             <div class="flex justify-between text-sm">
-              <span class="text-slate-600">Location</span>
-              <span class="font-medium text-slate-900">{{
+              <span class="text-muted-foreground">Location</span>
+              <span class="font-medium text-foreground">{{
                 device.location
               }}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-slate-600">IP Address</span>
-              <span class="font-mono text-sm text-slate-900">{{
+              <span class="text-muted-foreground">IP Address</span>
+              <span class="font-mono text-sm text-foreground">{{
                 device.ipAddress
               }}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-slate-600">Last Sync</span>
-              <span class="text-slate-900">{{ device.lastSync }}</span>
+              <span class="text-muted-foreground">Last Sync</span>
+              <span class="text-foreground">{{ device.lastSync }}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-slate-600">Today's Scans</span>
-              <span class="font-semibold text-blue-600">{{
+              <span class="text-muted-foreground">Today's Scans</span>
+              <span class="font-semibold text-blue-500">{{
                 device.todayScans
               }}</span>
             </div>
           </div>
 
-          <div class="flex gap-2 mt-4 pt-4 border-t border-slate-200">
+          <div class="flex gap-2 mt-4 pt-4 border-t border-border">
             <Button variant="outline" size="sm" class="flex-1">
               <RefreshCw class="h-4 w-4 mr-2" />
               Sync Now
@@ -242,59 +242,59 @@ const getDeviceIcon = (type: string) => {
     </div>
 
     <!-- Device Logs -->
-    <Card class="border-slate-200">
+    <Card class="border-border">
       <CardContent class="p-6">
-        <h3 class="text-lg font-semibold text-slate-900 mb-4">
+        <h3 class="text-lg font-semibold text-foreground mb-4">
           Recent Device Activity
         </h3>
         <div class="space-y-3">
           <div
-            class="flex items-center justify-between p-3 border border-slate-200 rounded-lg"
+            class="flex items-center justify-between p-3 border border-border rounded-lg"
           >
             <div class="flex items-center gap-3">
               <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
               <div>
-                <p class="text-sm font-medium text-slate-900">
+                <p class="text-sm font-medium text-foreground">
                   Main Entrance Scanner synced successfully
                 </p>
-                <p class="text-xs text-slate-500">2 minutes ago</p>
+                <p class="text-xs text-muted-foreground">2 minutes ago</p>
               </div>
             </div>
-            <Badge class="bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
+            <Badge class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
               >Success</Badge
             >
           </div>
 
           <div
-            class="flex items-center justify-between p-3 border border-slate-200 rounded-lg"
+            class="flex items-center justify-between p-3 border border-border rounded-lg"
           >
             <div class="flex items-center gap-3">
               <div class="w-2 h-2 bg-red-500 rounded-full"></div>
               <div>
-                <p class="text-sm font-medium text-slate-900">
+                <p class="text-sm font-medium text-foreground">
                   Pharmacy Exit connection lost
                 </p>
-                <p class="text-xs text-slate-500">2 hours ago</p>
+                <p class="text-xs text-muted-foreground">2 hours ago</p>
               </div>
             </div>
-            <Badge class="bg-red-100 text-red-700 hover:bg-red-100"
+            <Badge class="bg-red-50 text-red-600 hover:bg-red-100"
               >Error</Badge
             >
           </div>
 
           <div
-            class="flex items-center justify-between p-3 border border-slate-200 rounded-lg"
+            class="flex items-center justify-between p-3 border border-border rounded-lg"
           >
             <div class="flex items-center gap-3">
               <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
               <div>
-                <p class="text-sm font-medium text-slate-900">
+                <p class="text-sm font-medium text-foreground">
                   Surgery Wing Scanner firmware updated
                 </p>
-                <p class="text-xs text-slate-500">5 hours ago</p>
+                <p class="text-xs text-muted-foreground">5 hours ago</p>
               </div>
             </div>
-            <Badge class="bg-blue-100 text-blue-700 hover:bg-blue-100"
+            <Badge class="bg-blue-50 text-blue-600 hover:bg-blue-100"
               >Update</Badge
             >
           </div>

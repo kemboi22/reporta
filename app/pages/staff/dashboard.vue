@@ -91,8 +91,8 @@ const activities = ref([
   <div class="p-6 space-y-6">
     <!-- Header -->
     <div>
-      <h1 class="text-3xl font-bold text-slate-900">My Dashboard</h1>
-      <p class="text-slate-600 mt-1">
+      <h1 class="text-3xl font-bold text-foreground">My Dashboard</h1>
+      <p class="text-muted-foreground mt-1">
         Welcome back! Here's your day at a glance
       </p>
     </div>
@@ -105,7 +105,7 @@ const activities = ref([
         </CardHeader>
         <CardContent>
           <div class="text-center space-y-6">
-            <div class="text-6xl font-bold text-slate-900">
+            <div class="text-6xl font-bold text-foreground">
               {{ currentTime }}
             </div>
             <div class="flex items-center justify-center gap-4">
@@ -113,16 +113,16 @@ const activities = ref([
                 :class="
                   isOnDuty
                     ? 'bg-green-100 text-green-700 border-green-200'
-                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                    : 'bg-muted text-foreground border-border'
                 "
                 variant="outline"
                 class="text-lg px-4 py-2"
               >
                 {{ isOnDuty ? "On Duty" : "Off Duty" }}
               </Badge>
-              <div class="text-sm text-slate-600">
+              <div class="text-sm text-muted-foreground">
                 Shift:
-                <span class="font-medium text-slate-900"
+                <span class="font-medium text-foreground"
                   >Morning (6 AM - 2 PM)</span
                 >
               </div>
@@ -136,9 +136,9 @@ const activities = ref([
               <component :is="isOnDuty ? LogOut : LogIn" class="h-5 w-5 mr-2" />
               {{ isOnDuty ? "Clock Out" : "Clock In" }}
             </Button>
-            <div class="text-sm text-slate-600">
+            <div class="text-sm text-muted-foreground">
               Today's Hours:
-              <span class="font-bold text-lg text-slate-900"
+              <span class="font-bold text-lg text-foreground"
                 >{{ todayHours }}h</span
               >
             </div>
@@ -152,8 +152,8 @@ const activities = ref([
           <CardContent class="p-6">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-slate-600">Tasks Assigned</p>
-                <p class="text-3xl font-bold text-slate-900">8</p>
+                <p class="text-sm text-muted-foreground">Tasks Assigned</p>
+                <p class="text-3xl font-bold text-foreground">8</p>
               </div>
               <div
                 class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center"
@@ -168,7 +168,7 @@ const activities = ref([
           <CardContent class="p-6">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-slate-600">Reports Due</p>
+                <p class="text-sm text-muted-foreground">Reports Due</p>
                 <p class="text-3xl font-bold text-orange-600">2</p>
               </div>
               <div
@@ -184,7 +184,7 @@ const activities = ref([
           <CardContent class="p-6">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-slate-600">Notifications</p>
+                <p class="text-sm text-muted-foreground">Notifications</p>
                 <p class="text-3xl font-bold text-purple-600">5</p>
               </div>
               <div
@@ -209,12 +209,12 @@ const activities = ref([
           <div
             v-for="task in tasks"
             :key="task.id"
-            class="flex items-start gap-4 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+            class="flex items-start gap-4 p-4 rounded-lg border border-border hover:bg-muted transition-colors"
           >
             <input type="checkbox" class="mt-1" v-model="task.completed" />
             <div class="flex-1">
-              <p class="font-medium text-slate-900">{{ task.title }}</p>
-              <p class="text-sm text-slate-600 mt-1">Due: {{ task.dueDate }}</p>
+              <p class="font-medium text-foreground">{{ task.title }}</p>
+              <p class="text-sm text-muted-foreground mt-1">Due: {{ task.dueDate }}</p>
             </div>
             <Badge
               :class="{
@@ -222,7 +222,7 @@ const activities = ref([
                   task.priority === 'urgent',
                 'bg-orange-100 text-orange-700 border-orange-200':
                   task.priority === 'high',
-                'bg-slate-100 text-slate-700 border-slate-200':
+                'bg-muted text-foreground border-border':
                   task.priority === 'normal',
               }"
               variant="outline"
@@ -242,17 +242,17 @@ const activities = ref([
           <div
             v-for="report in reports"
             :key="report.id"
-            class="space-y-3 p-4 rounded-lg border border-slate-200"
+            class="space-y-3 p-4 rounded-lg border border-border"
           >
             <div>
-              <p class="font-medium text-slate-900">{{ report.name }}</p>
-              <p class="text-sm text-slate-600 mt-1">
+              <p class="font-medium text-foreground">{{ report.name }}</p>
+              <p class="text-sm text-muted-foreground mt-1">
                 Due: {{ report.dueDate }}
               </p>
             </div>
             <Badge
               :class="{
-                'bg-slate-100 text-slate-700 border-slate-200':
+                'bg-muted text-foreground border-border':
                   report.status === 'not-started',
                 'bg-blue-100 text-blue-700 border-blue-200':
                   report.status === 'in-progress',
@@ -278,12 +278,12 @@ const activities = ref([
             <div
               v-for="(activity, index) in activities"
               :key="index"
-              class="flex items-start gap-4 pb-4 border-b border-slate-200 last:border-0"
+              class="flex items-start gap-4 pb-4 border-b border-border last:border-0"
             >
               <div class="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
               <div>
-                <p class="text-sm text-slate-900">{{ activity.action }}</p>
-                <p class="text-xs text-slate-500 mt-1">{{ activity.time }}</p>
+                <p class="text-sm text-foreground">{{ activity.action }}</p>
+                <p class="text-xs text-muted-foreground mt-1">{{ activity.time }}</p>
               </div>
             </div>
           </div>

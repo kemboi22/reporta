@@ -21,7 +21,7 @@ const handleResetRequest = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center p-8 bg-muted/30">
+  <div class="min-h-screen flex items-center justify-center p-8 bg-muted">
     <div class="w-full max-w-md">
       <!-- Logo -->
       <div class="flex justify-center mb-8">
@@ -176,7 +176,7 @@ const handleResetRequest = async () => {
               <strong class="text-foreground">{{ email }}</strong>
             </p>
 
-            <div class="bg-muted/50 rounded-lg p-4 mb-6">
+            <div class="bg-muted rounded-lg p-4 mb-6">
               <p class="text-sm text-muted-foreground">
                 Didn't receive the email? Check your spam folder or
                 <button

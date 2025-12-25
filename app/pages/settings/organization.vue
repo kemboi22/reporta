@@ -64,25 +64,25 @@ const saveSettings = () => {
       <div class="max-w-4xl">
         <!-- Header -->
         <div class="mb-6">
-          <h1 class="text-3xl font-bold text-slate-900 mb-2">
+          <h1 class="text-3xl font-bold text-foreground mb-2">
             Organization Settings
           </h1>
-          <p class="text-slate-600">
+          <p class="text-muted-foreground">
             Manage your workspace configuration and branding
           </p>
         </div>
 
-        <div class="bg-white rounded-xl border border-slate-200 p-6 space-y-6">
+        <div class="bg-card rounded-xl border border-border p-6 space-y-6">
           <!-- Logo Upload -->
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">
+            <label class="block text-sm font-medium text-foreground mb-2">
               Organization Logo
             </label>
             <div class="flex items-center gap-4">
               <div
-                class="w-20 h-20 rounded-lg bg-slate-100 flex items-center justify-center border-2 border-slate-200"
+                class="w-20 h-20 rounded-lg bg-muted flex items-center justify-center border-2 border-border"
               >
-                <span class="text-2xl font-bold text-slate-400">AC</span>
+                <span class="text-2xl font-bold text-muted-foreground">AC</span>
               </div>
               <div>
                 <button
@@ -90,35 +90,35 @@ const saveSettings = () => {
                 >
                   Upload Logo
                 </button>
-                <p class="text-xs text-slate-500 mt-1">PNG, JPG up to 2MB</p>
+                <p class="text-xs text-muted-foreground mt-1">PNG, JPG up to 2MB</p>
               </div>
             </div>
           </div>
 
           <!-- Organization Name -->
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">
+            <label class="block text-sm font-medium text-foreground mb-2">
               Organization Name
             </label>
             <input
               v-model="orgName"
               type="text"
-              class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <!-- Subdomain -->
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">
+            <label class="block text-sm font-medium text-foreground mb-2">
               Workspace URL
             </label>
             <div class="flex items-center gap-2">
               <input
                 v-model="subdomain"
                 type="text"
-                class="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <span class="text-slate-500 whitespace-nowrap"
+              <span class="text-muted-foreground whitespace-nowrap"
                 >.workforcepro.com</span
               >
             </div>
@@ -126,12 +126,12 @@ const saveSettings = () => {
 
           <!-- Organization Type -->
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">
+            <label class="block text-sm font-medium text-foreground mb-2">
               Organization Type
             </label>
             <select
               v-model="orgType"
-              class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option
                 v-for="type in organizationTypes"
@@ -146,12 +146,12 @@ const saveSettings = () => {
           <!-- Timezone and Currency -->
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-2">
+              <label class="block text-sm font-medium text-foreground mb-2">
                 Timezone
               </label>
               <select
                 v-model="timezone"
-                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option v-for="tz in timezones" :key="tz" :value="tz">
                   {{ tz }}
@@ -159,12 +159,12 @@ const saveSettings = () => {
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-2">
+              <label class="block text-sm font-medium text-foreground mb-2">
                 Currency
               </label>
               <select
                 v-model="currency"
-                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option v-for="cur in currencies" :key="cur" :value="cur">
                   {{ cur }}
@@ -175,7 +175,7 @@ const saveSettings = () => {
 
           <!-- Working Hours -->
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">
+            <label class="block text-sm font-medium text-foreground mb-2">
               Working Hours
             </label>
             <div class="grid grid-cols-2 gap-4">
@@ -183,24 +183,24 @@ const saveSettings = () => {
                 <input
                   v-model="workingHoursStart"
                   type="time"
-                  class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <p class="text-xs text-slate-500 mt-1">Start time</p>
+                <p class="text-xs text-muted-foreground mt-1">Start time</p>
               </div>
               <div>
                 <input
                   v-model="workingHoursEnd"
                   type="time"
-                  class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <p class="text-xs text-slate-500 mt-1">End time</p>
+                <p class="text-xs text-muted-foreground mt-1">End time</p>
               </div>
             </div>
           </div>
 
           <!-- Weekend Days -->
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">
+            <label class="block text-sm font-medium text-foreground mb-2">
               Weekend Days
             </label>
             <div class="flex gap-2">
@@ -213,7 +213,7 @@ const saveSettings = () => {
                   'px-4 py-2 rounded-lg font-medium transition-colors text-sm',
                   weekendDays.includes(day.value)
                     ? 'bg-blue-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200',
+                    : 'bg-muted text-muted-foreground hover:bg-muted',
                 ]"
               >
                 {{ day.label }}
@@ -222,7 +222,7 @@ const saveSettings = () => {
           </div>
 
           <!-- Save Button -->
-          <div class="flex justify-end pt-4 border-t border-slate-200">
+          <div class="flex justify-end pt-4 border-t border-border">
             <button
               @click="saveSettings"
               class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"

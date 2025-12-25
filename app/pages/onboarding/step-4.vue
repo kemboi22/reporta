@@ -39,11 +39,11 @@ const skipAndComplete = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+  <div class="min-h-screen bg-muted flex items-center justify-center p-4">
     <div class="w-full max-w-2xl">
       <!-- Compact progress bar -->
       <div class="mb-6 flex items-center justify-between text-sm">
-        <span class="font-medium text-slate-900">Step 4 of 4</span>
+        <span class="font-medium text-foreground">Step 4 of 4</span>
         <div class="flex items-center gap-2">
           <div class="w-24 h-1.5 bg-blue-600 rounded-full"></div>
           <div class="w-24 h-1.5 bg-blue-600 rounded-full"></div>

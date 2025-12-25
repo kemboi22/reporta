@@ -113,8 +113,8 @@ const features = [
 </script>
 
 <template>
-  <div class="min-h-screen bg-white">
-    <nav class="border-b border-slate-200">
+  <div class="min-h-screen bg-background">
+    <nav class="border-b border-border">
       <div class="container mx-auto px-6 py-4">
         <div class="flex items-center justify-between">
           <NuxtLink to="/" class="flex items-center gap-3">
@@ -128,13 +128,13 @@ const features = [
       </div>
     </nav>
 
-    <section class="py-20 bg-slate-50">
+    <section class="py-20 bg-muted">
       <div class="container mx-auto px-6">
         <div class="max-w-3xl mx-auto text-center mb-16">
-          <h1 class="text-5xl font-bold text-slate-900 mb-6">
+          <h1 class="text-5xl font-bold text-foreground mb-6">
             Powerful Features
           </h1>
-          <p class="text-xl text-slate-600">
+          <p class="text-xl text-muted-foreground">
             Everything you need to manage your workforce efficiently in one
             comprehensive platform.
           </p>
@@ -154,15 +154,15 @@ const features = [
                   <component :is="feature.icon" class="w-6 h-6 text-blue-600" />
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-xl font-semibold text-slate-900 mb-2">
+                  <h3 class="text-xl font-semibold text-foreground mb-2">
                     {{ feature.title }}
                   </h3>
-                  <p class="text-slate-600 mb-4">{{ feature.description }}</p>
+                  <p class="text-muted-foreground mb-4">{{ feature.description }}</p>
                   <ul class="space-y-2">
                     <li
                       v-for="detail in feature.details"
                       :key="detail"
-                      class="text-sm text-slate-500 flex items-center gap-2"
+                      class="text-sm text-muted-foreground flex items-center gap-2"
                     >
                       <div class="w-1 h-1 rounded-full bg-blue-600"></div>
                       {{ detail }}
@@ -178,10 +178,10 @@ const features = [
 
     <section class="py-20">
       <div class="container mx-auto px-6 text-center">
-        <h2 class="text-3xl font-bold text-slate-900 mb-6">
+        <h2 class="text-3xl font-bold text-foreground mb-6">
           Ready to Get Started?
         </h2>
-        <p class="text-xl text-slate-600 mb-8">
+        <p class="text-xl text-muted-foreground mb-8">
           Start your 14-day free trial today. No credit card required.
         </p>
         <Button size="lg" @click="navigateTo('/onboarding/step-1')"

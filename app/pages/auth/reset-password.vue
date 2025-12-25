@@ -61,7 +61,7 @@ const handleResetPassword = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center p-8 bg-muted/30">
+  <div class="min-h-screen flex items-center justify-center p-8 bg-muted">
     <div class="w-full max-w-md">
       <!-- Logo -->
       <div class="flex justify-center mb-8">
@@ -287,7 +287,7 @@ const handleResetPassword = async () => {
 
               <!-- Password requirements -->
               <div
-                class="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground space-y-1"
+                class="bg-muted rounded-lg p-4 text-sm text-muted-foreground space-y-1"
               >
                 <p class="font-medium text-foreground mb-2">
                   Password must contain:

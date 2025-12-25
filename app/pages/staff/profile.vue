@@ -65,8 +65,8 @@ const performance = ref({
 <template>
   <div class="p-6 space-y-6">
     <div>
-      <h1 class="text-3xl font-bold text-slate-900">My Profile</h1>
-      <p class="text-slate-600 mt-1">
+      <h1 class="text-3xl font-bold text-foreground">My Profile</h1>
+      <p class="text-muted-foreground mt-1">
         Manage your personal information and preferences
       </p>
     </div>
@@ -91,7 +91,7 @@ const performance = ref({
                 <Upload class="h-4 w-4 mr-2" />
                 Change Photo
               </Button>
-              <p class="text-sm text-slate-600 mt-2">
+              <p class="text-sm text-muted-foreground mt-2">
                 JPG, PNG or GIF (max. 2MB)
               </p>
             </div>
@@ -141,26 +141,26 @@ const performance = ref({
           </CardHeader>
           <CardContent class="space-y-4">
             <div class="flex items-start gap-3">
-              <User class="h-5 w-5 text-slate-400 mt-0.5" />
+              <User class="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>
-                <p class="text-sm text-slate-600">Position</p>
-                <p class="font-medium text-slate-900">{{ profile.position }}</p>
+                <p class="text-sm text-muted-foreground">Position</p>
+                <p class="font-medium text-foreground">{{ profile.position }}</p>
               </div>
             </div>
             <div class="flex items-start gap-3">
-              <MapPin class="h-5 w-5 text-slate-400 mt-0.5" />
+              <MapPin class="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>
-                <p class="text-sm text-slate-600">Department</p>
-                <p class="font-medium text-slate-900">
+                <p class="text-sm text-muted-foreground">Department</p>
+                <p class="font-medium text-foreground">
                   {{ profile.department }}
                 </p>
               </div>
             </div>
             <div class="flex items-start gap-3">
-              <Calendar class="h-5 w-5 text-slate-400 mt-0.5" />
+              <Calendar class="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>
-                <p class="text-sm text-slate-600">Join Date</p>
-                <p class="font-medium text-slate-900">{{ profile.joinDate }}</p>
+                <p class="text-sm text-muted-foreground">Join Date</p>
+                <p class="font-medium text-foreground">{{ profile.joinDate }}</p>
               </div>
             </div>
           </CardContent>
@@ -173,12 +173,12 @@ const performance = ref({
           <CardContent class="space-y-4">
             <div class="space-y-2">
               <div class="flex items-center justify-between text-sm">
-                <span class="text-slate-600">Task Completion</span>
-                <span class="font-medium text-slate-900"
+                <span class="text-muted-foreground">Task Completion</span>
+                <span class="font-medium text-foreground"
                   >{{ performance.taskCompletion }}%</span
                 >
               </div>
-              <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-2 bg-muted rounded-full overflow-hidden">
                 <div
                   class="h-full bg-blue-600"
                   :style="{ width: `${performance.taskCompletion}%` }"
@@ -187,12 +187,12 @@ const performance = ref({
             </div>
             <div class="space-y-2">
               <div class="flex items-center justify-between text-sm">
-                <span class="text-slate-600">Report Compliance</span>
-                <span class="font-medium text-slate-900"
+                <span class="text-muted-foreground">Report Compliance</span>
+                <span class="font-medium text-foreground"
                   >{{ performance.reportCompliance }}%</span
                 >
               </div>
-              <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-2 bg-muted rounded-full overflow-hidden">
                 <div
                   class="h-full bg-green-600"
                   :style="{ width: `${performance.reportCompliance}%` }"
@@ -201,11 +201,11 @@ const performance = ref({
             </div>
             <Separator />
             <div>
-              <p class="text-sm text-slate-600">Last Appraisal</p>
-              <p class="text-2xl font-bold text-slate-900 mt-1">
+              <p class="text-sm text-muted-foreground">Last Appraisal</p>
+              <p class="text-2xl font-bold text-foreground mt-1">
                 {{ performance.lastAppraisal }}
               </p>
-              <p class="text-xs text-slate-500 mt-1">
+              <p class="text-xs text-muted-foreground mt-1">
                 {{ performance.appraisalDate }}
               </p>
             </div>
@@ -224,10 +224,10 @@ const performance = ref({
             <div
               v-for="shift in shifts"
               :key="shift.day"
-              class="flex items-center justify-between p-3 rounded-lg border border-slate-200"
+              class="flex items-center justify-between p-3 rounded-lg border border-border"
             >
-              <span class="font-medium text-slate-900">{{ shift.day }}</span>
-              <span class="text-slate-600">{{ shift.time }}</span>
+              <span class="font-medium text-foreground">{{ shift.day }}</span>
+              <span class="text-muted-foreground">{{ shift.time }}</span>
             </div>
           </div>
         </CardContent>
@@ -242,7 +242,7 @@ const performance = ref({
         <CardContent class="space-y-3">
           <div v-for="item in training" :key="item.name" class="space-y-2">
             <div class="flex items-start justify-between">
-              <p class="text-sm font-medium text-slate-900">{{ item.name }}</p>
+              <p class="text-sm font-medium text-foreground">{{ item.name }}</p>
               <Badge
                 :class="
                   item.completed
@@ -254,7 +254,7 @@ const performance = ref({
                 {{ item.completed ? "Completed" : "Pending" }}
               </Badge>
             </div>
-            <p v-if="item.completed" class="text-xs text-slate-500">
+            <p v-if="item.completed" class="text-xs text-muted-foreground">
               {{ item.date }}
             </p>
           </div>

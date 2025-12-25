@@ -54,16 +54,16 @@ const nextStep = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+  <div class="min-h-screen bg-muted flex items-center justify-center p-4">
     <div class="w-full max-w-2xl">
       <!-- Compact progress bar -->
       <div class="mb-6 flex items-center justify-between text-sm">
-        <span class="font-medium text-slate-900">Step 2 of 4</span>
+        <span class="font-medium text-foreground">Step 2 of 4</span>
         <div class="flex items-center gap-2">
           <div class="w-24 h-1.5 bg-blue-600 rounded-full"></div>
           <div class="w-24 h-1.5 bg-blue-600 rounded-full"></div>
-          <div class="w-24 h-1.5 bg-slate-200 rounded-full"></div>
-          <div class="w-24 h-1.5 bg-slate-200 rounded-full"></div>
+          <div class="w-24 h-1.5 bg-muted rounded-full"></div>
+          <div class="w-24 h-1.5 bg-muted rounded-full"></div>
         </div>
       </div>
 
@@ -126,7 +126,7 @@ const nextStep = () => {
             <div v-if="adminPassword" class="space-y-2">
               <div class="flex items-center gap-2">
                 <div
-                  class="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden"
+                  class="flex-1 h-1.5 bg-muted rounded-full overflow-hidden"
                 >
                   <div
                     :class="[passwordStrength.color, 'h-full transition-all']"

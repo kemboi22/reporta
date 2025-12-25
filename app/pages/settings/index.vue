@@ -73,8 +73,8 @@ const settingsCategories = [
   <div class="p-6 space-y-6">
     <!-- Header -->
     <div>
-      <h1 class="text-3xl font-bold text-slate-900">Settings</h1>
-      <p class="text-slate-600 mt-1">Manage your workspace configuration</p>
+      <h1 class="text-3xl font-bold text-foreground">Settings</h1>
+      <p class="text-muted-foreground mt-1">Manage your workspace configuration</p>
     </div>
 
     <!-- Settings Grid -->

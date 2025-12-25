@@ -97,7 +97,7 @@ const getFrequencyColor = (frequency: string) => {
     Weekly: "bg-purple-100 text-purple-700 hover:bg-purple-100",
     Monthly: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100",
     Quarterly: "bg-amber-100 text-amber-700 hover:bg-amber-100",
-    "On-Demand": "bg-slate-100 text-slate-700 hover:bg-slate-100",
+    "On-Demand": "bg-muted text-foreground hover:bg-muted",
   };
   return colors[frequency] || colors["On-Demand"];
 };
@@ -105,7 +105,7 @@ const getFrequencyColor = (frequency: string) => {
 const getStatusColor = (status: string) => {
   return status === "Active"
     ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
-    : "bg-slate-100 text-slate-700 hover:bg-slate-100";
+    : "bg-muted text-foreground hover:bg-muted";
 };
 </script>
 
@@ -114,8 +114,8 @@ const getStatusColor = (status: string) => {
     <!-- Page Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-slate-900">Report Templates</h1>
-        <p class="text-slate-600 mt-1">
+        <h1 class="text-3xl font-bold text-foreground">Report Templates</h1>
+        <p class="text-muted-foreground mt-1">
           Create and manage custom report templates
         </p>
       </div>
@@ -130,12 +130,12 @@ const getStatusColor = (status: string) => {
     </div>
 
     <!-- Filters -->
-    <Card class="border-slate-200">
+    <Card class="border-border">
       <CardContent class="p-6">
         <div class="flex flex-col md:flex-row gap-4">
           <div class="relative flex-1">
             <Search
-              class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
+              class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
             />
             <Input
               v-model="searchQuery"
@@ -176,7 +176,7 @@ const getStatusColor = (status: string) => {
       <Card
         v-for="template in templates"
         :key="template.id"
-        class="border-slate-200 hover:shadow-lg transition-all cursor-pointer"
+        class="border-border hover:shadow-lg transition-all cursor-pointer"
       >
         <CardContent class="p-6">
           <div class="flex items-start justify-between mb-4">
@@ -190,10 +190,10 @@ const getStatusColor = (status: string) => {
             }}</Badge>
           </div>
 
-          <h3 class="text-lg font-semibold text-slate-900 mb-2">
+          <h3 class="text-lg font-semibold text-foreground mb-2">
             {{ template.name }}
           </h3>
-          <p class="text-sm text-slate-600 mb-4 line-clamp-2">
+          <p class="text-sm text-muted-foreground mb-4 line-clamp-2">
             {{ template.description }}
           </p>
 
@@ -207,21 +207,21 @@ const getStatusColor = (status: string) => {
           </div>
 
           <div
-            class="grid grid-cols-2 gap-4 py-4 border-t border-slate-200 text-sm"
+            class="grid grid-cols-2 gap-4 py-4 border-t border-border text-sm"
           >
             <div>
-              <p class="text-slate-500">Fields</p>
-              <p class="font-semibold text-slate-900">{{ template.fields }}</p>
+              <p class="text-muted-foreground">Fields</p>
+              <p class="font-semibold text-foreground">{{ template.fields }}</p>
             </div>
             <div>
-              <p class="text-slate-500">Submissions</p>
-              <p class="font-semibold text-slate-900">
+              <p class="text-muted-foreground">Submissions</p>
+              <p class="font-semibold text-foreground">
                 {{ template.submissions }}
               </p>
             </div>
           </div>
 
-          <div class="flex gap-2 pt-4 border-t border-slate-200">
+          <div class="flex gap-2 pt-4 border-t border-border">
             <!-- Added Fill Report button -->
             <Button
               variant="outline"
@@ -254,33 +254,33 @@ const getStatusColor = (status: string) => {
 
     <!-- Stats -->
     <div class="grid md:grid-cols-4 gap-6">
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Total Templates</p>
-          <p class="text-3xl font-bold text-slate-900">6</p>
-          <p class="text-sm text-slate-500 mt-2">5 active, 1 draft</p>
+          <p class="text-sm text-muted-foreground mb-1">Total Templates</p>
+          <p class="text-3xl font-bold text-foreground">6</p>
+          <p class="text-sm text-muted-foreground mt-2">5 active, 1 draft</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Total Submissions</p>
+          <p class="text-sm text-muted-foreground mb-1">Total Submissions</p>
           <p class="text-3xl font-bold text-blue-600">600</p>
-          <p class="text-sm text-slate-500 mt-2">This month</p>
+          <p class="text-sm text-muted-foreground mt-2">This month</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Departments</p>
+          <p class="text-sm text-muted-foreground mb-1">Departments</p>
           <p class="text-3xl font-bold text-purple-600">6</p>
-          <p class="text-sm text-slate-500 mt-2">Using templates</p>
+          <p class="text-sm text-muted-foreground mt-2">Using templates</p>
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <p class="text-sm text-slate-600 mb-1">Avg Completion</p>
+          <p class="text-sm text-muted-foreground mb-1">Avg Completion</p>
           <p class="text-3xl font-bold text-emerald-600">98%</p>
           <p class="text-sm text-emerald-600 mt-2">+3% from last month</p>
         </CardContent>

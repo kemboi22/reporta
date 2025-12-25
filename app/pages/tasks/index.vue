@@ -43,7 +43,7 @@ const showCreateTaskDialog = ref(false);
 const selectedFilter = ref("all");
 
 const columns = [
-  { id: "backlog", title: "Backlog", color: "bg-slate-100", count: 8 },
+  { id: "backlog", title: "Backlog", color: "bg-muted", count: 8 },
   { id: "todo", title: "To Do", color: "bg-blue-100", count: 12 },
   { id: "in-progress", title: "In Progress", color: "bg-purple-100", count: 5 },
   { id: "review", title: "Review", color: "bg-amber-100", count: 3 },
@@ -149,7 +149,7 @@ const getPriorityBadge = (priority: string) => {
     urgent: "bg-red-100 text-red-700 hover:bg-red-100",
     high: "bg-orange-100 text-orange-700 hover:bg-orange-100",
     medium: "bg-blue-100 text-blue-700 hover:bg-blue-100",
-    low: "bg-slate-100 text-slate-700 hover:bg-slate-100",
+    low: "bg-muted text-foreground hover:bg-muted",
   };
   return badges[priority] || badges.medium;
 };
@@ -203,8 +203,8 @@ const onColumnDrop = (targetColumnId: string) => {
       <!-- Page Header -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-3xl font-bold text-slate-900">Task Management</h1>
-          <p class="text-slate-600 mt-1">Organize and track your team's work</p>
+          <h1 class="text-3xl font-bold text-foreground">Task Management</h1>
+          <p class="text-muted-foreground mt-1">Organize and track your team's work</p>
         </div>
 
         <Dialog v-model:open="showCreateTaskDialog">
@@ -287,13 +287,13 @@ const onColumnDrop = (targetColumnId: string) => {
       </div>
 
       <!-- Toolbar -->
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-4">
           <div class="flex flex-col md:flex-row items-center gap-4">
             <!-- Search -->
             <div class="relative flex-1 w-full">
               <Search
-                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
+                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
               />
               <Input placeholder="Search tasks..." class="pl-10" />
             </div>
@@ -316,11 +316,11 @@ const onColumnDrop = (targetColumnId: string) => {
               </Button>
 
               <!-- View Toggle -->
-              <div class="flex border border-slate-200 rounded-lg">
+              <div class="flex border border-border rounded-lg">
                 <Button
                   variant="ghost"
                   size="icon"
-                  :class="viewMode === 'kanban' && 'bg-slate-100'"
+                  :class="viewMode === 'kanban' && 'bg-muted'"
                   @click="viewMode = 'kanban'"
                 >
                   <LayoutGrid class="h-4 w-4" />
@@ -328,7 +328,7 @@ const onColumnDrop = (targetColumnId: string) => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  :class="viewMode === 'list' && 'bg-slate-100'"
+                  :class="viewMode === 'list' && 'bg-muted'"
                   @click="viewMode = 'list'"
                 >
                   <ListIcon class="h-4 w-4" />
@@ -349,7 +349,7 @@ const onColumnDrop = (targetColumnId: string) => {
             @dragover="onColumnDragOver"
             @drop="onColumnDrop(column.id)"
           >
-            <Card class="border-slate-200">
+            <Card class="border-border">
               <CardContent class="p-4">
                 <!-- Column Header -->
                 <div class="flex items-center justify-between mb-4">
@@ -362,7 +362,7 @@ const onColumnDrop = (targetColumnId: string) => {
                           .replace('100', '500'),
                       ]"
                     ></div>
-                    <h3 class="font-semibold text-slate-900">
+                    <h3 class="font-semibold text-foreground">
                       {{ column.title }}
                     </h3>
                     <Badge variant="secondary" class="text-xs">{{
@@ -382,7 +382,7 @@ const onColumnDrop = (targetColumnId: string) => {
                     v-for="task in tasks[column.id as keyof typeof tasks]"
                     :key="task.id"
                     :class="[
-                      'border-slate-200 hover:shadow-md transition-all cursor-move',
+                      'border-border hover:shadow-md transition-all cursor-move',
                       getPriorityColor(task.priority),
                     ]"
                     draggable="true"
@@ -403,19 +403,19 @@ const onColumnDrop = (targetColumnId: string) => {
                       </div>
 
                       <!-- Task Title -->
-                      <h4 class="font-medium text-slate-900 mb-2 line-clamp-2">
-                        {{ task.title }}
-                      </h4>
-                      <p class="text-sm text-slate-600 mb-3 line-clamp-2">
+                       <h4 class="font-medium text-foreground mb-2 line-clamp-2">
+                         {{ task.title }}
+                       </h4>
+                       <p class="text-sm text-muted-foreground mb-3 line-clamp-2">
                         {{ task.description }}
                       </p>
 
                       <!-- Task Meta -->
                       <div
-                        class="flex items-center justify-between pt-3 border-t border-slate-100"
+                        class="flex items-center justify-between pt-3 border-t border-border"
                       >
                         <div
-                          class="flex items-center gap-3 text-xs text-slate-500"
+                          class="flex items-center gap-3 text-xs text-muted-foreground"
                         >
                           <div class="flex items-center gap-1">
                             <Calendar class="h-3 w-3" />
@@ -450,10 +450,10 @@ const onColumnDrop = (targetColumnId: string) => {
                       <!-- Subtasks Progress -->
                       <div
                         v-if="task.subtasks.total > 0"
-                        class="mt-3 pt-3 border-t border-slate-100"
+                        class="mt-3 pt-3 border-t border-border"
                       >
                         <div
-                          class="flex items-center justify-between text-xs text-slate-600 mb-2"
+                           class="flex items-center justify-between text-xs text-muted-foreground mb-2"
                         >
                           <span>Subtasks</span>
                           <span class="font-medium"
@@ -462,7 +462,7 @@ const onColumnDrop = (targetColumnId: string) => {
                             }}</span
                           >
                         </div>
-                        <div class="w-full bg-slate-200 rounded-full h-1.5">
+                        <div class="w-full bg-muted rounded-full h-1.5">
                           <div
                             class="bg-blue-600 h-1.5 rounded-full transition-all"
                             :style="{
@@ -481,52 +481,52 @@ const onColumnDrop = (targetColumnId: string) => {
       </div>
 
       <!-- List View -->
-      <Card v-else class="border-slate-200">
+      <Card v-else class="border-border">
         <CardContent class="p-0">
           <div class="overflow-x-auto">
             <table class="w-full">
-              <thead class="bg-slate-50 border-b border-slate-200">
+              <thead class="bg-muted border-b border-border">
                 <tr>
                   <th
-                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+                    class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
                   >
                     Task
                   </th>
                   <th
-                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+                    class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
                   >
                     Priority
                   </th>
                   <th
-                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+                    class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
                   >
                     Category
                   </th>
                   <th
-                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+                    class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
                   >
                     Assignee
                   </th>
                   <th
-                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+                    class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
                   >
                     Due Date
                   </th>
                   <th
-                    class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase"
+                    class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
                   >
                     Status
                   </th>
                 </tr>
               </thead>
-              <tbody class="bg-white divide-y divide-slate-200">
-                <tr class="hover:bg-slate-50 transition-colors cursor-pointer">
+              <tbody class="bg-background divide-y divide-border">
+                <tr class="hover:bg-muted transition-colors cursor-pointer">
                   <td class="px-6 py-4">
                     <div>
-                      <p class="text-sm font-medium text-slate-900">
+                      <p class="text-sm font-medium text-foreground">
                         Sample Task
                       </p>
-                      <p class="text-sm text-slate-500">
+                      <p class="text-sm text-muted-foreground">
                         Task description here
                       </p>
                     </div>
@@ -547,10 +547,10 @@ const onColumnDrop = (targetColumnId: string) => {
                           >SJ</AvatarFallback
                         >
                       </Avatar>
-                      <span class="text-sm text-slate-900">Sarah Johnson</span>
+                      <span class="text-sm text-foreground">Sarah Johnson</span>
                     </div>
                   </td>
-                  <td class="px-6 py-4 text-sm text-slate-600">Dec 25</td>
+                  <td class="px-6 py-4 text-sm text-muted-foreground">Dec 25</td>
                   <td class="px-6 py-4">
                     <Badge class="bg-blue-100 text-blue-700 hover:bg-blue-100"
                       >To Do</Badge
@@ -565,35 +565,35 @@ const onColumnDrop = (targetColumnId: string) => {
 
       <!-- Task Statistics -->
       <div class="grid md:grid-cols-4 gap-6">
-        <Card class="border-slate-200">
+        <Card class="border-border">
           <CardContent class="p-6">
-            <p class="text-sm text-slate-600 mb-1">Total Tasks</p>
-            <p class="text-3xl font-bold text-slate-900">52</p>
-            <p class="text-sm text-slate-500 mt-2">Across all boards</p>
+            <p class="text-sm text-muted-foreground mb-1">Total Tasks</p>
+            <p class="text-3xl font-bold text-foreground">52</p>
+            <p class="text-sm text-muted-foreground mt-2">Across all boards</p>
           </CardContent>
         </Card>
 
-        <Card class="border-slate-200">
+        <Card class="border-border">
           <CardContent class="p-6">
-            <p class="text-sm text-slate-600 mb-1">In Progress</p>
+            <p class="text-sm text-muted-foreground mb-1">In Progress</p>
             <p class="text-3xl font-bold text-purple-600">5</p>
-            <p class="text-sm text-slate-500 mt-2">Active tasks</p>
+            <p class="text-sm text-muted-foreground mt-2">Active tasks</p>
           </CardContent>
         </Card>
 
-        <Card class="border-slate-200">
+        <Card class="border-border">
           <CardContent class="p-6">
-            <p class="text-sm text-slate-600 mb-1">Completed</p>
+            <p class="text-sm text-muted-foreground mb-1">Completed</p>
             <p class="text-3xl font-bold text-emerald-600">24</p>
             <p class="text-sm text-emerald-600 mt-2">46% completion rate</p>
           </CardContent>
         </Card>
 
-        <Card class="border-slate-200">
+        <Card class="border-border">
           <CardContent class="p-6">
-            <p class="text-sm text-slate-600 mb-1">Overdue</p>
+            <p class="text-sm text-muted-foreground mb-1">Overdue</p>
             <p class="text-3xl font-bold text-red-600">0</p>
-            <p class="text-sm text-slate-500 mt-2">Great work!</p>
+            <p class="text-sm text-muted-foreground mt-2">Great work!</p>
           </CardContent>
         </Card>
       </div>

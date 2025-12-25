@@ -24,28 +24,28 @@ const getIcon = (iconName: string) => {
 
 const getColorClasses = (color: string) => {
   const colors: Record<string, { bg: string; text: string }> = {
-    emerald: { bg: 'bg-emerald-100', text: 'text-emerald-600' },
-    blue: { bg: 'bg-blue-100', text: 'text-blue-600' },
-    amber: { bg: 'bg-amber-100', text: 'text-amber-600' },
-    purple: { bg: 'bg-purple-100', text: 'text-purple-600' }
+    emerald: { bg: 'bg-emerald-500/10 dark:bg-emerald-400/10', text: 'text-emerald-600 dark:text-emerald-400' },
+    blue: { bg: 'bg-blue-500/10 dark:bg-blue-400/10', text: 'text-blue-600 dark:text-blue-400' },
+    amber: { bg: 'bg-amber-500/10 dark:bg-amber-400/10', text: 'text-amber-600 dark:text-amber-400' },
+    purple: { bg: 'bg-purple-500/10 dark:bg-purple-400/10', text: 'text-purple-600 dark:text-purple-400' }
   }
   return colors[color] || colors.blue
 }
 </script>
 
 <template>
-  <Card class="border-slate-200 hover:shadow-lg transition-all">
+  <Card class="border-border hover:shadow-lg transition-all">
     <CardContent class="p-6">
       <div class="flex items-start justify-between">
         <div class="flex-1">
-          <p class="text-sm font-medium text-slate-600 mb-1">{{ title }}</p>
+          <p class="text-sm font-medium text-muted-foreground mb-1">{{ title }}</p>
           <div class="flex items-baseline gap-2">
-            <h3 class="text-3xl font-bold text-slate-900">{{ value }}</h3>
-            <span v-if="total" class="text-lg text-slate-400">/ {{ total }}</span>
+            <h3 class="text-3xl font-bold text-foreground">{{ value }}</h3>
+            <span v-if="total" class="text-lg text-muted-foreground">/ {{ total }}</span>
           </div>
           <p :class="[
             'text-sm mt-2 flex items-center gap-1',
-            alert ? 'text-red-600' : 'text-slate-600'
+            alert ? 'text-destructive' : 'text-muted-foreground'
           ]">
             <TrendingUp v-if="!alert" class="h-3 w-3" />
             <AlertCircle v-else class="h-3 w-3" />

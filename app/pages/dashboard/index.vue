@@ -190,12 +190,12 @@ const getAlertIcon = (type: string) => {
     <!-- Page Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-slate-900">Dashboard</h1>
-        <p class="text-slate-600 mt-1">
+        <h1 class="text-3xl font-bold text-foreground">Dashboard</h1>
+        <p class="text-muted-foreground mt-1">
           Welcome back! Here's what's happening today.
         </p>
       </div>
-      <div class="flex items-center gap-2 text-sm text-slate-600">
+      <div class="flex items-center gap-2 text-sm text-muted-foreground">
         <Clock class="h-4 w-4" />
         <span>{{ currentTime }}</span>
       </div>
@@ -236,9 +236,9 @@ const getAlertIcon = (type: string) => {
     </div>
 
     <!-- Quick Actions -->
-    <Card class="border-slate-200">
+    <Card class="border-border">
       <CardContent class="p-6">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4">Quick Actions</h2>
+        <h2 class="text-lg font-semibold text-foreground mb-4">Quick Actions</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <QuickActionButton
             v-for="action in quickActions"
@@ -255,11 +255,11 @@ const getAlertIcon = (type: string) => {
     <!-- Main Content Grid -->
     <div class="grid lg:grid-cols-2 gap-6">
       <!-- Live Attendance Feed -->
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
           <div class="flex items-center justify-between mb-4">
             <h2
-              class="text-lg font-semibold text-slate-900 flex items-center gap-2"
+              class="text-lg font-semibold text-foreground flex items-center gap-2"
             >
               <span class="relative flex h-3 w-3">
                 <span
@@ -285,10 +285,10 @@ const getAlertIcon = (type: string) => {
       </Card>
 
       <!-- Recent Activity -->
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-slate-900">
+            <h2 class="text-lg font-semibold text-foreground">
               Recent Activity
             </h2>
             <Button variant="ghost" size="sm">View All</Button>
@@ -307,15 +307,15 @@ const getAlertIcon = (type: string) => {
 
     <!-- Charts Placeholder -->
     <div class="grid lg:grid-cols-3 gap-6">
-      <Card class="lg:col-span-2 border-slate-200">
+      <Card class="lg:col-span-2 border-border">
         <CardContent class="p-6">
-          <h2 class="text-lg font-semibold text-slate-900 mb-4">
+          <h2 class="text-lg font-semibold text-foreground mb-4">
             Attendance Trend (Last 7 Days)
           </h2>
           <div
-            class="h-64 flex items-center justify-center bg-slate-50 rounded-lg border border-slate-200"
+            class="h-64 flex items-center justify-center bg-muted rounded-lg border border-border"
           >
-            <div class="text-center text-slate-400">
+            <div class="text-center text-muted-foreground">
               <svg
                 class="h-12 w-12 mx-auto mb-2"
                 fill="none"
@@ -335,15 +335,15 @@ const getAlertIcon = (type: string) => {
         </CardContent>
       </Card>
 
-      <Card class="border-slate-200">
+      <Card class="border-border">
         <CardContent class="p-6">
-          <h2 class="text-lg font-semibold text-slate-900 mb-4">
+          <h2 class="text-lg font-semibold text-foreground mb-4">
             Task Completion
           </h2>
           <div
-            class="h-64 flex items-center justify-center bg-slate-50 rounded-lg border border-slate-200"
+            class="h-64 flex items-center justify-center bg-muted rounded-lg border border-border"
           >
-            <div class="text-center text-slate-400">
+            <div class="text-center text-muted-foreground">
               <svg
                 class="h-12 w-12 mx-auto mb-2"
                 fill="none"
@@ -371,9 +371,9 @@ const getAlertIcon = (type: string) => {
     </div>
 
     <!-- Alerts Panel -->
-    <Card class="border-slate-200">
+    <Card class="border-border">
       <CardContent class="p-6">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4">
+        <h2 class="text-lg font-semibold text-foreground mb-4">
           Alerts & Reminders
         </h2>
         <div class="space-y-3">
@@ -382,10 +382,10 @@ const getAlertIcon = (type: string) => {
             :key="alert.id"
             :class="
               alert.type === 'error'
-                ? 'border-red-200 bg-red-50'
+                ? 'border-destructive bg-destructive/10'
                 : alert.type === 'warning'
-                  ? 'border-amber-200 bg-amber-50'
-                  : 'border-blue-200 bg-blue-50'
+                  ? 'border-orange-200 bg-orange-50'
+                  : 'border-primary bg-primary/10'
             "
           >
             <component :is="getAlertIcon(alert.type)" class="h-4 w-4" />
