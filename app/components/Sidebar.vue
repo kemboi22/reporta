@@ -70,12 +70,7 @@ const switchWorkspace = async (
   };
 
   isSwitching.value = false;
-  navigateTo("/dashboard");
-};
-
-const navigateTo = (href: string) => {
-  // Navigation logic
-  window.location.href = href;
+  await navigateTo("/dashboard");
 };
 
 const getInitials = (name: string) => {
