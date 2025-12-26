@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import ThemeToggle from "@/components/ThemeToggle.vue";
+import { NuxtLink } from "#components";
 import {
   Clock,
   Users,
@@ -105,7 +102,8 @@ const stats = [
           <div class="flex items-center justify-center gap-4 flex-wrap">
             <Button
               size="lg"
-              @click="navigateTo('/onboarding/step-1')"
+              :as="NuxtLink"
+              to="/onboarding/step-1"
               class="h-12 px-8"
             >
               Start Free Trial

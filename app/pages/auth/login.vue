@@ -54,12 +54,6 @@ const handleLogin = async () => {
         class="absolute inset-0 bg-grid-pattern opacity-[0.02] dark:opacity-[0.05]"
       ></div>
     </div>
-
-    <!-- Theme Toggle -->
-    <div class="absolute top-6 right-6 z-50">
-      <ThemeToggle />
-    </div>
-
     <!-- Main Content -->
     <div class="flex min-h-screen items-center justify-center p-4">
       <div

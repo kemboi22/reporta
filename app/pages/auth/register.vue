@@ -85,12 +85,6 @@ const getStrengthText = () => {
         class="absolute inset-0 bg-grid-pattern opacity-[0.02] dark:opacity-[0.05]"
       ></div>
     </div>
-
-    <!-- Theme Toggle -->
-    <div class="absolute top-6 right-6 z-50">
-      <ThemeToggle />
-    </div>
-
     <!-- Main Content -->
     <div class="flex min-h-screen items-center justify-center p-4">
       <div
@@ -137,7 +131,8 @@ const getStrengthText = () => {
             <p
               class="text-lg lg:text-xl text-muted-foreground max-w-lg mx-auto lg:mx-0"
             >
-              Join thousands of organizations transforming their workforce management with cutting-edge tools designed for modern businesses.
+              Join thousands of organizations transforming their workforce
+              management with cutting-edge tools designed for modern businesses.
             </p>
           </div>
 
@@ -295,7 +290,9 @@ const getStrengthText = () => {
               <form @submit.prevent="handleRegister" class="space-y-4">
                 <!-- Full Name field -->
                 <div class="space-y-2">
-                  <Label for="fullName" class="text-sm font-medium">Full Name</Label>
+                  <Label for="fullName" class="text-sm font-medium"
+                    >Full Name</Label
+                  >
                   <div class="relative">
                     <div
                       class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
@@ -359,7 +356,9 @@ const getStrengthText = () => {
 
                 <!-- Password field -->
                 <div class="space-y-2">
-                  <Label for="password" class="text-sm font-medium">Password</Label>
+                  <Label for="password" class="text-sm font-medium"
+                    >Password</Label
+                  >
                   <div class="relative">
                     <div
                       class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
@@ -391,7 +390,9 @@ const getStrengthText = () => {
                   <!-- Password strength indicator -->
                   <div v-if="form.password" class="space-y-1">
                     <div class="flex items-center justify-between text-xs">
-                      <span class="text-muted-foreground">Password strength</span>
+                      <span class="text-muted-foreground"
+                        >Password strength</span
+                      >
                       <span
                         :class="getStrengthColor().replace('bg-', 'text-')"
                         class="font-medium"
@@ -444,14 +445,22 @@ const getStrengthText = () => {
 
                 <!-- Terms checkbox -->
                 <div class="flex items-start gap-2">
-                  <Checkbox id="terms" v-model:checked="form.agreeToTerms" required />
+                  <Checkbox
+                    id="terms"
+                    v-model:checked="form.agreeToTerms"
+                    required
+                  />
                   <Label for="terms" class="text-sm font-normal cursor-pointer">
                     I agree to the
-                    <NuxtLink to="/terms" class="text-primary hover:underline font-medium"
+                    <NuxtLink
+                      to="/terms"
+                      class="text-primary hover:underline font-medium"
                       >Terms of Service</NuxtLink
                     >
                     and
-                    <NuxtLink to="/privacy" class="text-primary hover:underline font-medium"
+                    <NuxtLink
+                      to="/privacy"
+                      class="text-primary hover:underline font-medium"
                       >Privacy Policy</NuxtLink
                     >
                   </Label>
