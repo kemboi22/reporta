@@ -14,6 +14,9 @@ import {
   Building2,
   Plus,
   Check,
+  Calendar as CalendarIcon,
+  FolderKanban,
+  Building,
 } from "lucide-vue-next";
 defineProps<{
   collapsed: boolean;
@@ -38,6 +41,10 @@ const otherWorkspaces = ref([
 ]);
 
 const isSwitching = ref(false);
+
+const getInitials = (name: string) => {
+  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+};
 
 const switchWorkspace = async (
   workspaceId: number,
@@ -68,6 +75,30 @@ const navigationItems = [
     badge: null,
   },
   {
+    name: "Organizations",
+    icon: Building2,
+    children: [
+      { name: "All Organizations", href: "/organizations" },
+      { name: "Switch Workspace", href: "/workspace/switch" },
+    ],
+  },
+  {
+    name: "Projects",
+    icon: FolderKanban,
+    href: "/projects",
+  },
+  {
+    name: "Tasks",
+    icon: CheckSquare,
+    href: "/tasks",
+    badge: "12",
+  },
+  {
+    name: "Calendar",
+    icon: CalendarIcon,
+    href: "/calendar",
+  },
+  {
     name: "HR Management",
     icon: Users,
     children: [
@@ -85,12 +116,6 @@ const navigationItems = [
       { name: "Reports", href: "/attendance/reports" },
       { name: "Biometric Devices", href: "/attendance/devices" },
     ],
-  },
-  {
-    name: "Tasks",
-    icon: CheckSquare,
-    href: "/tasks",
-    badge: "12",
   },
   {
     name: "Reports",
