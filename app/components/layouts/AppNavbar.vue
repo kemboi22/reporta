@@ -61,10 +61,10 @@ const navigateToLink = (href: string) => {
         <!-- Desktop CTA Buttons -->
         <div class="hidden md:flex items-center gap-3">
           <ThemeToggle />
-          <Button variant="ghost" size="sm" @click="navigateTo('/auth/login')"
+          <Button :as="NuxtLink" variant="ghost" size="sm" to="/auth/login"
             >Sign In</Button
           >
-          <Button size="sm" @click="navigateTo('/onboarding/step-1')"
+          <Button :as="NuxtLink" size="sm" to="/onboarding/step-1"
             >Get Started</Button
           >
         </div>

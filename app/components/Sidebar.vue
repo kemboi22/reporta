@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { NuxtLink } from "#components";
 import {
   LayoutDashboard,
   Users,
@@ -17,18 +15,6 @@ import {
   Plus,
   Check,
 } from "lucide-vue-next";
-import { ref, computed } from "vue";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-
 defineProps<{
   collapsed: boolean;
 }>();
@@ -72,15 +58,6 @@ const switchWorkspace = async (
 
   isSwitching.value = false;
   await navigateTo("/dashboard");
-};
-
-const getInitials = (name: string) => {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .substring(0, 2);
 };
 
 const navigationItems = [
@@ -195,10 +172,7 @@ const navigationItems = [
     </div>
 
     <!-- Enhanced workspace switcher with seamless transitions -->
-    <div
-      v-if="!collapsed"
-      class="px-3 py-3 border-b border-border flex-shrink-0"
-    >
+    <div v-if="!collapsed" class="px-3 py-3 border-b border-border shrink-0">
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button
@@ -207,7 +181,7 @@ const navigationItems = [
             :disabled="isSwitching"
           >
             <div class="flex items-center gap-2.5 min-w-0">
-              <Avatar class="h-7 w-7 flex-shrink-0">
+              <Avatar class="h-7 w-7 shrink-0">
                 <AvatarFallback
                   class="bg-primary/10 text-primary text-xs font-semibold"
                 >
@@ -226,7 +200,7 @@ const navigationItems = [
               </div>
             </div>
             <ChevronDown
-:class="[
+              :class="[
                 'h-4 w-4 text-muted-foreground',
                 isSwitching && 'animate-spin',
               ]"
@@ -284,7 +258,7 @@ const navigationItems = [
                 </AvatarFallback>
               </Avatar>
               <div class="flex-1 min-w-0">
-<div class="text-sm font-medium text-foreground truncate">
+                <div class="text-sm font-medium text-foreground truncate">
                   {{ workspace.name }}
                 </div>
                 <div class="text-xs text-muted-foreground">
@@ -297,7 +271,8 @@ const navigationItems = [
           <DropdownMenuSeparator />
 
           <DropdownMenuItem
-            @click="navigateTo('/onboarding/step-1')"
+            :as="NuxtLink"
+            to="/onboarding/step-1"
             class="py-2.5"
           >
             <Plus class="h-4 w-4 mr-2 text-primary" />
@@ -316,7 +291,7 @@ const navigationItems = [
             <Button
               variant="ghost"
               :class="[
-'w-full justify-start hover:bg-muted',
+                'w-full justify-start hover:bg-muted',
                 collapsed && 'justify-center px-2',
               ]"
               @click="toggleSection(item.name)"
@@ -328,7 +303,7 @@ const navigationItems = [
               />
               <template v-if="!collapsed">
                 <span
-class="flex-1 text-left text-sm font-medium text-foreground"
+                  class="flex-1 text-left text-sm font-medium text-foreground"
                   >{{ item.name }}</span
                 >
                 <component
@@ -349,6 +324,8 @@ class="flex-1 text-left text-sm font-medium text-foreground"
                 variant="ghost"
                 class="w-full justify-start text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
                 @click="navigateTo(child.href)"
+                :as="NuxtLink"
+                :to="child.href"
               >
                 {{ child.name }}
               </Button>
@@ -363,7 +340,8 @@ class="flex-1 text-left text-sm font-medium text-foreground"
               'w-full justify-start hover:bg-muted',
               collapsed && 'justify-center px-2',
             ]"
-            @click="navigateTo(item.href)"
+            :as="NuxtLink"
+            :to="item.href"
           >
             <div class="relative">
               <component
@@ -381,7 +359,7 @@ class="flex-1 text-left text-sm font-medium text-foreground"
             </div>
             <template v-if="!collapsed">
               <span
-                 class="flex-1 text-left text-sm font-medium text-foreground"
+                class="flex-1 text-left text-sm font-medium text-foreground"
                 >{{ item.name }}</span
               >
               <Badge v-if="item.badge" variant="destructive" class="ml-auto">{{
@@ -400,13 +378,15 @@ class="flex-1 text-left text-sm font-medium text-foreground"
       <div v-if="!collapsed" class="flex items-center gap-3">
         <Avatar class="h-10 w-10">
           <AvatarImage src="/placeholder-user.jpg" />
-<AvatarFallback class="bg-primary/10 text-primary">AD</AvatarFallback>
+          <AvatarFallback class="bg-primary/10 text-primary">AD</AvatarFallback>
         </Avatar>
         <div class="flex-1 min-w-0">
           <div class="text-sm font-medium text-foreground truncate">
             Admin User
           </div>
-          <div class="text-xs text-muted-foreground truncate">admin@company.com</div>
+          <div class="text-xs text-muted-foreground truncate">
+            admin@company.com
+          </div>
         </div>
       </div>
       <Avatar v-else class="h-10 w-10 mx-auto">
