@@ -16,28 +16,33 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  FolderKanban,
 } from "lucide-vue-next";
+import { definePageMeta } from "#imports";
 
 definePageMeta({
   layout: "dashboard",
 });
 
 const viewMode = ref<"kanban" | "list">("kanban");
-const showCreateTaskDialog = ref(false);
-const showEditTaskDialog = ref(false);
+const showCreateTaskSheet = ref(false);
+const showEditTaskSheet = ref(false);
+const showAddTeammateSheet = ref(false);
 const selectedFilter = ref("all");
+const selectedProject = ref<string | null>(null);
 const selectedAssignee = ref<string | null>(null);
 const searchQuery = ref("");
 const draggedTask = ref<{ columnId: string; taskId: number } | null>(null);
 const dragOverColumn = ref<string | null>(null);
 const editingTask = ref<any>(null);
+const selectedTaskForTeam = ref<any>(null);
 
 const columns = [
-  { id: "backlog", title: "Backlog", color: "bg-slate-500", count: 8, icon: "○" },
-  { id: "todo", title: "To Do", color: "bg-blue-500", count: 12, icon: "◐" },
-  { id: "in-progress", title: "In Progress", color: "bg-purple-500", count: 5, icon: "◑" },
-  { id: "review", title: "Review", color: "bg-amber-500", count: 3, icon: "◎" },
-  { id: "completed", title: "Completed", color: "bg-emerald-500", count: 24, icon: "●" },
+  { id: "backlog", title: "Backlog", color: "bg-slate-500", count: 8 },
+  { id: "todo", title: "To Do", color: "bg-blue-500", count: 12 },
+  { id: "in-progress", title: "In Progress", color: "bg-purple-500", count: 5 },
+  { id: "review", title: "Review", color: "bg-amber-500", count: 3 },
+  { id: "completed", title: "Completed", color: "bg-emerald-500", count: 24 },
 ];
 
 const teamMembers = [
@@ -46,6 +51,13 @@ const teamMembers = [
   { id: "mike", name: "Mike Chen", photo: "/placeholder-user.jpg", role: "Maintenance" },
   { id: "robert", name: "Robert Taylor", photo: "/placeholder-user.jpg", role: "HR" },
   { id: "james", name: "James Wilson", photo: "/placeholder-user.jpg", role: "Compliance" },
+];
+
+const projects = [
+  { id: "p1", name: "Website Redesign", color: "bg-blue-500" },
+  { id: "p2", name: "Mobile App", color: "bg-purple-500" },
+  { id: "p3", name: "API Integration", color: "bg-emerald-500" },
+  { id: "p4", name: "Marketing Campaign", color: "bg-amber-500" },
 ];
 
 const tasks = ref({
@@ -57,6 +69,8 @@ const tasks = ref({
       priority: "medium",
       category: "Pharmacy",
       assigneeId: "emma",
+      projectId: "p1",
+      teamIds: ["emma", "sarah"],
       dueDate: "2024-12-30",
       comments: 2,
       attachments: 1,
@@ -69,6 +83,8 @@ const tasks = ref({
       priority: "low",
       category: "HR",
       assigneeId: "robert",
+      projectId: "p3",
+      teamIds: ["robert"],
       dueDate: "2025-01-05",
       comments: 0,
       attachments: 2,
@@ -83,6 +99,8 @@ const tasks = ref({
       priority: "urgent",
       category: "Reports",
       assigneeId: "emma",
+      projectId: "p1",
+      teamIds: ["emma"],
       dueDate: "2024-12-25",
       comments: 5,
       attachments: 3,
@@ -95,6 +113,8 @@ const tasks = ref({
       priority: "high",
       category: "Quality",
       assigneeId: "sarah",
+      projectId: "p2",
+      teamIds: ["sarah", "mike"],
       dueDate: "2024-12-26",
       comments: 1,
       attachments: 0,
@@ -109,6 +129,8 @@ const tasks = ref({
       priority: "urgent",
       category: "Maintenance",
       assigneeId: "mike",
+      projectId: "p2",
+      teamIds: ["mike", "robert"],
       dueDate: "2024-12-24",
       comments: 8,
       attachments: 5,
@@ -123,6 +145,8 @@ const tasks = ref({
       priority: "high",
       category: "Compliance",
       assigneeId: "james",
+      projectId: "p3",
+      teamIds: ["james"],
       dueDate: "2024-12-27",
       comments: 4,
       attachments: 2,
@@ -136,13 +160,12 @@ const getAssignee = (assigneeId: string) => {
   return teamMembers.find((m) => m.id === assigneeId) || { name: "Unassigned", photo: "" };
 };
 
+const getProject = (projectId: string) => {
+  return projects.find((p) => p.id === projectId) || { name: "No Project", color: "bg-muted" };
+};
+
 const getInitials = (name: string) => {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 };
 
 const getPriorityColor = (priority: string) => {
@@ -157,7 +180,7 @@ const getPriorityColor = (priority: string) => {
 
 const getPriorityBadge = (priority: string) => {
   const badges: Record<string, any> = {
-    urgent: { variant: "destructive" as const, icon: AlertCircle, label: "Urgent" },
+    urgent: { variant: "destructive" as const, label: "Urgent" },
     high: { variant: "default" as const, class: "bg-orange-500 hover:bg-orange-600 text-white", label: "High" },
     medium: { variant: "default" as const, class: "bg-blue-500 hover:bg-blue-600 text-white", label: "Medium" },
     low: { variant: "secondary" as const, label: "Low" },
@@ -167,15 +190,14 @@ const getPriorityBadge = (priority: string) => {
 
 const getFilteredTasks = (columnId: string) => {
   const columnTasks = tasks.value[columnId as keyof typeof tasks.value] || [];
-  
   return columnTasks.filter((task) => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                          task.description.toLowerCase().includes(searchQuery.value.toLowerCase());
     const matchesAssignee = !selectedAssignee.value || task.assigneeId === selectedAssignee.value;
+    const matchesProject = !selectedProject.value || task.projectId === selectedProject.value;
     const matchesFilter = selectedFilter.value === "all" ||
                          (selectedFilter.value === "urgent" && task.priority === "urgent");
-    
-    return matchesSearch && matchesAssignee && matchesFilter;
+    return matchesSearch && matchesAssignee && matchesProject && matchesFilter;
   });
 };
 
@@ -201,24 +223,19 @@ const onColumnDragOver = (event: DragEvent) => {
 
 const onColumnDrop = (targetColumnId: string) => {
   if (!draggedTask.value) return;
-
   const { columnId: sourceColumnId, taskId } = draggedTask.value;
-
   if (sourceColumnId === targetColumnId) {
     draggedTask.value = null;
     dragOverColumn.value = null;
     return;
   }
-
   const sourceColumn = tasks.value[sourceColumnId as keyof typeof tasks.value];
   const taskIndex = sourceColumn.findIndex((t) => t.id === taskId);
-
   if (taskIndex !== -1) {
     const [task] = sourceColumn.splice(taskIndex, 1);
     const targetColumn = tasks.value[targetColumnId as keyof typeof tasks.value];
     targetColumn.push(task);
   }
-
   draggedTask.value = null;
   dragOverColumn.value = null;
 };
@@ -231,12 +248,26 @@ const assignTask = (columnId: string, taskId: number, assigneeId: string) => {
   }
 };
 
-const openEditTask = (columnId: string, taskId: number) => {
+const openCreateTaskSheet = () => {
+  editingTask.value = null;
+  showCreateTaskSheet.value = true;
+};
+
+const openEditTaskSheet = (columnId: string, taskId: number) => {
   const column = tasks.value[columnId as keyof typeof tasks.value];
   const task = column.find((t) => t.id === taskId);
   if (task) {
     editingTask.value = { ...task, columnId };
-    showEditTaskDialog.value = true;
+    showEditTaskSheet.value = true;
+  }
+};
+
+const openAddTeammateSheet = (columnId: string, taskId: number) => {
+  const column = tasks.value[columnId as keyof typeof tasks.value];
+  const task = column.find((t) => t.id === taskId);
+  if (task) {
+    selectedTaskForTeam.value = { ...task, columnId };
+    showAddTeammateSheet.value = true;
   }
 };
 
@@ -249,12 +280,17 @@ const saveTask = () => {
       Object.assign(column[taskIndex], updates);
     }
   }
-  showEditTaskDialog.value = false;
+  showCreateTaskSheet.value = false;
+  showEditTaskSheet.value = false;
   editingTask.value = null;
 };
 
 const createTask = () => {
-  showCreateTaskDialog.value = false;
+  showCreateTaskSheet.value = false;
+};
+
+const addTeammate = () => {
+  showAddTeammateSheet.value = false;
 };
 
 const totalTasks = computed(() => {
@@ -280,9 +316,10 @@ const allTasks = computed(() => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                          task.description.toLowerCase().includes(searchQuery.value.toLowerCase());
     const matchesAssignee = !selectedAssignee.value || task.assigneeId === selectedAssignee.value;
+    const matchesProject = !selectedProject.value || task.projectId === selectedProject.value;
     const matchesFilter = selectedFilter.value === "all" ||
                          (selectedFilter.value === "urgent" && task.priority === "urgent");
-    return matchesSearch && matchesAssignee && matchesFilter;
+    return matchesSearch && matchesAssignee && matchesProject && matchesFilter;
   });
 });
 </script>
@@ -294,18 +331,18 @@ const allTasks = computed(() => {
         <h1 class="text-3xl font-bold text-foreground">Task Management</h1>
         <p class="text-muted-foreground mt-1">Organize and track your team's work</p>
       </div>
-      <Dialog v-model:open="showCreateTaskDialog">
-        <DialogTrigger as-child>
+      <Sheet v-model:open="showCreateTaskSheet">
+        <SheetTrigger as-child>
           <Button class="gap-2">
             <Plus class="h-4 w-4" />
             Create Task
           </Button>
-        </DialogTrigger>
-        <DialogContent class="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Create New Task</DialogTitle>
-            <DialogDescription>Add a new task to your board</DialogDescription>
-          </DialogHeader>
+        </SheetTrigger>
+        <SheetContent class="w-full sm:w-[540px] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Create New Task</SheetTitle>
+            <SheetDescription>Add a new task to your board</SheetDescription>
+          </SheetHeader>
           <div class="grid gap-4 py-4">
             <div class="space-y-2">
               <Label for="title">Task Title</Label>
@@ -317,19 +354,17 @@ const allTasks = computed(() => {
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
-                <Label for="assignee">Assign To</Label>
+                <Label for="project">Project</Label>
                 <Select>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select staff member" />
+                    <SelectValue placeholder="Select project" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem v-for="member in teamMembers" :key="member.id" :value="member.id">
+                    <SelectItem value="none">No Project</SelectItem>
+                    <SelectItem v-for="project in projects" :key="project.id" :value="project.id">
                       <div class="flex items-center gap-2">
-                        <Avatar class="h-5 w-5">
-                          <AvatarImage :src="member.photo" />
-                          <AvatarFallback class="text-xs">{{ getInitials(member.name) }}</AvatarFallback>
-                        </Avatar>
-                        {{ member.name }}
+                        <div :class="['w-3 h-3 rounded-full', project.color]"></div>
+                        {{ project.name }}
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -352,21 +387,71 @@ const allTasks = computed(() => {
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
+                <Label for="assignee">Assign To</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select staff member" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="member in teamMembers" :key="member.id" :value="member.id">
+                      <div class="flex items-center gap-2">
+                        <Avatar class="h-5 w-5">
+                          <AvatarImage :src="member.photo" />
+                          <AvatarFallback class="text-xs">{{ getInitials(member.name) }}</AvatarFallback>
+                        </Avatar>
+                        {{ member.name }}
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div class="space-y-2">
                 <Label for="category">Category</Label>
                 <Input id="category" placeholder="e.g., Reports" />
               </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
                 <Label for="dueDate">Due Date</Label>
                 <Input id="dueDate" type="date" />
               </div>
+              <div class="space-y-2">
+                <Label for="column">Column</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select column" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="col in columns" :key="col.id" :value="col.id">{{ col.title }}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <Label>Team Members</Label>
+              <div class="border rounded-md p-3 space-y-2 max-h-32 overflow-y-auto">
+                <div v-for="member in teamMembers" :key="member.id" class="flex items-center gap-3">
+                  <Switch :id="'team-' + member.id" />
+                  <Avatar class="h-8 w-8">
+                    <AvatarImage :src="member.photo" />
+                    <AvatarFallback class="bg-primary text-primary-foreground text-xs">
+                      {{ getInitials(member.name) }}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div class="flex-1">
+                    <div class="text-sm font-medium">{{ member.name }}</div>
+                    <div class="text-xs text-muted-foreground">{{ member.role }}</div>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="flex justify-end gap-3">
-              <Button variant="outline" @click="showCreateTaskDialog = false">Cancel</Button>
+              <Button variant="outline" @click="showCreateTaskSheet = false">Cancel</Button>
               <Button @click="createTask">Create Task</Button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </div>
 
     <Card>
@@ -377,6 +462,20 @@ const allTasks = computed(() => {
             <Input v-model="searchQuery" placeholder="Search tasks..." class="pl-10" />
           </div>
           <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <Select v-model="selectedProject">
+              <SelectTrigger class="w-[160px]">
+                <SelectValue placeholder="All Projects" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Projects</SelectItem>
+                <SelectItem v-for="project in projects" :key="project.id" :value="project.id">
+                  <div class="flex items-center gap-2">
+                    <div :class="['w-2.5 h-2.5 rounded-full', project.color]"></div>
+                    {{ project.name }}
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
             <Select v-model="selectedFilter">
               <SelectTrigger class="w-[140px]">
                 <SelectValue placeholder="All Tasks" />
@@ -386,40 +485,7 @@ const allTasks = computed(() => {
                 <SelectItem value="urgent">Urgent Only</SelectItem>
               </SelectContent>
             </Select>
-            <Popover>
-              <PopoverTrigger as-child>
-                <Button variant="outline" class="gap-2 min-w-[140px] justify-start">
-                  <Users class="h-4 w-4" />
-                  <span class="truncate">{{ selectedAssignee ? getAssignee(selectedAssignee).name : "Filter by Member" }}</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent class="w-[240px] p-2" align="end">
-                <Command>
-                  <CommandInput placeholder="Search members..." />
-                  <CommandList>
-                    <CommandItem @click="selectedAssignee = null" :value="'all'">
-                      <CheckCircle2 v-if="!selectedAssignee" class="mr-2 h-4 w-4" />
-                      <div class="mr-2 h-4 w-4" v-else></div>
-                      All Members
-                    </CommandItem>
-                    <CommandSeparator />
-                    <CommandGroup>
-                      <CommandItem v-for="member in teamMembers" :key="member.id" :value="member.id" @click="selectedAssignee = member.id">
-                        <CheckCircle2 v-if="selectedAssignee === member.id" class="mr-2 h-4 w-4" />
-                        <div class="mr-2 h-4 w-4" v-else></div>
-                        <Avatar class="h-5 w-5 mr-2">
-                          <AvatarImage :src="member.photo" />
-                          <AvatarFallback class="text-xs">{{ getInitials(member.name) }}</AvatarFallback>
-                        </Avatar>
-                        <span>{{ member.name }}</span>
-                        <span class="ml-auto text-xs text-muted-foreground">{{ member.role }}</span>
-                      </CommandItem>
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            <Button variant="outline" size="icon" @click="() => { selectedFilter = 'all'; selectedAssignee = null; searchQuery = '' }">
+            <Button variant="outline" size="icon" @click="() => { selectedFilter = 'all'; selectedProject = null; selectedAssignee = null; searchQuery = '' }">
               <Filter class="h-4 w-4" />
             </Button>
             <Separator orientation="vertical" class="h-8 hidden lg:block" />
@@ -461,95 +527,127 @@ const allTasks = computed(() => {
               </div>
               <ScrollArea class="max-h-[calc(100vh-320px)]">
                 <div class="space-y-3 pr-2">
-                <Card
-                  v-for="task in getFilteredTasks(column.id)"
-                  :key="task.id"
-                  :class="[
-                    'group cursor-grab active:cursor-grabbing hover:shadow-lg transition-all',
-                    'border-l-4',
-                    getPriorityColor(task.priority),
-                  ]"
-                  draggable="true"
-                  @dragstart="onTaskDragStart(column.id, task.id)"
-                >
-                  <CardContent class="p-3">
-                    <div class="flex items-start justify-between mb-2">
-                      <Badge :variant="getPriorityBadge(task.priority).variant" :class="getPriorityBadge(task.priority).class" class="text-[10px] font-medium uppercase px-1.5 py-0.5">
-                        {{ task.priority }}
-                      </Badge>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger as-child>
-                          <Button variant="ghost" size="icon" class="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <MoreVertical class="h-3.5 w-3.5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem @click="openEditTask(column.id, task.id)">
-                            <Edit2 class="h-4 w-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem class="text-destructive">
-                            <Trash2 class="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    <h4 class="font-medium text-sm mb-1 line-clamp-2">{{ task.title }}</h4>
-                    <p class="text-xs text-muted-foreground mb-3 line-clamp-2">{{ task.description }}</p>
-                    <div class="flex items-center justify-between pt-2 border-t">
-                      <div class="flex items-center gap-3 text-xs text-muted-foreground">
-                        <div class="flex items-center gap-1">
-                          <Calendar class="h-3 w-3" />
-                          <span>{{ task.dueDate }}</span>
+                  <Card
+                    v-for="task in getFilteredTasks(column.id)"
+                    :key="task.id"
+                    :class="[
+                      'group cursor-grab active:cursor-grabbing hover:shadow-lg transition-all',
+                      'border-l-4',
+                      getPriorityColor(task.priority),
+                    ]"
+                    draggable="true"
+                    @dragstart="onTaskDragStart(column.id, task.id)"
+                  >
+                    <CardContent class="p-3">
+                      <div class="flex items-start justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                          <Badge :variant="getPriorityBadge(task.priority).variant" :class="getPriorityBadge(task.priority).class" class="text-[10px] font-medium uppercase px-1.5 py-0.5">
+                            {{ task.priority }}
+                          </Badge>
+                          <div v-if="task.projectId" class="flex items-center gap-1 text-[10px] text-muted-foreground">
+                            <FolderKanban class="h-3 w-3" />
+                            {{ getProject(task.projectId).name }}
+                          </div>
                         </div>
-                        <div v-if="task.comments > 0" class="flex items-center gap-1">
-                          <MessageSquare class="h-3 w-3" />
-                          <span>{{ task.comments }}</span>
-                        </div>
-                        <div v-if="task.attachments > 0" class="flex items-center gap-1">
-                          <Paperclip class="h-3 w-3" />
-                          <span>{{ task.attachments }}</span>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger as-child>
+                            <Button variant="ghost" size="icon" class="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <MoreVertical class="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem @click="openEditTaskSheet(column.id, task.id)">
+                              <Edit2 class="h-4 w-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem class="text-destructive">
+                              <Trash2 class="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                      <Popover>
-                        <PopoverTrigger as-child>
-                          <Button variant="ghost" size="icon" class="h-7 w-7 p-0 rounded-full">
-                            <Avatar class="h-6 w-6">
-                              <AvatarImage :src="getAssignee(task.assigneeId).photo" />
-                              <AvatarFallback class="text-[10px] bg-primary/10 text-primary">{{ getInitials(getAssignee(task.assigneeId).name) }}</AvatarFallback>
-                            </Avatar>
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent class="w-[200px] p-2" align="end">
-                          <div class="text-xs font-medium mb-2 px-2 text-muted-foreground">Assign to:</div>
-                          <Command>
-                            <CommandList>
-                              <CommandItem v-for="member in teamMembers" :key="member.id" :value="member.id" @click="assignTask(column.id, task.id, member.id)">
-                                <CheckCircle2 v-if="task.assigneeId === member.id" class="mr-2 h-3.5 w-3.5" />
-                                <div class="mr-2 h-3.5 w-3.5" v-else></div>
-                                <Avatar class="h-5 w-5 mr-2">
-                                  <AvatarImage :src="member.photo" />
-                                  <AvatarFallback class="text-[10px]">{{ getInitials(member.name) }}</AvatarFallback>
+                      <h4 class="font-medium text-sm mb-1 line-clamp-2">{{ task.title }}</h4>
+                      <p class="text-xs text-muted-foreground mb-3 line-clamp-2">{{ task.description }}</p>
+                      <div class="flex items-center justify-between pt-2 border-t">
+                        <div class="flex items-center gap-3 text-xs text-muted-foreground">
+                          <div class="flex items-center gap-1">
+                            <Calendar class="h-3 w-3" />
+                            <span>{{ task.dueDate }}</span>
+                          </div>
+                          <div v-if="task.comments > 0" class="flex items-center gap-1">
+                            <MessageSquare class="h-3 w-3" />
+                            <span>{{ task.comments }}</span>
+                          </div>
+                          <div v-if="task.attachments > 0" class="flex items-center gap-1">
+                            <Paperclip class="h-3 w-3" />
+                            <span>{{ task.attachments }}</span>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <Popover>
+                            <PopoverTrigger as-child>
+                              <Button variant="ghost" size="icon" class="h-7 w-7 p-0 rounded-full">
+                                <Avatar class="h-6 w-6">
+                                  <AvatarImage :src="getAssignee(task.assigneeId).photo" />
+                                  <AvatarFallback class="text-[10px] bg-primary/10 text-primary">{{ getInitials(getAssignee(task.assigneeId).name) }}</AvatarFallback>
                                 </Avatar>
-                                <span class="text-sm">{{ member.name }}</span>
-                              </CommandItem>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div v-if="task.subtasks.total > 0" class="mt-3">
-                      <div class="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
-                        <span>Progress</span>
-                        <span class="font-medium">{{ task.subtasks.completed }}/{{ task.subtasks.total }}</span>
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent class="w-[200px] p-2" align="end">
+                              <div class="text-xs font-medium mb-2 px-2 text-muted-foreground">Assign to:</div>
+                              <Command>
+                                <CommandList>
+                                  <CommandItem v-for="member in teamMembers" :key="member.id" :value="member.id" @click="assignTask(column.id, task.id, member.id)">
+                                    <CheckCircle2 v-if="task.assigneeId === member.id" class="mr-2 h-3.5 w-3.5" />
+                                    <div class="mr-2 h-3.5 w-3.5" v-else></div>
+                                    <Avatar class="h-5 w-5 mr-2">
+                                      <AvatarImage :src="member.photo" />
+                                      <AvatarFallback class="text-[10px]">{{ getInitials(member.name) }}</AvatarFallback>
+                                    </Avatar>
+                                    <span class="text-sm">{{ member.name }}</span>
+                                  </CommandItem>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                          <Button variant="outline" size="icon" class="h-7 w-7" @click="openAddTeammateSheet(column.id, task.id)">
+                            <Users class="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
-                      <div class="w-full bg-muted/50 rounded-full h-1">
-                        <div class="h-1 rounded-full transition-all" :class="task.subtasks.completed === task.subtasks.total ? 'bg-emerald-500' : 'bg-primary'" :style="{ width: `${(task.subtasks.completed / task.subtasks.total) * 100}%` }"></div>
+                      <div v-if="task.subtasks.total > 0" class="mt-3">
+                        <div class="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+                          <span>Progress</span>
+                          <span class="font-medium">{{ task.subtasks.completed }}/{{ task.subtasks.total }}</span>
+                        </div>
+                        <div class="w-full bg-muted/50 rounded-full h-1">
+                          <div class="h-1 rounded-full transition-all" :class="task.subtasks.completed === task.subtasks.total ? 'bg-emerald-500' : 'bg-primary'" :style="{ width: `${(task.subtasks.completed / task.subtasks.total) * 100}%` }"></div>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      <div v-if="task.teamIds && task.teamIds.length > 1" class="mt-3 pt-3 border-t">
+                        <div class="flex items-center gap-1 text-[10px] text-muted-foreground mb-2">
+                          <Users class="h-3 w-3" />
+                          <span>Team ({{ task.teamIds.length }})</span>
+                        </div>
+                        <div class="flex -space-x-1.5">
+                          <Avatar
+                            v-for="memberId in task.teamIds.slice(0, 4)"
+                            :key="memberId"
+                            class="h-6 w-6 border-2 border-background"
+                          >
+                            <AvatarImage :src="getAssignee(memberId).photo" />
+                            <AvatarFallback class="bg-primary text-primary-foreground text-[9px]">
+                              {{ getInitials(getAssignee(memberId).name) }}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div v-if="task.teamIds.length > 4" class="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center text-[9px] font-medium text-muted-foreground">
+                            +{{ task.teamIds.length - 4 }}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </ScrollArea>
             </CardContent>
@@ -564,9 +662,10 @@ const allTasks = computed(() => {
           <TableHeader>
             <TableRow>
               <TableHead>Task</TableHead>
+              <TableHead>Project</TableHead>
               <TableHead>Priority</TableHead>
-              <TableHead>Category</TableHead>
               <TableHead>Assignee</TableHead>
+              <TableHead>Team</TableHead>
               <TableHead>Due Date</TableHead>
               <TableHead>Status</TableHead>
               <TableHead class="w-[60px]"></TableHead>
@@ -581,10 +680,13 @@ const allTasks = computed(() => {
                 </div>
               </TableCell>
               <TableCell>
-                <Badge :variant="getPriorityBadge(task.priority).variant" :class="getPriorityBadge(task.priority).class">{{ task.priority }}</Badge>
+                <div v-if="task.projectId" class="flex items-center gap-2">
+                  <div :class="['w-2 h-2 rounded-full', getProject(task.projectId).color]"></div>
+                  <span class="text-sm">{{ getProject(task.projectId).name }}</span>
+                </div>
               </TableCell>
               <TableCell>
-                <Badge variant="secondary">{{ task.category }}</Badge>
+                <Badge :variant="getPriorityBadge(task.priority).variant" :class="getPriorityBadge(task.priority).class">{{ task.priority }}</Badge>
               </TableCell>
               <TableCell>
                 <div class="flex items-center gap-2">
@@ -593,6 +695,17 @@ const allTasks = computed(() => {
                     <AvatarFallback class="text-[10px]">{{ getInitials(getAssignee(task.assigneeId).name) }}</AvatarFallback>
                   </Avatar>
                   <span class="text-sm">{{ getAssignee(task.assigneeId).name }}</span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div v-if="task.teamIds && task.teamIds.length > 0" class="flex -space-x-1">
+                  <Avatar v-for="memberId in task.teamIds.slice(0, 3)" :key="memberId" class="h-6 w-6 border-2 border-background">
+                    <AvatarImage :src="getAssignee(memberId).photo" />
+                    <AvatarFallback class="text-[9px]">{{ getInitials(getAssignee(memberId).name) }}</AvatarFallback>
+                  </Avatar>
+                  <div v-if="task.teamIds.length > 3" class="h-6 w-6 rounded-full bg-muted border-2 border-background flex items-center justify-center text-[9px] font-medium text-muted-foreground">
+                    +{{ task.teamIds.length - 3 }}
+                  </div>
                 </div>
               </TableCell>
               <TableCell class="text-sm text-muted-foreground">{{ task.dueDate }}</TableCell>
@@ -607,7 +720,7 @@ const allTasks = computed(() => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem @click="openEditTask(task.columnId, task.id)">
+                    <DropdownMenuItem @click="openEditTaskSheet(task.columnId, task.id)">
                       <Edit2 class="h-4 w-4 mr-2" />
                       Edit
                     </DropdownMenuItem>
@@ -634,7 +747,7 @@ const allTasks = computed(() => {
             </div>
           </div>
           <p class="text-2xl font-bold">{{ totalTasks }}</p>
-          <p class="text-xs text-muted-foreground mt-1">Across all boards</p>
+          <p class="text-xs text-muted-foreground mt-1">Across all projects</p>
         </CardContent>
       </Card>
       <Card>
@@ -664,23 +777,23 @@ const allTasks = computed(() => {
       <Card>
         <CardContent class="p-5">
           <div class="flex items-center justify-between mb-2">
-            <p class="text-sm text-muted-foreground">Team Members</p>
+            <p class="text-sm text-muted-foreground">Projects</p>
             <div class="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-950 flex items-center justify-center">
-              <Users class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <FolderKanban class="h-4 w-4 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
-          <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ teamMembers.length }}</p>
-          <p class="text-xs text-muted-foreground mt-1">Active contributors</p>
+          <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ projects.length }}</p>
+          <p class="text-xs text-muted-foreground mt-1">Active projects</p>
         </CardContent>
       </Card>
     </div>
 
-    <Dialog v-model:open="showEditTaskDialog">
-      <DialogContent class="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Edit Task</DialogTitle>
-          <DialogDescription>Update task details</DialogDescription>
-        </DialogHeader>
+    <Sheet v-model:open="showEditTaskSheet">
+      <SheetContent class="w-full sm:w-[540px] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Edit Task</SheetTitle>
+          <SheetDescription>Update task details</SheetDescription>
+        </SheetHeader>
         <div v-if="editingTask" class="grid gap-4 py-4">
           <div class="space-y-2">
             <Label for="edit-title">Task Title</Label>
@@ -692,14 +805,15 @@ const allTasks = computed(() => {
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
-              <Label for="edit-assignee">Assign To</Label>
-              <Select v-model="editingTask.assigneeId">
+              <Label for="edit-project">Project</Label>
+              <Select v-model="editingTask.projectId">
                 <SelectTrigger>
-                  <SelectValue placeholder="Select staff member" />
+                  <SelectValue placeholder="Select project" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem v-for="member in teamMembers" :key="member.id" :value="member.id">
-                    {{ member.name }}
+                  <SelectItem value="">No Project</SelectItem>
+                  <SelectItem v-for="project in projects" :key="project.id" :value="project.id">
+                    {{ project.name }}
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -721,20 +835,99 @@ const allTasks = computed(() => {
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
+              <Label for="edit-assignee">Assign To</Label>
+              <Select v-model="editingTask.assigneeId">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select staff member" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="member in teamMembers" :key="member.id" :value="member.id">{{ member.name }}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div class="space-y-2">
               <Label for="edit-category">Category</Label>
               <Input id="edit-category" v-model="editingTask.category" />
             </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
               <Label for="edit-dueDate">Due Date</Label>
               <Input id="edit-dueDate" v-model="editingTask.dueDate" type="date" />
             </div>
+            <div class="space-y-2">
+              <Label for="edit-column">Move to</Label>
+              <Select v-model="editingTask.columnId">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select column" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="col in columns" :key="col.id" :value="col.id">{{ col.title }}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div class="space-y-2">
+            <Label>Team Members</Label>
+            <div class="border rounded-md p-3 space-y-2 max-h-32 overflow-y-auto">
+              <div v-for="member in teamMembers" :key="member.id" class="flex items-center gap-3">
+                <Switch :id="'edit-team-' + member.id" :checked="editingTask.teamIds?.includes(member.id)" />
+                <Avatar class="h-8 w-8">
+                  <AvatarImage :src="member.photo" />
+                  <AvatarFallback class="bg-primary text-primary-foreground text-xs">
+                    {{ getInitials(member.name) }}
+                  </AvatarFallback>
+                </Avatar>
+                <div class="flex-1">
+                  <div class="text-sm font-medium">{{ member.name }}</div>
+                  <div class="text-xs text-muted-foreground">{{ member.role }}</div>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="flex justify-end gap-3">
-            <Button variant="outline" @click="showEditTaskDialog = false">Cancel</Button>
+            <Button variant="outline" @click="showEditTaskSheet = false">Cancel</Button>
             <Button @click="saveTask">Save Changes</Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
+
+    <Sheet v-model:open="showAddTeammateSheet">
+      <SheetContent class="w-full sm:w-[450px]">
+        <SheetHeader>
+          <SheetTitle>Manage Task Team</SheetTitle>
+          <SheetDescription>Add or remove team members for this task</SheetDescription>
+        </SheetHeader>
+        <div v-if="selectedTaskForTeam" class="space-y-4 py-4">
+          <div class="p-4 rounded-lg bg-muted/30">
+            <p class="font-medium text-foreground mb-2">{{ selectedTaskForTeam.title }}</p>
+            <p class="text-sm text-muted-foreground">{{ selectedTaskForTeam.description }}</p>
+          </div>
+          <div class="space-y-2">
+            <Label>Add Team Members</Label>
+            <div class="border rounded-md p-3 space-y-2 max-h-48 overflow-y-auto">
+              <div v-for="member in teamMembers" :key="member.id" class="flex items-center gap-3">
+                <Switch :id="'task-team-' + member.id" :checked="selectedTaskForTeam.teamIds?.includes(member.id)" />
+                <Avatar class="h-8 w-8">
+                  <AvatarImage :src="member.photo" />
+                  <AvatarFallback class="bg-primary text-primary-foreground text-xs">
+                    {{ getInitials(member.name) }}
+                  </AvatarFallback>
+                </Avatar>
+                <div class="flex-1">
+                  <div class="text-sm font-medium">{{ member.name }}</div>
+                  <div class="text-xs text-muted-foreground">{{ member.role }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-end gap-3">
+            <Button variant="outline" @click="showAddTeammateSheet = false">Cancel</Button>
+            <Button @click="addTeammate">Save Changes</Button>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   </div>
 </template>

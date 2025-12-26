@@ -1,37 +1,70 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { definePageMeta } from "#imports";
+import {
+  Building2,
+  Upload,
+  Globe,
+  Clock,
+  Calendar as CalendarIcon,
+  Palette,
+  Save,
+} from "lucide-vue-next";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 
-const orgName = ref("Acme Corporation");
-const subdomain = ref("acme");
-const orgType = ref("corporate");
-const timezone = ref("UTC");
-const currency = ref("USD");
-const workingHoursStart = ref("09:00");
-const workingHoursEnd = ref("17:00");
-const weekendDays = ref(["saturday", "sunday"]);
+definePageMeta({
+  layout: "dashboard",
+});
+
+const activeTab = ref("general");
+const hasChanges = ref(false);
+
+const orgSettings = ref({
+  name: "Acme Corporation",
+  subdomain: "acme",
+  logo: null,
+  type: "healthcare",
+  timezone: "UTC",
+  currency: "USD",
+  workingHoursStart: "09:00",
+  workingHoursEnd: "17:00",
+  weekendDays: ["saturday", "sunday"],
+  primaryColor: "#3b82f6",
+});
 
 const organizationTypes = [
-  { value: "healthcare", label: "Healthcare" },
-  { value: "corporate", label: "Corporate" },
-  { value: "manufacturing", label: "Manufacturing" },
-  { value: "education", label: "Education" },
-  { value: "retail", label: "Retail" },
-  { value: "hospitality", label: "Hospitality" },
-  { value: "other", label: "Other" },
+  { value: "healthcare", label: "Healthcare", icon: "🏥" },
+  { value: "corporate", label: "Corporate", icon: "🏢" },
+  { value: "manufacturing", label: "Manufacturing", icon: "🏭" },
+  { value: "education", label: "Education", icon: "🎓" },
+  { value: "retail", label: "Retail", icon: "🏪" },
+  { value: "hospitality", label: "Hospitality", icon: "🏨" },
+  { value: "other", label: "Other", icon: "🏢" },
 ];
 
 const timezones = [
-  "UTC",
-  "America/New_York",
-  "America/Los_Angeles",
-  "Europe/London",
-  "Europe/Paris",
-  "Asia/Dubai",
-  "Asia/Singapore",
-  "Australia/Sydney",
+  "UTC", "America/New_York", "America/Los_Angeles", "America/Chicago",
+  "Europe/London", "Europe/Paris", "Europe/Berlin", "Asia/Dubai",
+  "Asia/Singapore", "Asia/Tokyo", "Australia/Sydney",
 ];
 
-const currencies = ["USD", "EUR", "GBP", "AED", "SGD", "AUD"];
+const currencies = [
+  { value: "USD", label: "USD ($)", symbol: "$" },
+  { value: "EUR", label: "EUR (€)", symbol: "€" },
+  { value: "GBP", label: "GBP (£)", symbol: "£" },
+  { value: "AED", label: "AED (د.إ)", symbol: "د.إ" },
+  { value: "SGD", label: "SGD ($)", symbol: "$" },
+  { value: "AUD", label: "AUD ($)", symbol: "$" },
+];
 
 const weekDays = [
   { value: "monday", label: "Mon" },
@@ -43,195 +76,326 @@ const weekDays = [
   { value: "sunday", label: "Sun" },
 ];
 
+const colorOptions = [
+  "#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#6366f1",
+];
+
 const toggleWeekend = (day: string) => {
-  const index = weekendDays.value.indexOf(day);
+  const index = orgSettings.value.weekendDays.indexOf(day);
   if (index > -1) {
-    weekendDays.value.splice(index, 1);
+    orgSettings.value.weekendDays.splice(index, 1);
   } else {
-    weekendDays.value.push(day);
+    orgSettings.value.weekendDays.push(day);
   }
+  hasChanges.value = true;
 };
 
 const saveSettings = () => {
-  console.log("[v0] Saving organization settings");
-  // API call here
+  hasChanges.value = false;
+};
+
+const getInitials = (name: string) => {
+  return name.split(" ").map((n) => n[0]).join("").toUpperCase();
 };
 </script>
 
 <template>
-  <NuxtLayout name="dashboard">
-    <div class="p-6">
-      <div class="max-w-4xl">
-        <!-- Header -->
-        <div class="mb-6">
-          <h1 class="text-3xl font-bold text-foreground mb-2">
-            Organization Settings
-          </h1>
-          <p class="text-muted-foreground">
-            Manage your workspace configuration and branding
-          </p>
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-foreground">Organization Settings</h1>
+        <p class="text-muted-foreground mt-1">Configure your workspace and branding</p>
+      </div>
+      <Button @click="saveSettings" :disabled="!hasChanges" class="gap-2">
+        <Save class="h-4 w-4" />
+        Save Changes
+      </Button>
+    </div>
+
+    <Tabs v-model="activeTab" class="w-full">
+      <TabsList class="grid w-full md:w-auto md:inline-grid grid-cols-4 bg-muted/50">
+        <TabsTrigger value="general">General</TabsTrigger>
+        <TabsTrigger value="branding">Branding</TabsTrigger>
+        <TabsTrigger value="working">Working Hours</TabsTrigger>
+        <TabsTrigger value="advanced">Advanced</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="general" class="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Organization Details</CardTitle>
+            <CardDescription>Basic information about your organization</CardDescription>
+          </CardHeader>
+          <CardContent class="space-y-4">
+            <div class="space-y-2">
+              <Label for="org-name">Organization Name</Label>
+              <Input id="org-name" v-model="orgSettings.name" @input="hasChanges = true" />
+            </div>
+            <div class="space-y-2">
+              <Label for="org-type">Organization Type</Label>
+              <Select v-model="orgSettings.type" @update:model-value="hasChanges = true">
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="type in organizationTypes" :key="type.value" :value="type.value">
+                    <span class="mr-2">{{ type.icon }}</span>
+                    {{ type.label }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div class="space-y-2">
+              <Label for="subdomain">Workspace URL</Label>
+              <div class="flex items-center gap-2">
+                <Input id="subdomain" v-model="orgSettings.subdomain" @input="hasChanges = true" />
+                <span class="text-sm text-muted-foreground whitespace-nowrap">.workforcepro.com</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle class="text-lg">Timezone</CardTitle>
+              <CardDescription>Set your organization's timezone</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div class="flex items-center gap-2 mb-3">
+                <Globe class="h-4 w-4 text-muted-foreground" />
+                <Select v-model="orgSettings.timezone" @update:model-value="hasChanges = true" class="flex-1">
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="tz in timezones" :key="tz" :value="tz">{{ tz }}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p class="text-xs text-muted-foreground mt-2">Current time: {{ new Date().toLocaleTimeString() }}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle class="text-lg">Currency</CardTitle>
+              <CardDescription>Default currency for payments</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Select v-model="orgSettings.currency" @update:model-value="hasChanges = true">
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="curr in currencies" :key="curr.value" :value="curr.value">{{ curr.label }}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p class="text-xs text-muted-foreground mt-2">Used in reports and billing</p>
+            </CardContent>
+          </Card>
         </div>
+      </TabsContent>
 
-        <div class="bg-card rounded-xl border border-border p-6 space-y-6">
-          <!-- Logo Upload -->
-          <div>
-            <label class="block text-sm font-medium text-foreground mb-2">
-              Organization Logo
-            </label>
-            <div class="flex items-center gap-4">
-              <div
-                class="w-20 h-20 rounded-lg bg-muted flex items-center justify-center border-2 border-border"
-              >
-                <span class="text-2xl font-bold text-muted-foreground">AC</span>
-              </div>
-              <div>
-                <button
-                  class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
-                >
+      <TabsContent value="branding" class="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Logo & Identity</CardTitle>
+            <CardDescription>Customize your organization's appearance</CardDescription>
+          </CardHeader>
+          <CardContent class="space-y-6">
+            <div class="flex items-start gap-6">
+              <Avatar class="h-20 w-20 border-2 border-border">
+                <AvatarFallback class="bg-primary text-primary-foreground text-2xl">
+                  {{ getInitials(orgSettings.name) }}
+                </AvatarFallback>
+              </Avatar>
+              <div class="flex-1 space-y-2">
+                <Button variant="outline" class="gap-2">
+                  <Upload class="h-4 w-4" />
                   Upload Logo
-                </button>
-                <p class="text-xs text-muted-foreground mt-1">PNG, JPG up to 2MB</p>
+                </Button>
+                <p class="text-xs text-muted-foreground">PNG, JPG, or SVG up to 2MB. Recommended size: 200x200px.</p>
               </div>
             </div>
-          </div>
-
-          <!-- Organization Name -->
-          <div>
-            <label class="block text-sm font-medium text-foreground mb-2">
-              Organization Name
-            </label>
-            <input
-              v-model="orgName"
-              type="text"
-              class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <!-- Subdomain -->
-          <div>
-            <label class="block text-sm font-medium text-foreground mb-2">
-              Workspace URL
-            </label>
-            <div class="flex items-center gap-2">
-              <input
-                v-model="subdomain"
-                type="text"
-                class="flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <span class="text-muted-foreground whitespace-nowrap"
-                >.workforcepro.com</span
-              >
-            </div>
-          </div>
-
-          <!-- Organization Type -->
-          <div>
-            <label class="block text-sm font-medium text-foreground mb-2">
-              Organization Type
-            </label>
-            <select
-              v-model="orgType"
-              class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option
-                v-for="type in organizationTypes"
-                :key="type.value"
-                :value="type.value"
-              >
-                {{ type.label }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Timezone and Currency -->
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-foreground mb-2">
-                Timezone
-              </label>
-              <select
-                v-model="timezone"
-                class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option v-for="tz in timezones" :key="tz" :value="tz">
-                  {{ tz }}
-                </option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-foreground mb-2">
-                Currency
-              </label>
-              <select
-                v-model="currency"
-                class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option v-for="cur in currencies" :key="cur" :value="cur">
-                  {{ cur }}
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Working Hours -->
-          <div>
-            <label class="block text-sm font-medium text-foreground mb-2">
-              Working Hours
-            </label>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <input
-                  v-model="workingHoursStart"
-                  type="time"
-                  class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p class="text-xs text-muted-foreground mt-1">Start time</p>
-              </div>
-              <div>
-                <input
-                  v-model="workingHoursEnd"
-                  type="time"
-                  class="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p class="text-xs text-muted-foreground mt-1">End time</p>
+            <Separator />
+            <div class="space-y-3">
+              <Label>Primary Color</Label>
+              <div class="flex items-center gap-3">
+                <div
+                  v-for="color in colorOptions"
+                  :key="color"
+                  :class="['w-10 h-10 rounded-lg cursor-pointer border-2 transition-all', orgSettings.primaryColor === color ? 'border-primary scale-110' : 'border-transparent hover:scale-105']"
+                  :style="{ backgroundColor: color }"
+                  @click="orgSettings.primaryColor = color; hasChanges = true"
+                ></div>
               </div>
             </div>
-          </div>
+            <div class="space-y-2">
+              <Label for="custom-color">Custom Color</Label>
+              <div class="flex items-center gap-2">
+                <Input id="custom-color" type="color" v-model="orgSettings.primaryColor" @input="hasChanges = true" class="w-16 h-10" />
+                <Input :value="orgSettings.primaryColor" readonly class="flex-1" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          <!-- Weekend Days -->
-          <div>
-            <label class="block text-sm font-medium text-foreground mb-2">
-              Weekend Days
-            </label>
-            <div class="flex gap-2">
-              <button
+        <Card>
+          <CardHeader>
+            <CardTitle class="text-lg">Preview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="rounded-lg border p-4" :style="{ borderColor: orgSettings.primaryColor }">
+              <div class="flex items-center gap-3 mb-4">
+                <Avatar class="h-10 w-10" :style="{ backgroundColor: orgSettings.primaryColor }">
+                  <AvatarFallback class="text-white text-sm">{{ getInitials(orgSettings.name) }}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <h4 class="font-semibold">{{ orgSettings.name }}</h4>
+                  <p class="text-xs text-muted-foreground">{{ orgSettings.type }}</p>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <Button size="sm" :style="{ backgroundColor: orgSettings.primaryColor }">Primary Button</Button>
+                <Button size="sm" variant="outline">Secondary Button</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="working" class="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Working Hours</CardTitle>
+            <CardDescription>Set standard operating hours for your organization</CardDescription>
+          </CardHeader>
+          <CardContent class="space-y-4">
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <Label for="start-time">Start Time</Label>
+                <div class="flex items-center gap-2">
+                  <Clock class="h-4 w-4 text-muted-foreground" />
+                  <Input id="start-time" type="time" v-model="orgSettings.workingHoursStart" @input="hasChanges = true" />
+                </div>
+              </div>
+              <div class="space-y-2">
+                <Label for="end-time">End Time</Label>
+                <div class="flex items-center gap-2">
+                  <Clock class="h-4 w-4 text-muted-foreground" />
+                  <Input id="end-time" type="time" v-model="orgSettings.workingHoursEnd" @input="hasChanges = true" />
+                </div>
+              </div>
+            </div>
+            <p class="text-xs text-muted-foreground">These hours are used for scheduling and availability calculations.</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Weekend Days</CardTitle>
+            <CardDescription>Configure non-working days</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div class="flex flex-wrap gap-2">
+              <Button
                 v-for="day in weekDays"
                 :key="day.value"
-                type="button"
+                variant="outline"
+                size="sm"
                 @click="toggleWeekend(day.value)"
                 :class="[
-                  'px-4 py-2 rounded-lg font-medium transition-colors text-sm',
-                  weekendDays.includes(day.value)
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-muted text-muted-foreground hover:bg-muted',
+                  'transition-all',
+                  orgSettings.weekendDays.includes(day.value)
+                    ? 'bg-primary text-primary-foreground'
+                    : 'hover:bg-muted',
                 ]"
               >
                 {{ day.label }}
-              </button>
+              </Button>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <!-- Save Button -->
-          <div class="flex justify-end pt-4 border-t border-border">
-            <button
-              @click="saveSettings"
-              class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-            >
-              Save Changes
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </NuxtLayout>
+        <Card>
+          <CardHeader>
+            <CardTitle class="text-lg">Calendar Preview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="grid grid-cols-7 gap-1 text-center text-xs">
+              <div v-for="day in weekDays" :key="day.value" class="p-2 text-muted-foreground">{{ day.label }}</div>
+            </div>
+            <div class="grid grid-cols-7 gap-1 mt-1">
+              <div
+                v-for="i in 28"
+                :key="i"
+                :class="[
+                  'p-2 text-sm rounded text-center',
+                  orgSettings.weekendDays.includes(['sunday', 'saturday'][i % 7])
+                    ? 'bg-muted text-muted-foreground'
+                    : 'bg-background hover:bg-muted'
+                ]"
+              >
+                {{ i }}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="advanced" class="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Organization Features</CardTitle>
+            <CardDescription>Enable or disable additional features</CardDescription>
+          </CardHeader>
+          <CardContent class="space-y-4">
+            <div class="flex items-center justify-between p-4 rounded-lg border">
+              <div>
+                <h4 class="font-medium text-foreground">Auto-assign Tasks</h4>
+                <p class="text-sm text-muted-foreground">Automatically assign tasks to available staff</p>
+              </div>
+              <Switch @update:checked="hasChanges = true" />
+            </div>
+            <div class="flex items-center justify-between p-4 rounded-lg border">
+              <div>
+                <h4 class="font-medium text-foreground">Overtime Tracking</h4>
+                <p class="text-sm text-muted-foreground">Monitor and alert on overtime hours</p>
+              </div>
+              <Switch @update:checked="hasChanges = true" :default-checked="true" />
+            </div>
+            <div class="flex items-center justify-between p-4 rounded-lg border">
+              <div>
+                <h4 class="font-medium text-foreground">Public Portal</h4>
+                <p class="text-sm text-muted-foreground">Allow external access to public schedules</p>
+              </div>
+              <Switch @update:checked="hasChanges = true" />
+            </div>
+            <div class="flex items-center justify-between p-4 rounded-lg border">
+              <div>
+                <h4 class="font-medium text-foreground">Audit Logging</h4>
+                <p class="text-sm text-muted-foreground">Keep detailed logs of all activities</p>
+              </div>
+              <Switch @update:checked="hasChanges = true" :default-checked="true" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle class="text-lg">Danger Zone</CardTitle>
+            <CardDescription>Irreversible actions for your organization</CardDescription>
+          </CardHeader>
+          <CardContent class="space-y-4">
+            <div class="p-4 rounded-lg border border-destructive/50 bg-destructive/5">
+              <h4 class="font-medium text-destructive mb-2">Delete Organization</h4>
+              <p class="text-sm text-muted-foreground mb-3">This will permanently delete all data including users, tasks, projects, and settings. This action cannot be undone.</p>
+              <Button variant="destructive" size="sm">Delete Organization</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
+  </div>
 </template>
