@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { definePageMeta } from "#imports";
 import {
   FolderKanban,
@@ -11,7 +11,8 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  ArrowRight,
+  Filter,
+  X,
 } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +34,8 @@ definePageMeta({
 const searchQuery = ref("");
 const showCreateProjectSheet = ref(false);
 const showAddTeamSheet = ref(false);
+const selectedStatus = ref("all");
+const selectedAssignee = ref<number | null>(null);
 const editingProject = ref<any>(null);
 const selectedProject = ref<any>(null);
 const showAddTeammateSheet = ref(false);
@@ -114,8 +117,11 @@ const projects = ref([
 
 const getFilteredProjects = () => {
   return projects.value.filter((project) => {
-    return project.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    const matchesSearch = project.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
            project.description.toLowerCase().includes(searchQuery.value.toLowerCase());
+    const matchesStatus = selectedStatus.value === "all" || project.status === selectedStatus.value;
+    const matchesAssignee = !selectedAssignee.value || project.team.includes(selectedAssignee.value);
+    return matchesSearch && matchesStatus && matchesAssignee;
   });
 };
 
@@ -172,14 +178,14 @@ const addTeammate = () => {
 
     <Card>
       <CardContent class="p-4">
-        <div class="flex items-center gap-4">
-          <div class="relative flex-1">
+        <div class="flex flex-col lg:flex-row items-start gap-4">
+          <div class="relative flex-1 w-full">
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input v-model="searchQuery" placeholder="Search projects..." class="pl-10" />
+            <Input v-model="searchQuery" placeholder="Search projects..." class="pl-10 h-11" />
           </div>
-          <div class="flex gap-2">
-            <Select>
-              <SelectTrigger class="w-[140px]">
+          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <Select v-model="selectedStatus">
+              <SelectTrigger class="w-[150px] h-11">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
@@ -189,144 +195,181 @@ const addTeammate = () => {
                 <SelectItem value="planning">Planning</SelectItem>
               </SelectContent>
             </Select>
+            <Select v-model="selectedAssignee">
+              <SelectTrigger class="w-[160px] h-11">
+                <SelectValue placeholder="All Members" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Members</SelectItem>
+                <SelectItem v-for="member in teamMembers" :key="member.id" :value="member.id">
+                  <div class="flex items-center gap-2">
+                    <Avatar class="h-5 w-5">
+                      <AvatarImage :src="member.photo" />
+                      <AvatarFallback class="text-[10px] bg-primary/10 text-primary">
+                        {{ getInitials(member.name) }}
+                      </AvatarFallback>
+                    </Avatar>
+                    {{ member.name }}
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="icon" class="h-11 w-11" @click="() => { selectedStatus = 'all'; selectedAssignee = null; searchQuery = '' }">
+              <X class="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </CardContent>
     </Card>
 
-    <div class="grid md:grid-cols-2 gap-4">
-      <Card v-for="project in getFilteredProjects()" :key="project.id" class="hover:shadow-lg transition-all cursor-pointer group">
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <Card v-for="project in getFilteredProjects()" :key="project.id" class="hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 cursor-pointer group border-2 hover:border-primary/30">
         <CardContent class="p-6">
-          <div class="flex items-start justify-between mb-4">
-            <div class="flex items-center gap-3">
-              <div :class="['h-12 w-12 rounded-lg flex items-center justify-center', project.color, 'text-white']">
-                <FolderKanban class="h-6 w-6" />
+          <div class="flex items-start justify-between mb-5">
+            <div class="flex items-center gap-4">
+              <div :class="['h-14 w-14 rounded-xl flex items-center justify-center text-white shadow-lg', project.color, 'group-hover:scale-110 transition-transform duration-300']">
+                <FolderKanban class="h-7 w-7" />
               </div>
               <div>
-                <h3 class="font-semibold text-foreground group-hover:text-primary transition-colors">{{ project.name }}</h3>
-                <p class="text-xs text-muted-foreground mt-0.5">{{ project.priority }} priority</p>
+                <h3 class="font-bold text-lg group-hover:text-primary transition-colors">{{ project.name }}</h3>
+                <p class="text-xs text-muted-foreground mt-1 font-medium uppercase tracking-wide">{{ project.priority }} priority</p>
               </div>
             </div>
-            <Badge :variant="getStatusBadge(project.status).variant" :class="getStatusBadge(project.status).class" class="text-xs">
+            <Badge :variant="getStatusBadge(project.status).variant" :class="[getStatusBadge(project.status).class, 'text-xs font-semibold px-3 py-1.5']">
               {{ project.status }}
             </Badge>
-          </div>
+          </div> 
 
-          <p class="text-sm text-muted-foreground mb-4 line-clamp-2">{{ project.description }}</p>
+          <p class="text-sm text-muted-foreground mb-5 line-clamp-2 leading-relaxed">{{ project.description }}</p> 
 
-          <div class="mb-4">
-            <div class="flex items-center justify-between text-xs text-muted-foreground mb-2">
-              <span>Progress</span>
-              <span class="font-medium">{{ project.tasks.completed }}/{{ project.tasks.total }} tasks</span>
+          <div class="mb-5">
+            <div class="flex items-center justify-between text-sm mb-2">
+              <span class="text-muted-foreground font-medium">Progress</span>
+              <span class="font-bold text-foreground">{{ project.tasks.completed }}/{{ project.tasks.total }} tasks</span>
             </div>
-            <Progress :value="project.progress" class="h-2" />
-          </div>
+            <div class="relative">
+              <div class="h-2 bg-muted/50 rounded-full overflow-hidden">
+                <Progress :value="project.progress" class="h-2" />
+              </div>
+            </div>
+          </div> 
 
-          <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
-            <div class="flex items-center gap-2 text-muted-foreground">
-              <Calendar class="h-3.5 w-3.5" />
-              <span>{{ project.endDate }}</span>
+          <div class="grid grid-cols-2 gap-4 mb-5 text-sm">
+            <div class="flex items-center gap-2.5">
+              <div class="h-8 w-8 rounded-lg bg-primary/5 flex items-center justify-center">
+                <Calendar class="h-4 w-4 text-primary" />
+              </div>
+              <span class="font-medium text-foreground">{{ project.endDate }}</span>
             </div>
-            <div class="flex items-center gap-2" :class="project.tasks.completed === project.tasks.total ? 'text-emerald-600' : 'text-muted-foreground'">
-              <component :is="project.tasks.completed === project.tasks.total ? CheckCircle2 : Clock" class="h-3.5 w-3.5" />
-              <span>{{ project.tasks.completed === project.tasks.total ? 'Completed' : 'In Progress' }}</span>
+            <div class="flex items-center gap-2.5" :class="project.tasks.completed === project.tasks.total ? 'text-emerald-600' : 'text-muted-foreground'">
+              <div class="h-8 w-8 rounded-lg flex items-center justify-center" :class="project.tasks.completed === project.tasks.total ? 'bg-emerald-500/10' : 'bg-amber-500/10'">
+                <component :is="project.tasks.completed === project.tasks.total ? CheckCircle2 : Clock" class="h-4 w-4" :class="project.tasks.completed === project.tasks.total ? 'text-emerald-600' : 'text-amber-600'" />
+              </div>
+              <span class="font-medium">{{ project.tasks.completed === project.tasks.total ? 'Completed' : 'In Progress' }}</span>
             </div>
-          </div>
+          </div> 
 
           <div class="flex items-center justify-between">
-            <div class="flex -space-x-2">
-              <Avatar
-                v-for="memberId in project.team.slice(0, 4)"
-                :key="memberId"
-                class="h-8 w-8 border-2 border-background"
-              >
-                <AvatarImage :src="getTeamMember(memberId)?.photo" />
-                <AvatarFallback class="bg-primary text-primary-foreground text-xs">
-                  {{ getInitials(getTeamMember(memberId)?.name || '') }}
-                </AvatarFallback>
-              </Avatar>
-              <div v-if="project.team.length > 4" class="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium text-muted-foreground">
-                +{{ project.team.length - 4 }}
+            <div class="flex items-center gap-2.5">
+              <div class="flex -space-x-3">
+                <Avatar
+                  v-for="(memberId, index) in project.team.slice(0, 3)"
+                  :key="memberId"
+                  class="h-10 w-10 border-2 border-background ring-2 ring-background transition-transform hover:scale-110 cursor-pointer"
+                  :style="{ zIndex: 10 - index }"
+                >
+                  <AvatarImage :src="getTeamMember(memberId)?.photo" />
+                  <AvatarFallback class="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-sm font-semibold">
+                    {{ getInitials(getTeamMember(memberId)?.name || '') }}
+                  </AvatarFallback>
+                </Avatar>
+                <div v-if="project.team.length > 3" class="h-10 w-10 rounded-full bg-primary border-2 border-background flex items-center justify-center text-xs font-bold text-primary-foreground ring-2 ring-background">
+                  +{{ project.team.length - 3 }}
+                </div>
               </div>
             </div>
             <div class="flex items-center gap-2">
-              <Button variant="outline" size="sm" @click="openAddTeamSheet(project)">
-                <Users class="h-3.5 w-3.5 mr-1" />
+              <Button variant="outline" size="sm" @click="openAddTeamSheet(project)" class="h-9 px-4 hover:bg-primary/5">
+                <Users class="h-3.5 w-3.5 mr-1.5" />
                 Team
               </Button>
-              <Button variant="ghost" size="icon" class="h-8 w-8">
+              <Button variant="ghost" size="icon" class="h-9 w-9 hover:bg-muted">
                 <MoreVertical class="h-4 w-4" />
               </Button>
             </div>
           </div>
-        </CardContent>
+         </CardContent>
       </Card>
     </div>
 
-    <div class="grid md:grid-cols-4 gap-4">
-      <Card>
+    <div class="grid md:grid-cols-4 gap-5">
+      <Card class="hover:shadow-lg transition-shadow">
         <CardContent class="p-6">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-950 flex items-center justify-center">
-              <FolderKanban class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <div class="flex items-center gap-4 mb-3">
+            <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
+              <FolderKanban class="h-6 w-6 text-white" />
             </div>
             <div>
-              <p class="text-sm text-muted-foreground">Total</p>
-              <p class="text-2xl font-bold text-foreground">{{ projects.length }}</p>
+              <p class="text-sm text-muted-foreground font-medium">Total Projects</p>
+              <p class="text-3xl font-bold text-foreground">{{ projects.length }}</p>
             </div>
           </div>
+          <p class="text-xs text-muted-foreground">Across all teams</p>
         </CardContent>
       </Card>
-      <Card>
+      <Card class="hover:shadow-lg transition-shadow">
         <CardContent class="p-6">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="h-10 w-10 rounded-lg bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center">
-              <CheckCircle2 class="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          <div class="flex items-center gap-4 mb-3">
+            <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-md">
+              <CheckCircle2 class="h-6 w-6 text-white" />
             </div>
             <div>
-              <p class="text-sm text-muted-foreground">Completed</p>
-              <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{{ projects.filter(p => p.progress === 100).length }}</p>
+              <p class="text-sm text-muted-foreground font-medium">Completed</p>
+              <p class="text-3xl font-bold text-emerald-600">{{ projects.filter(p => p.progress === 100).length }}</p>
             </div>
           </div>
+          <p class="text-xs text-emerald-600 font-medium">All tasks done</p>
         </CardContent>
       </Card>
-      <Card>
+      <Card class="hover:shadow-lg transition-shadow">
         <CardContent class="p-6">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="h-10 w-10 rounded-lg bg-amber-100 dark:bg-amber-950 flex items-center justify-center">
-              <Clock class="h-5 w-5 text-amber-600 dark:text-amber-400" />
+          <div class="flex items-center gap-4 mb-3">
+            <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-md">
+              <Clock class="h-6 w-6 text-white" />
             </div>
             <div>
-              <p class="text-sm text-muted-foreground">In Progress</p>
-              <p class="text-2xl font-bold text-amber-600 dark:text-amber-400">{{ projects.filter(p => p.progress > 0 && p.progress < 100).length }}</p>
+              <p class="text-sm text-muted-foreground font-medium">In Progress</p>
+              <p class="text-3xl font-bold text-amber-600">{{ projects.filter(p => p.progress > 0 && p.progress < 100).length }}</p>
             </div>
           </div>
+          <p class="text-xs text-amber-600 font-medium">Currently active</p>
         </CardContent>
       </Card>
-      <Card>
+      <Card class="hover:shadow-lg transition-shadow">
         <CardContent class="p-6">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-950 flex items-center justify-center">
-              <AlertCircle class="h-5 w-5 text-slate-600 dark:text-slate-400" />
+          <div class="flex items-center gap-4 mb-3">
+            <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center shadow-md">
+              <AlertCircle class="h-6 w-6 text-white" />
             </div>
             <div>
-              <p class="text-sm text-muted-foreground">Overdue</p>
-              <p class="text-2xl font-bold text-slate-600 dark:text-slate-400">0</p>
+              <p class="text-sm text-muted-foreground font-medium">On Hold</p>
+              <p class="text-3xl font-bold text-slate-600">{{ projects.filter(p => p.status === 'on-hold').length }}</p>
             </div>
           </div>
+          <p class="text-xs text-slate-600 font-medium">Paused projects</p>
         </CardContent>
       </Card>
     </div>
 
     <Sheet v-model:open="showCreateProjectSheet">
-      <SheetContent class="w-full sm:w-[600px] overflow-y-auto">
-        <SheetHeader>
+      <SheetContent class="w-full sm:w-[650px] overflow-y-auto">
+        <SheetHeader class="px-6 pt-6 pb-2">
           <SheetTitle>{{ editingProject ? 'Edit Project' : 'Create New Project' }}</SheetTitle>
           <SheetDescription>
             {{ editingProject ? 'Update project details' : 'Set up a new project for your team' }}
           </SheetDescription>
         </SheetHeader>
-        <div class="space-y-4 py-4">
+        <div class="space-y-5 px-6 py-4">
           <div class="space-y-2">
             <Label for="project-name">Project Name</Label>
             <Input id="project-name" placeholder="e.g., Website Redesign" />
@@ -394,20 +437,20 @@ const addTeammate = () => {
             </div>
           </div>
         </div>
-        <SheetFooter>
-          <Button variant="outline" @click="showCreateProjectSheet = false">Cancel</Button>
-          <Button @click="saveProject">{{ editingProject ? 'Save Changes' : 'Create Project' }}</Button>
+        <SheetFooter class="px-6 pt-4 border-t">
+          <Button variant="outline" @click="showCreateProjectSheet = false" class="h-11 px-6">Cancel</Button>
+          <Button @click="saveProject" class="h-11 px-6">{{ editingProject ? 'Save Changes' : 'Create Project' }}</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
 
     <Sheet v-model:open="showAddTeamSheet">
-      <SheetContent class="w-full sm:w-[450px]">
-        <SheetHeader>
+      <SheetContent class="w-full sm:w-[550px] overflow-y-auto">
+        <SheetHeader class="px-6 pt-6 pb-2">
           <SheetTitle>Add Team Members</SheetTitle>
           <SheetDescription>Invite team members to {{ selectedProject?.name }}</SheetDescription>
         </SheetHeader>
-        <div class="space-y-4 py-4">
+        <div class="space-y-5 px-6 py-4">
           <div class="space-y-2">
             <Label for="member-email">Email Address</Label>
             <Input id="member-email" type="email" placeholder="colleague@company.com" />
@@ -445,10 +488,10 @@ const addTeammate = () => {
             </div>
           </div>
         </div>
-        <SheetFooter>
-          <Button variant="outline" @click="showAddTeamSheet = false">Cancel</Button>
-          <Button @click="addTeammate">
-            <Plus class="h-4 w-4 mr-1" />
+        <SheetFooter class="px-6 pt-4 border-t">
+          <Button variant="outline" @click="showAddTeamSheet = false" class="h-11 px-6">Cancel</Button>
+          <Button @click="addTeammate" class="h-11 px-6">
+            <Plus class="h-4 w-4 mr-1.5" />
             Add Member
           </Button>
         </SheetFooter>

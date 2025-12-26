@@ -6,12 +6,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Users, Settings, Plus, MoreVertical, Globe, Mail } from "lucide-vue-next";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Building2,
+  Users,
+  Settings,
+  Plus,
+  MoreVertical,
+  Globe,
+  Mail,
+} from "lucide-vue-next";
 import { definePageMeta } from "#imports";
 
 definePageMeta({
@@ -142,7 +162,9 @@ const totalProjects = computed(() => {
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-foreground">{{ organization.name }}</h1>
+        <h1 class="text-3xl font-bold text-foreground">
+          {{ organization.name }}
+        </h1>
         <p class="text-muted-foreground mt-1">{{ organization.description }}</p>
       </div>
       <div class="flex items-center gap-3">
@@ -158,7 +180,9 @@ const totalProjects = computed(() => {
       <Card class="border-border">
         <CardContent class="p-6">
           <div class="flex items-center gap-3">
-            <div class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+            <div
+              class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center"
+            >
               <Users class="h-6 w-6 text-primary" />
             </div>
             <div>
@@ -171,7 +195,9 @@ const totalProjects = computed(() => {
       <Card class="border-border">
         <CardContent class="p-6">
           <div class="flex items-center gap-3">
-            <div class="h-12 w-12 rounded-lg bg-blue-500/10 flex items-center justify-center">
+            <div
+              class="h-12 w-12 rounded-lg bg-blue-500/10 flex items-center justify-center"
+            >
               <Building2 class="h-6 w-6 text-blue-500" />
             </div>
             <div>
@@ -184,7 +210,9 @@ const totalProjects = computed(() => {
       <Card class="border-border">
         <CardContent class="p-6">
           <div class="flex items-center gap-3">
-            <div class="h-12 w-12 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+            <div
+              class="h-12 w-12 rounded-lg bg-emerald-500/10 flex items-center justify-center"
+            >
               <span class="text-2xl">📊</span>
             </div>
             <div>
@@ -197,7 +225,9 @@ const totalProjects = computed(() => {
       <Card class="border-border">
         <CardContent class="p-6">
           <div class="flex items-center gap-3">
-            <div class="h-12 w-12 rounded-lg bg-purple-500/10 flex items-center justify-center">
+            <div
+              class="h-12 w-12 rounded-lg bg-purple-500/10 flex items-center justify-center"
+            >
               <span class="text-2xl">📅</span>
             </div>
             <div>
@@ -235,17 +265,32 @@ const totalProjects = computed(() => {
               <div class="space-y-4">
                 <div>
                   <Label for="ws-name">Name</Label>
-                  <Input id="ws-name" v-model="newWorkspace.name" placeholder="Workspace name" />
+                  <Input
+                    id="ws-name"
+                    v-model="newWorkspace.name"
+                    placeholder="Workspace name"
+                  />
                 </div>
                 <div>
                   <Label for="ws-desc">Description</Label>
-                  <Textarea id="ws-desc" v-model="newWorkspace.description" placeholder="Workspace description" />
+                  <Textarea
+                    id="ws-desc"
+                    v-model="newWorkspace.description"
+                    placeholder="Workspace description"
+                  />
                 </div>
                 <div>
                   <Label for="ws-color">Color</Label>
-                  <Input id="ws-color" type="color" v-model="newWorkspace.color" class="h-10 w-full" />
+                  <Input
+                    id="ws-color"
+                    type="color"
+                    v-model="newWorkspace.color"
+                    class="h-10 w-full"
+                  />
                 </div>
-                <Button @click="addWorkspace" class="w-full">Create Workspace</Button>
+                <Button @click="addWorkspace" class="w-full"
+                  >Create Workspace</Button
+                >
               </div>
             </DialogContent>
           </Dialog>
@@ -276,7 +321,9 @@ const totalProjects = computed(() => {
               </div>
             </CardHeader>
             <CardContent>
-              <p class="text-sm text-muted-foreground mb-4">{{ ws.description }}</p>
+              <p class="text-sm text-muted-foreground mb-4">
+                {{ ws.description }}
+              </p>
               <div class="flex gap-4 text-sm">
                 <div>
                   <span class="font-semibold">{{ ws.members }}</span>
@@ -309,11 +356,20 @@ const totalProjects = computed(() => {
               <div class="space-y-4">
                 <div>
                   <Label for="member-name">Name</Label>
-                  <Input id="member-name" v-model="newMember.name" placeholder="Member name" />
+                  <Input
+                    id="member-name"
+                    v-model="newMember.name"
+                    placeholder="Member name"
+                  />
                 </div>
                 <div>
                   <Label for="member-email">Email</Label>
-                  <Input id="member-email" type="email" v-model="newMember.email" placeholder="member@email.com" />
+                  <Input
+                    id="member-email"
+                    type="email"
+                    v-model="newMember.email"
+                    placeholder="member@email.com"
+                  />
                 </div>
                 <div>
                   <Label for="member-role">Role</Label>
@@ -329,7 +385,9 @@ const totalProjects = computed(() => {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button @click="addMember" class="w-full">Send Invitation</Button>
+                <Button @click="addMember" class="w-full"
+                  >Send Invitation</Button
+                >
               </div>
             </DialogContent>
           </Dialog>
@@ -354,18 +412,22 @@ const totalProjects = computed(() => {
                       <Badge
                         :class="[
                           roleColors[member.role] || 'bg-gray-500',
-                          'text-white'
+                          'text-white',
                         ]"
                       >
                         {{ member.role }}
                       </Badge>
                     </div>
-                    <div class="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div
+                      class="flex items-center gap-4 text-sm text-muted-foreground"
+                    >
                       <div class="flex items-center gap-1">
                         <Mail class="h-3 w-3" />
                         <span>{{ member.email }}</span>
                       </div>
-                      <span>Joined {{ member.joinedAt.toLocaleDateString() }}</span>
+                      <span
+                        >Joined {{ member.joinedAt.toLocaleDateString() }}</span
+                      >
                     </div>
                   </div>
                 </div>
