@@ -13,3 +13,1358 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Organization {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  logo        String?
+  website     String?
+  industry    String?
+  size        String? // small, medium, large, enterprise
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users              OrganizationUser[]
+  workspaces         Workspace[]
+  staff              Staff[]
+  devices            Device[]
+  shifts             Shift[]
+  appraisals         Appraisal[]
+  departments        Department[]
+  settings           OrganizationSettings?
+  invitations        UserInvitation[]
+  ipWhitelistEntries IPWhitelistEntry[]
+  subscriptions      Subscription[]
+  auditLogs          AuditLog[]
+  attendances        Attendance[]
+  leaveRequests      LeaveRequest[]
+  billingAddress     BillingAddress?
+  integrations       Integration[]
+
+  @@map("organizations")
+}
+
+// Workspace model for multi-tenancy
+model Workspace {
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  slug           String   @unique
+  description    String?
+  logo           String?
+  color          String? // For UI theming
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization  Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  users         WorkspaceUser[]
+  reports       Report[]
+  templates     ReportTemplate[]
+  documents     Document[]
+  projects      Project[]
+  teamCalendars TeamCalendar[]
+  tasks         Task[]
+  integrations  Integration[]
+
+  @@map("workspaces")
+}
+
+// User model for authentication (compatible with better-auth)
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  twoFactorEnabled    Boolean?    @default(false)
+  username            String?
+  displayUsername     String?
+  phoneNumber         String?
+  phoneNumberVerified Boolean?
+  role                UserRole    @default(USER)
+  banned              Boolean?    @default(false)
+  banReason           String?
+  banExpires          DateTime?
+  twofactors          TwoFactor[]
+  passkeys            Passkey[]
+
+  firstName           String?
+  lastName            String?
+  avatar              String?
+  isActive            Boolean   @default(true)
+  lastLoginAt         DateTime?
+  twoFactorSecret      String?   @db.Text
+  twoFactorBackupCodes Json?
+  failedLoginAttempts  Int       @default(0)
+  lockedUntil         DateTime?
+  lastFailedLoginAt    DateTime?
+
+  organizationUsers       OrganizationUser[]
+  workspaceUsers          WorkspaceUser[]
+  userDepartments        UserDepartment[]
+  notifications           Notification[]
+  taskAssignments         TaskAssignee[]
+  projectMemberships      ProjectMember[]
+  staff                   Staff?
+  notificationPreferences NotificationPreference?
+  backupCodes             TwoFactorBackupCode[]
+  loginAttempts           LoginAttempt[]
+  auditLogs               AuditLog[]
+  roleAssignments         UserRoleAssignment[]
+  sentInvitations         UserInvitation[]        @relation("InvitationSender")
+  acceptedInvitations     UserInvitation[]        @relation("InvitationAccepter")
+
+  @@unique([email])
+  @@unique([username])
+  @@unique([phoneNumber])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  impersonatedBy String?
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model TwoFactor {
+  id          String @id
+  secret      String
+  backupCodes String
+  userId      String
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([secret])
+  @@index([userId])
+  @@map("twoFactor")
+}
+
+model Passkey {
+  id           String    @id
+  name         String?
+  publicKey    String
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialID String
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?
+  createdAt    DateTime?
+  aaguid       String?
+
+  @@index([userId])
+  @@index([credentialID])
+  @@map("passkey")
+}
+
+// OrganizationUser junction table
+model OrganizationUser {
+  id             String           @id @default(uuid())
+  userId         String
+  organizationId String
+  role           OrganizationRole @default(MEMBER)
+  joinedAt       DateTime         @default(now())
+
+  // Relations
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@map("organization_users")
+}
+
+// WorkspaceUser junction table
+model WorkspaceUser {
+  id          String        @id @default(uuid())
+  userId      String
+  workspaceId String
+  role        WorkspaceRole @default(MEMBER)
+  joinedAt    DateTime      @default(now())
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@map("workspace_users")
+}
+
+// UserDepartment junction table
+model UserDepartment {
+  id             String   @id @default(uuid())
+  userId         String
+  departmentId   String
+  isPrimary      Boolean  @default(false) // Is this their primary department?
+  joinedAt       DateTime @default(now())
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, departmentId])
+  @@map("user_departments")
+}
+
+// Department model
+model Department {
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  description    String?
+  headId         String?
+  color          String? // For UI
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  head         Staff?           @relation("DepartmentHead", fields: [headId], references: [id], onDelete: SetNull)
+  staff        Staff[]
+  projects     Project[]
+  users        UserDepartment[]
+  invitations  UserInvitation[]
+
+  @@map("departments")
+}
+
+// Staff model
+model Staff {
+  id               String         @id @default(uuid())
+  organizationId   String
+  departmentId     String?
+  userId           String?        @unique // Link to user account
+  firstName        String
+  lastName         String
+  email            String
+  phone            String?
+  position         String?
+  employeeId       String?        @unique
+  avatar           String?
+  isActive         Boolean        @default(true)
+  hireDate         DateTime?
+  birthDate        DateTime?
+  address          String?
+  city             String?
+  state            String?
+  country          String?
+  postalCode       String?
+  emergencyContact String?        @db.Text
+  salary           Float?
+  currency         String         @default("USD")
+  employmentType   EmploymentType @default(FULL_TIME)
+  workSchedule     Json? // Flexible work schedule details
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  // Relations
+  organization      Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department        Department?       @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  headOfDepartments Department[]      @relation("DepartmentHead")
+  user              User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  attendance        Attendance[]
+  leaveRequests     LeaveRequest[]
+  appraisals        Appraisal[]
+  shifts            ShiftAssignment[]
+
+  @@unique([organizationId, email])
+  @@map("staff")
+}
+
+// Shift assignment model for staff
+model ShiftAssignment {
+  id        String    @id @default(uuid())
+  staffId   String
+  shiftId   String
+  startDate DateTime
+  endDate   DateTime?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  staff Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  shift Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  @@map("shift_assignments")
+}
+
+// Device model for attendance
+model Device {
+  id             String     @id @default(uuid())
+  organizationId String
+  name           String
+  deviceId       String     @unique
+  location       String?
+  type           DeviceType @default(BIOMETRIC)
+  isActive       Boolean    @default(true)
+  lastSync       DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  attendance   Attendance[]
+
+  @@map("devices")
+}
+
+// Attendance model
+model Attendance {
+  id             String           @id @default(uuid())
+  organizationId String
+  staffId        String
+  deviceId       String?
+  checkIn        DateTime
+  checkOut       DateTime?
+  breakStart     DateTime?
+  breakEnd       DateTime?
+  location       String?
+  notes          String?
+  status         AttendanceStatus @default(PRESENT)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  staff        Staff        @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  device       Device?      @relation(fields: [deviceId], references: [id])
+
+  @@map("attendance")
+}
+
+// Leave Request model
+model LeaveRequest {
+  id              String      @id @default(uuid())
+  organizationId  String
+  staffId         String
+  type            LeaveType
+  startDate       DateTime
+  endDate         DateTime
+  reason          String
+  status          LeaveStatus @default(PENDING)
+  approvedBy      String?
+  approvedAt      DateTime?
+  rejectedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  staff        Staff        @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@map("leave_requests")
+}
+
+// Shift model
+model Shift {
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  startTime      String // HH:mm format
+  endTime        String // HH:mm format
+  breakDuration  Int      @default(0) // In minutes
+  days           String[] // ["monday", "tuesday", ...]
+  isActive       Boolean  @default(true)
+  color          String? // For UI
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  staff        ShiftAssignment[]
+
+  @@map("shifts")
+}
+
+// Appraisal model
+model Appraisal {
+  id             String          @id @default(uuid())
+  organizationId String
+  staffId        String
+  period         String // e.g., "2024-Q1", "2024-H1"
+  reviewerId     String?
+  goals          String?
+  achievements   String?
+  rating         Int?
+  feedback       String?
+  status         AppraisalStatus @default(DRAFT)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  staff        Staff        @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@map("appraisals")
+}
+
+// Report Template model
+model ReportTemplate {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  description String?
+  fields      Json // JSON schema for form fields
+  isActive    Boolean  @default(true)
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  reports   Report[]
+
+  @@map("report_templates")
+}
+
+// Report model
+model Report {
+  id          String       @id @default(uuid())
+  workspaceId String
+  templateId  String
+  staffId     String?
+  title       String
+  content     Json // Form data
+  status      ReportStatus @default(DRAFT)
+  submittedBy String
+  submittedAt DateTime?
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  template  ReportTemplate @relation(fields: [templateId], references: [id])
+
+  @@map("reports")
+}
+
+// Project model
+model Project {
+  id           String          @id @default(uuid())
+  workspaceId  String
+  departmentId String?
+  name         String
+  slug         String
+  description  String?
+  status       ProjectStatus   @default(PLANNING)
+  priority     ProjectPriority @default(MEDIUM)
+  startDate    DateTime?
+  endDate      DateTime?
+  budget       Float?
+  currency     String          @default("USD")
+  color        String? // For UI
+  icon         String? // For UI
+  createdBy    String
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  // Relations
+  workspace  Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  department Department?     @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  tasks      Task[]
+  members    ProjectMember[]
+  documents  Document[]
+  milestones Milestone[]
+
+  @@unique([workspaceId, slug])
+  @@map("projects")
+}
+
+// Project member (teammates) model
+model ProjectMember {
+  id        String      @id @default(uuid())
+  projectId String
+  userId    String
+  role      ProjectRole @default(MEMBER)
+  joinedAt  DateTime    @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@map("project_members")
+}
+
+// Milestone model for projects
+model Milestone {
+  id          String          @id @default(uuid())
+  projectId   String
+  name        String
+  description String?
+  dueDate     DateTime
+  status      MilestoneStatus @default(PLANNED)
+  completedAt DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks   Task[]
+
+  @@map("milestones")
+}
+
+// Document model
+model Document {
+  id           String             @id @default(uuid())
+  workspaceId  String
+  projectId    String? // Optional: can be org, workspace, or project level
+  name         String
+  description  String?
+  filePath     String
+  fileSize     Int
+  mimeType     String
+  category     String?
+  tags         String[]
+  visibility   DocumentVisibility @default(WORKSPACE)
+  uploadedBy   String
+  downloadedBy String[] // Track who downloaded
+  isPinned     Boolean            @default(false)
+  version      Int                @default(1)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  // Relations
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+// Task model
+model Task {
+  id             String       @id @default(uuid())
+  workspaceId    String
+  projectId      String?
+  milestoneId    String?
+  title          String
+  description    String?
+  assignedBy     String
+  status         TaskStatus   @default(TODO)
+  priority       TaskPriority @default(MEDIUM)
+  dueDate        DateTime?
+  estimatedHours Float?
+  actualHours    Float?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  tags           String[]
+  attachments    String[] // File paths
+  position       Int? // For drag and drop ordering
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Relations
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  milestone Milestone?      @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  assignees TaskAssignee[]
+  comments  TaskComment[]
+  timeLogs  TimeLog[]
+  checklist TaskChecklist[]
+
+  @@map("tasks")
+}
+
+// Task assignee model (many-to-many)
+model TaskAssignee {
+  id         String   @id @default(uuid())
+  taskId     String
+  userId     String
+  assignedAt DateTime @default(now())
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@map("task_assignees")
+}
+
+// Task comment model
+model TaskComment {
+  id        String   @id @default(uuid())
+  taskId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_comments")
+}
+
+// Time log model for tracking task time
+model TimeLog {
+  id          String    @id @default(uuid())
+  taskId      String
+  userId      String
+  description String?
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Float? // In hours
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  task        Task      @relation(fields: [taskId], references: [id])
+
+  @@map("time_logs")
+}
+
+// Task checklist model
+model TaskChecklist {
+  id          String   @id @default(uuid())
+  taskId      String
+  title       String
+  isCompleted Boolean  @default(false)
+  order       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_checklists")
+}
+
+// Team calendar model for scheduling and deadlines
+model TeamCalendar {
+  id            String       @id @default(uuid())
+  workspaceId   String
+  title         String
+  description   String?
+  type          CalendarType @default(EVENT)
+  startDate     DateTime
+  endDate       DateTime?
+  allDay        Boolean      @default(false)
+  location      String?
+  attendees     String[] // User IDs
+  recurrence    String? // daily, weekly, monthly
+  recurrenceEnd DateTime?
+  color         String? // For UI
+  createdBy     String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  // Relations
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@map("team_calendars")
+}
+
+// Notification model
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      NotificationType @default(INFO)
+  isRead    Boolean          @default(false)
+  data      Json? // Additional data
+  createdAt DateTime         @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// Verification token model for better-auth
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Organization Settings model
+model OrganizationSettings {
+  id             String @id @default(uuid())
+  organizationId String @unique
+
+  // General settings
+  subdomain        String @unique
+  organizationType String @default("corporate")
+  timezone         String @default("UTC")
+  currency         String @default("USD")
+  locale           String @default("en-US")
+
+  // Branding
+  logo         String?
+  primaryColor String  @default("#3b82f6")
+  customCss    String? @db.Text
+
+  // Working hours
+  workingHoursStart String   @default("09:00")
+  workingHoursEnd   String   @default("17:00")
+  weekendDays       String[] @default(["saturday", "sunday"])
+
+  // Feature flags
+  enableAutoAssignTasks  Boolean @default(false)
+  enableOvertimeTracking Boolean @default(true)
+  enablePublicPortal     Boolean @default(false)
+  enableAuditLogging     Boolean @default(true)
+  enableTwoFactorAuth    Boolean @default(false)
+  enableIPWhitelist      Boolean @default(false)
+
+  // Security settings
+  passwordMinLength        Int     @default(8)
+  passwordRequireUppercase Boolean @default(true)
+  passwordRequireLowercase Boolean @default(true)
+  passwordRequireNumbers   Boolean @default(true)
+  passwordRequireSpecial   Boolean @default(true)
+  passwordReuseHistory     Int     @default(5)
+  sessionTimeoutMinutes    Int     @default(60)
+  maxFailedLoginAttempts   Int     @default(5)
+  lockoutDurationMinutes   Int     @default(30)
+
+  // Advanced
+  allowedIpRanges String[]
+  customDomains   String[]
+  apiRateLimit    Int      @default(1000)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("organization_settings")
+}
+
+// Notification Preference model
+model NotificationPreference {
+  id     String @id @default(uuid())
+  userId String @unique
+
+  // Email preferences
+  emailEnabled          Boolean @default(true)
+  emailFrequency        String  @default("instant")
+  emailNewTask          Boolean @default(true)
+  emailTaskAssigned     Boolean @default(true)
+  emailTaskCompleted    Boolean @default(false)
+  emailCommentMention   Boolean @default(true)
+  emailDeadlineReminder Boolean @default(true)
+  emailWeeklyDigest     Boolean @default(true)
+  emailMarketing        Boolean @default(false)
+
+  // Push notification preferences
+  pushEnabled          Boolean @default(true)
+  pushNewTask          Boolean @default(true)
+  pushTaskAssigned     Boolean @default(true)
+  pushTaskCompleted    Boolean @default(true)
+  pushCommentMention   Boolean @default(true)
+  pushDeadlineReminder Boolean @default(true)
+  pushDailySummary     Boolean @default(false)
+
+  // SMS preferences
+  smsEnabled          Boolean @default(true)
+  smsUrgentOnly       Boolean @default(true)
+  smsDeadlineReminder Boolean @default(false)
+  smsShiftReminder    Boolean @default(true)
+
+  // Do Not Disturb
+  dndEnabled           Boolean @default(false)
+  dndStartTime         String  @default("22:00")
+  dndEndTime           String  @default("08:00")
+  dndAllowUrgentTasks  Boolean @default(true)
+  dndAllowMentions     Boolean @default(true)
+  dndAllowSystemAlerts Boolean @default(true)
+
+  // Sound settings
+  soundEnabled Boolean @default(true)
+  soundType    String  @default("default")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+// Two Factor Backup Code model
+model TwoFactorBackupCode {
+  id        String    @id @default(uuid())
+  userId    String
+  code      String // Encrypted
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("two_factor_backup_codes")
+}
+
+// Login Attempt model
+model LoginAttempt {
+  id            String      @id @default(uuid())
+  userId        String?
+  email         String?
+  ipAddress     String
+  userAgent     String?     @db.Text
+  status        LoginStatus
+  failureReason String?
+  location      Json?
+  device        Json?
+  createdAt     DateTime    @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([email])
+  @@index([ipAddress])
+  @@index([createdAt])
+  @@map("login_attempts")
+}
+
+// Audit Log model
+model AuditLog {
+  id             String      @id @default(uuid())
+  userId         String?
+  organizationId String?
+  action         AuditAction
+  entityType     String
+  entityId       String?
+  oldValue       Json?
+  newValue       Json?
+  metadata       Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime    @default(now())
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// IP Whitelist Entry model
+model IPWhitelistEntry {
+  id             String   @id @default(uuid())
+  organizationId String
+  ipRange        String // CIDR notation: "192.168.1.0/24"
+  description    String?
+  isAllowed      Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, ipRange])
+  @@map("ip_whitelist_entries")
+}
+
+// User Invitation model
+model UserInvitation {
+  id             String           @id @default(uuid())
+  organizationId String
+  email          String
+  role           OrganizationRole @default(MEMBER)
+  departmentId   String?
+  invitedBy      String
+  acceptedBy     String?
+  token          String           @unique
+  status         InvitationStatus @default(PENDING)
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  declinedAt     DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  inviter      User         @relation("InvitationSender", fields: [invitedBy], references: [id])
+  accepter     User?        @relation("InvitationAccepter", fields: [acceptedBy], references: [id], onDelete: SetNull)
+  department   Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([token])
+  @@index([organizationId])
+  @@map("user_invitations")
+}
+
+// Permission model
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique // "users.create", "tasks.delete", etc.
+  description String?
+  category    String // "users", "tasks", "reports", etc.
+  createdAt   DateTime @default(now())
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+// Role model
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique // "admin", "manager", "staff", "viewer"
+  displayName String
+  description String?
+  isSystem    Boolean  @default(false)
+  isDefault   Boolean  @default(false)
+  level       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  permissions         RolePermission[]
+  userRoleAssignments UserRoleAssignment[]
+
+  @@map("roles")
+}
+
+// Role Permission junction model
+model RolePermission {
+  id           String   @id @default(uuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// User Role Assignment model
+model UserRoleAssignment {
+  id         String    @id @default(uuid())
+  userId     String
+  roleId     String
+  assignedBy String
+  assignedAt DateTime  @default(now())
+  expiresAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@map("user_role_assignments")
+}
+
+// Subscription model
+model Subscription {
+  id                 String             @id @default(uuid())
+  organizationId     String             @unique
+  planId             String
+  status             SubscriptionStatus @default(ACTIVE)
+  billingCycle       BillingCycle       @default(MONTHLY)
+  usersLimit         Int
+  storageLimit       Int
+  usersUsed          Int                @default(0)
+  storageUsed        Int                @default(0)
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean            @default(false)
+  trialEndsAt        DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoices       Invoice[]
+  paymentMethods PaymentMethod[]
+  plan           Plan            @relation(fields: [planId], references: [id])
+
+  @@map("subscriptions")
+}
+
+// Plan model
+model Plan {
+  id           String       @id @default(uuid())
+  name         String       @unique // "Starter", "Professional", "Enterprise"
+  price        Float
+  billingCycle BillingCycle
+  usersLimit   Int
+  storageLimit Int
+  features     Json // Array of feature strings
+  isActive     Boolean      @default(true)
+  sortOrder    Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+// Invoice model
+model Invoice {
+  id             String        @id @default(uuid())
+  subscriptionId String
+  number         String        @unique // "INV-2024-001"
+  amount         Float
+  currency       String        @default("USD")
+  status         InvoiceStatus @default(PENDING)
+  dueDate        DateTime
+  paidAt         DateTime?
+  pdfUrl         String?
+  billingAddress Json? // Address object
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+// Payment Method model
+model PaymentMethod {
+  id             String          @id @default(uuid())
+  subscriptionId String
+  provider       PaymentProvider @default(STRIPE)
+  type           String // "card", "bank_account"
+  last4          String
+  expiryMonth    Int?
+  expiryYear     Int?
+  brand          String?
+  isDefault      Boolean         @default(false)
+  providerToken  String? // Stripe token ID
+  createdAt      DateTime        @default(now())
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("payment_methods")
+}
+
+// Billing Address model
+model BillingAddress {
+  id             String   @id @default(uuid())
+  organizationId String   @unique
+  line1          String
+  line2          String?
+  city           String
+  state          String?
+  postalCode     String
+  country        String
+  vatNumber      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("billing_addresses")
+}
+
+// Integration model
+model Integration {
+  id              String              @id @default(uuid())
+  organizationId  String
+  workspaceId     String?
+  name            String // "Biometric Attendance", "Microsoft 365"
+  provider        IntegrationProvider
+  status          IntegrationStatus   @default(DISCONNECTED)
+  category        String // "Attendance", "Calendar", etc.
+  configuration   Json // Encrypted API keys, secrets
+  autoSyncEnabled Boolean             @default(false)
+  syncInterval    Int? // In minutes
+  lastSyncAt      DateTime?
+  lastSyncStatus  String?
+  lastSyncError   String?
+  isEnabled       Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspace    Workspace?        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  syncHistory  IntegrationSync[]
+
+  @@map("integrations")
+}
+
+// Integration Sync model
+model IntegrationSync {
+  id               String    @id @default(uuid())
+  integrationId    String
+  status           String // "success", "failed", "in_progress"
+  recordsProcessed Int?
+  recordsCreated   Int?
+  recordsUpdated   Int?
+  recordsDeleted   Int?
+  errorMessage     String?   @db.Text
+  startedAt        DateTime  @default(now())
+  completedAt      DateTime?
+  duration         Int? // In milliseconds
+
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@map("integration_syncs")
+}
+
+// Enums
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  USER
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum ProjectRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum ProjectPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MilestoneStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum DocumentVisibility {
+  PRIVATE // Only owner
+  WORKSPACE // Workspace members
+  PROJECT // Project members
+  ORGANIZATION // Organization members
+  PUBLIC // Anyone with link
+}
+
+enum CalendarType {
+  EVENT
+  DEADLINE
+  REMINDER
+  HOLIDAY
+  MEETING
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+  FREELANCE
+}
+
+enum DeviceType {
+  BIOMETRIC
+  RFID
+  MOBILE
+  WEB
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+}
+
+enum LeaveType {
+  SICK
+  VACATION
+  PERSONAL
+  MATERNITY
+  PATERNITY
+  UNPAID
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum AppraisalStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+  APPROVED
+}
+
+enum ReportStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  UNPAID
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  PAID
+  FAILED
+  VOID
+}
+
+enum PaymentProvider {
+  STRIPE
+  PAYPAL
+  PADDLE
+}
+
+enum IntegrationProvider {
+  BIOMETRIC
+  MICROSOFT_365
+  GOOGLE_CALENDAR
+  QUICKBOOKS
+  STRIPE
+  SLACK
+  SMS_GATEWAY
+  EMAIL_PROVIDER
+  CUSTOM_API
+}
+
+enum IntegrationStatus {
+  DISCONNECTED
+  PENDING
+  CONNECTED
+  ERROR
+}
+
+enum LoginStatus {
+  SUCCESS
+  FAILED_INVALID_CREDENTIALS
+  FAILED_ACCOUNT_LOCKED
+  FAILED_2FA_REQUIRED
+  FAILED_2FA_INVALID
+  FAILED_IP_BLOCKED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXPORT
+  IMPORT
+  PERMISSION_CHANGE
+  SECURITY_SETTING_CHANGE
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
