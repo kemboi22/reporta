@@ -41,11 +41,6 @@ const otherWorkspaces = ref([
 ]);
 
 const isSwitching = ref(false);
-
-const getInitials = (name: string) => {
-  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-};
-
 const switchWorkspace = async (
   workspaceId: number,
   workspaceName: string,
