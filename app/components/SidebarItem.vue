@@ -23,7 +23,7 @@ const toggleExpanded = () => {
       class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-slate-600 hover:bg-slate-50 hover:text-slate-900"
       :class="collapsed && 'justify-center'"
     >
-      <component :is="item.icon" class="h-5 w-5 flex-shrink-0" />
+      <component :is="item.icon" class="h-5 w-5 shrink-0" />
 
       <span v-if="!collapsed" class="flex-1 text-left">{{ item.name }}</span>
 
