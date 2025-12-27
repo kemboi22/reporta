@@ -33,4 +33,7 @@ export default defineNuxtConfig({
      */
     componentDir: "./app/components/ui",
   },
+  experimental: {
+    typedPages: true,
+  },
 });
