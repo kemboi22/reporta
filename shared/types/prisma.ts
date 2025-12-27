@@ -75,7 +75,6 @@ export type {
 // ============================================================================
 
 export type {
-  UserRole,
   OrganizationRole,
   WorkspaceRole,
   ProjectRole,

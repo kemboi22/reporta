@@ -21,7 +21,7 @@ export const auth = betterAuth({
     username(),
     phoneNumber(),
     admin({
-      defaultRole: "USER",
+      defaultRole: "user",
     }),
     passkey(),
     // emailOTP({

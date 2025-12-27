@@ -91,7 +91,7 @@ model User {
   displayUsername     String?
   phoneNumber         String?
   phoneNumberVerified Boolean?
-  role                UserRole    @default(USER)
+  role                String      @default("user")
   banned              Boolean?    @default(false)
   banReason           String?
   banExpires          DateTime?
@@ -1156,12 +1156,6 @@ model IntegrationSync {
 }
 
 // Enums
-enum UserRole {
-  SUPER_ADMIN
-  ADMIN
-  USER
-}
-
 enum OrganizationRole {
   OWNER
   ADMIN
