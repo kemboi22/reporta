@@ -20,10 +20,19 @@ export const auth = betterAuth({
     twoFactor(),
     username(),
     phoneNumber(),
-    admin(),
+    admin({
+      defaultRole: "USER",
+    }),
     passkey(),
     // emailOTP({
     //   sendVerificationOTP(data) {return data},
     // }),
   ],
+  socialProviders: {
+    google: {
+      prompt: "select_account",
+      clientId: "",
+      clientSecret: "",
+    },
+  },
 });

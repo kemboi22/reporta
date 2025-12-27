@@ -1,36 +1,27 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { navigateTo } from "#app";
-import ThemeToggle from "~/components/ThemeToggle.vue";
+import { toast } from "vue-sonner";
+import { authClient } from "~/lib/auth";
 
-const email = ref("");
-const password = ref("");
-const rememberMe = ref(false);
+const form = ref({
+  email: "",
+  password: "",
+  rememberMe: false,
+});
+
 const isLoading = ref(false);
 
 const handleLogin = async () => {
   isLoading.value = true;
-
-  setTimeout(() => {
-    const hasWorkspaces = true;
-
-    if (hasWorkspaces) {
-      navigateTo("/dashboard");
-    } else {
-      navigateTo("/onboarding/step-1");
-    }
-  }, 1500);
+  const { data, error } = await authClient.signIn.email({
+    ...form.value,
+  });
+  if (error && error.message) {
+    toast.error(error.message);
+    return;
+  }
+  isLoading.value = false;
+  await navigateTo("/dashboard");
+  toast.success("Successfully signed in");
 };
 </script>
 
@@ -280,7 +271,7 @@ const handleLogin = async () => {
                     </div>
                     <Input
                       id="email"
-                      v-model="email"
+                      v-model="form.email"
                       type="email"
                       required
                       placeholder="name@example.com"
@@ -314,7 +305,7 @@ const handleLogin = async () => {
                     </div>
                     <Input
                       id="password"
-                      v-model="password"
+                      v-model="form.password"
                       type="password"
                       required
                       placeholder="••••••••"
@@ -326,7 +317,7 @@ const handleLogin = async () => {
                 <!-- Remember me & Forgot password -->
                 <div class="flex items-center justify-between">
                   <div class="flex items-center space-x-2">
-                    <Checkbox id="remember" v-model:checked="rememberMe" />
+                    <Checkbox id="remember" v-model:checked="form.rememberMe" />
                     <Label
                       for="remember"
                       class="text-sm font-medium cursor-pointer select-none"
@@ -349,27 +340,7 @@ const handleLogin = async () => {
                   class="w-full h-12 text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
                   size="lg"
                 >
-                  <svg
-                    v-if="isLoading"
-                    class="animate-spin h-5 w-5 mr-2"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      class="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      stroke-width="4"
-                    ></circle>
-                    <path
-                      class="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
+                  <Spinner v-if="isLoading" />
                   {{ isLoading ? "Signing in..." : "Sign In" }}
                 </Button>
               </form>

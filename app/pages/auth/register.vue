@@ -1,21 +1,17 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { navigateTo } from "#app";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import ThemeToggle from "~/components/ThemeToggle.vue";
+  LockIcon,
+  MailOpenIcon,
+  UserIcon,
+  Settings2Icon,
+  SettingsIcon,
+  ShieldCheckIcon,
+} from "lucide-vue-next";
+import { toast } from "vue-sonner";
+import { authClient } from "~/lib/auth";
 
 const form = ref({
-  fullName: "",
+  name: "",
   email: "",
   password: "",
   confirmPassword: "",
@@ -40,10 +36,23 @@ const handleRegister = async () => {
   }
 
   isLoading.value = true;
-
-  setTimeout(() => {
-    navigateTo("/onboarding/step-1");
-  }, 1500);
+  try {
+    const { data, error } = await authClient.signUp.email({
+      ...form.value,
+    });
+    if (error && error.message) {
+      toast.error(error.message);
+      return;
+    }
+    isLoading.value = false;
+    if (data?.user) {
+      await navigateTo("/dashboard");
+    }
+  } catch (e) {
+    console.log(e);
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 const onPasswordInput = () => {
@@ -62,6 +71,11 @@ const getStrengthText = () => {
   if (passwordStrength.value <= 50) return "Fair";
   if (passwordStrength.value <= 75) return "Good";
   return "Strong";
+};
+const signInWithGoogle = async () => {
+  await authClient.signIn.social({
+    provider: "google",
+  });
 };
 </script>
 
@@ -229,6 +243,7 @@ const getStrengthText = () => {
               <!-- Social Login Buttons (Top) -->
               <div class="space-y-3">
                 <Button
+                  @click.prevent="signInWithGoogle()"
                   type="button"
                   variant="outline"
                   class="w-full h-11 font-medium hover:bg-accent hover:border-primary/20 transition-all group"
@@ -256,22 +271,22 @@ const getStrengthText = () => {
                   </svg>
                   Continue with Google
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  class="w-full h-11 font-medium hover:bg-accent hover:border-primary/20 transition-all group"
-                >
-                  <svg
-                    class="w-5 h-5 mr-2 transition-transform group-hover:scale-110"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M12.001 2C6.47598 2 2.00098 6.475 2.00098 12C2.00098 16.425 4.86348 20.1625 8.83848 21.4875C9.33848 21.575 9.52598 21.275 9.52598 21.0125C9.52598 20.775 9.51348 19.9875 9.51348 19.15C7.00098 19.6125 6.35098 18.5375 6.15098 17.975C6.03848 17.6875 5.55098 16.8 5.12598 16.5625C4.77598 16.375 4.27598 15.9125 5.11348 15.9C5.90098 15.8875 6.46348 16.625 6.65098 16.925C7.55098 18.4375 8.98848 18.0125 9.56348 17.75C9.65098 17.1 9.91348 16.6625 10.201 16.4125C7.97598 16.1625 5.65098 15.3 5.65098 11.475C5.65098 10.3875 6.03848 9.4875 6.67598 8.7875C6.57598 8.5375 6.22598 7.5125 6.77598 6.1375C6.77598 6.1375 7.61348 5.875 9.52598 7.1625C10.326 6.9375 11.176 6.825 12.026 6.825C12.876 6.825 13.726 6.9375 14.526 7.1625C16.4385 5.8625 17.276 6.1375 17.276 6.1375C17.826 7.5125 17.476 8.5375 17.376 8.7875C18.0135 9.4875 18.401 10.375 18.401 11.475C18.401 15.3125 16.0635 16.1625 13.8385 16.4125C14.201 16.725 14.5135 17.325 14.5135 18.2625C14.5135 19.6 14.501 20.675 14.501 21.0125C14.501 21.275 14.6885 21.5875 15.1885 21.4875C19.259 20.1133 21.9998 16.2963 22.001 12C22.001 6.475 17.526 2 12.001 2Z"
-                    />
-                  </svg>
-                  Continue with GitHub
-                </Button>
+                <!-- <Button -->
+                <!--   type="button" -->
+                <!--   variant="outline" -->
+                <!--   class="w-full h-11 font-medium hover:bg-accent hover:border-primary/20 transition-all group" -->
+                <!-- > -->
+                <!--   <svg -->
+                <!--     class="w-5 h-5 mr-2 transition-transform group-hover:scale-110" -->
+                <!--     fill="currentColor" -->
+                <!--     viewBox="0 0 24 24" -->
+                <!--   > -->
+                <!--     <path -->
+                <!--       d="M12.001 2C6.47598 2 2.00098 6.475 2.00098 12C2.00098 16.425 4.86348 20.1625 8.83848 21.4875C9.33848 21.575 9.52598 21.275 9.52598 21.0125C9.52598 20.775 9.51348 19.9875 9.51348 19.15C7.00098 19.6125 6.35098 18.5375 6.15098 17.975C6.03848 17.6875 5.55098 16.8 5.12598 16.5625C4.77598 16.375 4.27598 15.9125 5.11348 15.9C5.90098 15.8875 6.46348 16.625 6.65098 16.925C7.55098 18.4375 8.98848 18.0125 9.56348 17.75C9.65098 17.1 9.91348 16.6625 10.201 16.4125C7.97598 16.1625 5.65098 15.3 5.65098 11.475C5.65098 10.3875 6.03848 9.4875 6.67598 8.7875C6.57598 8.5375 6.22598 7.5125 6.77598 6.1375C6.77598 6.1375 7.61348 5.875 9.52598 7.1625C10.326 6.9375 11.176 6.825 12.026 6.825C12.876 6.825 13.726 6.9375 14.526 7.1625C16.4385 5.8625 17.276 6.1375 17.276 6.1375C17.826 7.5125 17.476 8.5375 17.376 8.7875C18.0135 9.4875 18.401 10.375 18.401 11.475C18.401 15.3125 16.0635 16.1625 13.8385 16.4125C14.201 16.725 14.5135 17.325 14.5135 18.2625C14.5135 19.6 14.501 20.675 14.501 21.0125C14.501 21.275 14.6885 21.5875 15.1885 21.4875C19.259 20.1133 21.9998 16.2963 22.001 12C22.001 6.475 17.526 2 12.001 2Z" -->
+                <!--     /> -->
+                <!--   </svg> -->
+                <!--   Continue with GitHub -->
+                <!-- </Button> -->
               </div>
 
               <!-- Divider -->
@@ -297,23 +312,11 @@ const getStrengthText = () => {
                     <div
                       class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
                     >
-                      <svg
-                        class="w-5 h-5 text-muted-foreground"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
+                      <UserIcon class="w-5 h-5 text-muted-foreground" />
                     </div>
                     <Input
                       id="fullName"
-                      v-model="form.fullName"
+                      v-model="form.name"
                       type="text"
                       required
                       placeholder="John Doe"
@@ -329,19 +332,7 @@ const getStrengthText = () => {
                     <div
                       class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
                     >
-                      <svg
-                        class="w-5 h-5 text-muted-foreground"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                        />
-                      </svg>
+                      <MailOpenIcon class="w-5 h-5 text-muted-foreground" />
                     </div>
                     <Input
                       id="email"
@@ -363,19 +354,7 @@ const getStrengthText = () => {
                     <div
                       class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
                     >
-                      <svg
-                        class="w-5 h-5 text-muted-foreground"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                        />
-                      </svg>
+                      <SettingsIcon class="w-5 h-5 text-muted-foreground" />
                     </div>
                     <Input
                       id="password"
@@ -418,19 +397,7 @@ const getStrengthText = () => {
                     <div
                       class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
                     >
-                      <svg
-                        class="w-5 h-5 text-muted-foreground"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                        />
-                      </svg>
+                      <ShieldCheckIcon class="w-5 h-5 text-muted-foreground" />
                     </div>
                     <Input
                       id="confirmPassword"
@@ -445,11 +412,7 @@ const getStrengthText = () => {
 
                 <!-- Terms checkbox -->
                 <div class="flex items-start gap-2">
-                  <Checkbox
-                    id="terms"
-                    v-model:checked="form.agreeToTerms"
-                    required
-                  />
+                  <Checkbox id="terms" v-model="form.agreeToTerms" required />
                   <Label for="terms" class="text-sm font-normal cursor-pointer">
                     I agree to the
                     <NuxtLink
@@ -473,27 +436,7 @@ const getStrengthText = () => {
                   class="w-full h-12 text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
                   size="lg"
                 >
-                  <svg
-                    v-if="isLoading"
-                    class="animate-spin h-5 w-5 mr-2"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      class="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      stroke-width="4"
-                    ></circle>
-                    <path
-                      class="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
+                  <Spinner v-if="isLoading" />
                   {{ isLoading ? "Creating account..." : "Create Account" }}
                 </Button>
               </form>
