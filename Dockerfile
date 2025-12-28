@@ -4,7 +4,7 @@ WORKDIR /app
 FROM base AS install
 RUN mkdir -p /app/deps
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile --production=false
+RUN bun install --frozen-lockfile
 
 FROM base AS prisma-generate
 COPY --from=install /app/node_modules ./node_modules
