@@ -12,16 +12,25 @@ const isLoading = ref(false);
 
 const handleLogin = async () => {
   isLoading.value = true;
-  const { data, error } = await authClient.signIn.email({
-    ...form.value,
-  });
-  if (error && error.message) {
-    toast.error(error.message);
-    return;
+  try {
+    const { data, error } = await authClient.signIn.email({
+      ...form.value,
+    });
+    if (error && error.message) {
+      toast.error(error.message);
+      return;
+    }
+    if (data?.user.organizations.length > 0) {
+      await navigateTo(`/dashboard`);
+      toast.success("Successfully signed in");
+    } else {
+      toast.success("Successfully signed in");
+      await navigateTo("/onboarding/step-1");
+    }
+  } catch (e) {
+  } finally {
+    isLoading.value = false;
   }
-  isLoading.value = false;
-  await navigateTo("/dashboard");
-  toast.success("Successfully signed in");
 };
 </script>
 

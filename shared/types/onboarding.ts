@@ -74,6 +74,7 @@ export interface OnboardingCompleteRequest {
     logo?: string;
   };
   invitations: string[];
+  userId?: string;
 }
 
 export interface OnboardingCompleteResponse {

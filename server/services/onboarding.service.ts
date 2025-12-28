@@ -1,72 +1,8 @@
 import { prisma } from "../utils/db";
 
-export type OrganizationType = 
-  | "healthcare"
-  | "corporate"
-  | "manufacturing"
-  | "education"
-  | "retail"
-  | "hospitality"
-  | "other";
-
-export type WeekDay = 
-  | "monday"
-  | "tuesday"
-  | "wednesday"
-  | "thursday"
-  | "friday"
-  | "saturday"
-  | "sunday";
-
-export interface SubdomainCheckResponse {
-  available: boolean;
-  message?: string;
-}
-
-export interface OnboardingCompleteRequest {
-  organizationName: string;
-  subdomain: string;
-  organizationType: OrganizationType;
-  admin: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-  };
-  settings: {
-    timezone: string;
-    currency: string;
-    workingHoursStart: string;
-    workingHoursEnd: string;
-    weekendDays: WeekDay[];
-    logo?: string;
-  };
-  invitations: string[];
-}
-
-export interface OnboardingCompleteResponse {
-  organization: {
-    id: string;
-    name: string;
-    slug: string;
-    subdomain: string;
-  };
-  user: {
-    id: string;
-    email: string;
-    name: string;
-  };
-  workspace: {
-    id: string;
-    name: string;
-    slug: string;
-  };
-  invitationsSent: number;
-}
-
 export const checkSubdomainAvailability = async (
   subdomain: string
-): Promise<SubdomainCheckResponse> => {
+): Promise<{ available: boolean; message?: string }> => {
   const normalized = subdomain.toLowerCase().trim();
   
   if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(normalized)) {
@@ -98,9 +34,9 @@ export const checkSubdomainAvailability = async (
 };
 
 export const completeOnboarding = async (
-  data: OnboardingCompleteRequest
-): Promise<OnboardingCompleteResponse> => {
-  const { organizationName, subdomain, organizationType, admin, settings, invitations } = data;
+  data: any
+): Promise<any> => {
+  const { organizationName, subdomain, organizationType, admin, settings, invitations, userId } = data;
   const normalizedSubdomain = subdomain.toLowerCase().trim();
 
   return await prisma.$transaction(async (tx) => {
@@ -126,17 +62,35 @@ export const completeOnboarding = async (
       },
     });
 
-    const user = await tx.user.create({
-      data: {
-        id: crypto.randomUUID(),
-        email: admin.email.toLowerCase(),
-        name: `${admin.firstName} ${admin.lastName}`,
-        firstName: admin.firstName,
-        lastName: admin.lastName,
-        password: admin.password,
-        role: "ADMIN",
-      },
-    });
+    let user;
+    if (userId) {
+      user = await tx.user.findUnique({
+        where: { id: userId },
+      });
+      
+      if (!user) {
+        throw new Error("User not found");
+      }
+      
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          firstName: admin.firstName || user.firstName,
+          lastName: admin.lastName || user.lastName,
+        },
+      });
+    } else {
+      user = await tx.user.create({
+        data: {
+          id: crypto.randomUUID(),
+          email: admin.email.toLowerCase(),
+          name: `${admin.firstName} ${admin.lastName}`,
+          firstName: admin.firstName,
+          lastName: admin.lastName,
+          role: "ADMIN",
+        },
+      });
+    }
 
     await tx.organizationUser.create({
       data: {

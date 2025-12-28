@@ -1,88 +1,73 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { navigateTo } from "#app"; // Import navigateTo from '#app'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Upload } from "lucide-vue-next";
+import { X, Plus, Users, Rocket } from "lucide-vue-next";
+const { organizationForm } = useOrganizationStore();
+const isLoading = ref(false);
+const error = ref<string | null>(null);
 
-const timezone = ref("UTC");
-const workingHoursStart = ref("09:00");
-const workingHoursEnd = ref("17:00");
-const weekendDays = ref(["saturday", "sunday"]);
-const currency = ref("USD");
-const logoFile = ref<File | null>(null);
-const logoPreview = ref<string | null>(null);
+const addEmailField = () => {
+  organizationForm.inviteEmails.push("");
+};
 
-const timezones = [
-  { value: "UTC", label: "UTC (Coordinated Universal Time)" },
-  { value: "America/New_York", label: "Eastern Time (US & Canada)" },
-  { value: "America/Los_Angeles", label: "Pacific Time (US & Canada)" },
-  { value: "Europe/London", label: "London (GMT/BST)" },
-  { value: "Europe/Paris", label: "Central European Time" },
-  { value: "Asia/Dubai", label: "Dubai (GST)" },
-  { value: "Asia/Singapore", label: "Singapore (SGT)" },
-  { value: "Australia/Sydney", label: "Sydney (AEST)" },
-];
+const removeEmailField = (index: number) => {
+  organizationForm.inviteEmails.splice(index, 1);
+};
 
-const currencies = [
-  { value: "USD", label: "USD - US Dollar ($)" },
-  { value: "EUR", label: "EUR - Euro (€)" },
-  { value: "GBP", label: "GBP - British Pound (£)" },
-  { value: "AED", label: "AED - UAE Dirham (د.إ)" },
-  { value: "SGD", label: "SGD - Singapore Dollar (S$)" },
-  { value: "AUD", label: "AUD - Australian Dollar (A$)" },
-];
+const completeOnboarding = async () => {
+  isLoading.value = true;
+  error.value = null;
 
-const weekDays = [
-  { value: "monday", label: "Mon" },
-  { value: "tuesday", label: "Tue" },
-  { value: "wednesday", label: "Wed" },
-  { value: "thursday", label: "Thu" },
-  { value: "friday", label: "Fri" },
-  { value: "saturday", label: "Sat" },
-  { value: "sunday", label: "Sun" },
-];
+  try {
+    const result = await $fetch("/api/onboarding/complete", {
+      method: "POST",
+      body: {
+        organizationName: organizationForm.name,
+        subdomain: organizationForm.name
+          ?.toLowerCase()
+          .replace(/[^a-z0-9-]/g, "-"),
+        organizationType: organizationForm.industry,
+        settings: organizationForm.settings,
+        invitations: organizationForm.inviteEmails.filter(
+          (email) => email.trim() !== "",
+        ),
+      },
+    });
 
-const toggleWeekend = (day: string) => {
-  const index = weekendDays.value.indexOf(day);
-  if (index > -1) {
-    weekendDays.value.splice(index, 1);
-  } else {
-    weekendDays.value.push(day);
+    if (result) {
+      await navigateTo("/dashboard");
+    }
+  } catch (e: any) {
+    error.value = e.data?.message || "Failed to complete onboarding";
+  } finally {
+    isLoading.value = false;
   }
 };
 
-const handleLogoUpload = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  if (file) {
-    logoFile.value = file;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      logoPreview.value = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-  }
-};
+const skipAndComplete = async () => {
+  isLoading.value = true;
+  error.value = null;
 
-const nextStep = () => {
-  navigateTo("/onboarding/step-4");
+  try {
+    const result = await $fetch("/api/onboarding/complete", {
+      method: "POST",
+      body: {
+        organizationName: organizationForm.name,
+        subdomain: organizationForm.name
+          ?.toLowerCase()
+          .replace(/[^a-z0-9-]/g, "-"),
+        organizationType: organizationForm.industry,
+        settings: organizationForm.settings,
+        invitations: [],
+      },
+    });
+
+    if (result) {
+      await navigateTo("/dashboard");
+    }
+  } catch (e: any) {
+    error.value = e.data?.message || "Failed to complete onboarding";
+  } finally {
+    isLoading.value = false;
+  }
 };
 </script>
 
@@ -91,7 +76,7 @@ const nextStep = () => {
     <div class="w-full max-w-2xl">
       <!-- Compact progress bar -->
       <div class="mb-6 flex items-center justify-between text-sm">
-        <span class="font-medium text-foreground">Step 3 of 4</span>
+        <span class="font-medium text-foreground">Step 3 of 3</span>
         <div class="flex items-center gap-2">
           <div class="w-24 h-1.5 bg-blue-600 rounded-full"></div>
           <div class="w-24 h-1.5 bg-blue-600 rounded-full"></div>
@@ -102,108 +87,71 @@ const nextStep = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle class="text-2xl">Workspace Configuration</CardTitle>
-          <CardDescription
-            >Set timezone, hours, and preferences</CardDescription
-          >
+          <CardTitle class="text-2xl">Invite Your Team</CardTitle>
+          <CardDescription>Add team members or skip for now</CardDescription>
         </CardHeader>
 
         <CardContent class="space-y-4">
-          <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-              <Label for="timezone">Timezone</Label>
-              <Select v-model="timezone">
-                <SelectTrigger id="timezone">
-                  <SelectValue placeholder="Select timezone" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem
-                    v-for="tz in timezones"
-                    :key="tz.value"
-                    :value="tz.value"
-                  >
-                    {{ tz.label }}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div class="space-y-2">
-              <Label for="currency">Currency</Label>
-              <Select v-model="currency">
-                <SelectTrigger id="currency">
-                  <SelectValue placeholder="Select currency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem
-                    v-for="cur in currencies"
-                    :key="cur.value"
-                    :value="cur.value"
-                  >
-                    {{ cur.label }}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div
+            v-for="(email, index) in organizationForm.inviteEmails"
+            :key="index"
+            class="flex gap-2"
+          >
+            <Input
+              v-model="organizationForm.inviteEmails[index]"
+              type="email"
+              placeholder="colleague@acme.com"
+              class="flex-1"
+            />
+            <Button
+              v-if="organizationForm.inviteEmails.length > 1"
+              variant="ghost"
+              size="icon"
+              @click="removeEmailField(index)"
+            >
+              <X class="w-4 h-4" />
+            </Button>
           </div>
 
-          <div class="space-y-2">
-            <Label>Working Hours</Label>
-            <div class="grid grid-cols-2 gap-4">
-              <Input v-model="workingHoursStart" type="time" />
-              <Input v-model="workingHoursEnd" type="time" />
-            </div>
-          </div>
+          <Button
+            @click="addEmailField"
+            variant="outline"
+            class="w-full"
+            size="sm"
+          >
+            <Plus class="w-4 h-4 mr-2" />
+            Add Another Email
+          </Button>
 
-          <div class="space-y-2">
-            <Label>Weekend Days</Label>
-            <div class="flex flex-wrap gap-2">
-              <Button
-                v-for="day in weekDays"
-                :key="day.value"
-                type="button"
-                size="sm"
-                @click="toggleWeekend(day.value)"
-                :variant="
-                  weekendDays.includes(day.value) ? 'default' : 'outline'
-                "
-              >
-                {{ day.label }}
-              </Button>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <Label>Logo (Optional)</Label>
-            <label class="cursor-pointer">
-              <div
-                class="border-2 border-dashed rounded-lg p-4 text-center hover:border-blue-400 transition-colors"
-              >
-                <Upload class="w-6 h-6 mx-auto text-muted-foreground mb-1" />
-                <p class="text-sm text-muted-foreground">Upload your logo</p>
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                class="hidden"
-                @change="handleLogoUpload"
-              />
-            </label>
-            <div v-if="logoPreview" class="mt-2">
-              <img
-                :src="logoPreview"
-                alt="Logo"
-                class="w-16 h-16 rounded object-cover"
-              />
-            </div>
+          <div
+            v-if="error"
+            class="p-3 bg-destructive/10 text-destructive rounded-md text-sm"
+          >
+            {{ error }}
           </div>
         </CardContent>
 
         <CardFooter class="flex justify-between">
-          <Button variant="ghost" @click="navigateTo('/onboarding/step-2')">
+          <Button
+            variant="ghost"
+            @click="navigateTo('/onboarding/step-2')"
+            :disabled="isLoading"
+          >
             Back
           </Button>
-          <Button @click="nextStep">Continue</Button>
+          <div class="flex gap-2">
+            <Button
+              variant="outline"
+              @click="skipAndComplete"
+              :disabled="isLoading"
+            >
+              Skip
+            </Button>
+            <Button @click="completeOnboarding" :disabled="isLoading">
+              <span v-if="isLoading">Creating...</span>
+              <span v-else>Complete Setup</span>
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     </div>
