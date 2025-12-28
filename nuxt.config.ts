@@ -11,6 +11,7 @@ export default defineNuxtConfig({
     "@nuxt/icon",
     "@nuxt/scripts",
     "shadcn-nuxt",
+    "@pinia/nuxt",
   ],
   nitro: {
     preset: "bun",
