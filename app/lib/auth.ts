@@ -18,4 +18,5 @@ export const authClient = createAuthClient({
     adminClient(),
     passkeyClient(),
   ],
+  baseURL: process.env.BETTER_AUTH_URL,
 });
