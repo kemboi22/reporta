@@ -23,7 +23,13 @@ const handleLogin = async () => {
       return;
     }
     if (data?.user) {
-      await navigateTo(`/dashboard`);
+      const session = authClient.useSession();
+      let organizations = session.value.data?.user?.organizations;
+      if (organizations && organizations?.length > 0) {
+        await navigateTo(`/${organizations[0]}/dashboard`);
+      } else {
+        await navigateTo(`/onboarding/step-1`);
+      }
       toast.success("Successfully signed in");
     }
   } catch (e) {

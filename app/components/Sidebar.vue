@@ -16,54 +16,33 @@ import {
   Check,
   Calendar as CalendarIcon,
   FolderKanban,
-  Building,
 } from "lucide-vue-next";
 import { authClient } from "~/lib/auth";
 defineProps<{
   collapsed: boolean;
 }>();
 
+const route = useRoute();
 const session = authClient.useSession();
-
 const expandedSections = ref<Record<string, boolean>>({});
 
 const toggleSection = (name: string) => {
   expandedSections.value[name] = !expandedSections.value[name];
 };
-
-const currentWorkspace = ref({
-  id: 1,
-  name: "Acme Hospital",
-  logo: null,
-  subdomain: "acme",
+const currentOrganization = computed(() => {
+  let organizations = session.value.data?.user.organizations;
+  if (organizations && organizations.length > 0) {
+    return organizations.find((org) => org.id == route.params.organizationId);
+  }
 });
 
-const otherWorkspaces = ref([
-  { id: 2, name: "City Medical Center", subdomain: "citymed", logo: null },
-  { id: 3, name: "Springfield Clinic", subdomain: "springfield", logo: null },
-]);
-
-const isSwitching = ref(false);
-const switchWorkspace = async (
-  workspaceId: number,
-  workspaceName: string,
-  subdomain: string,
-) => {
-  isSwitching.value = true;
-
-  // Simulate workspace switch with animation
-  await new Promise((resolve) => setTimeout(resolve, 800));
-
-  currentWorkspace.value = {
-    id: workspaceId,
-    name: workspaceName,
-    logo: null,
-    subdomain,
-  };
-
-  isSwitching.value = false;
-  await navigateTo("/dashboard");
-};
+const otherOrganizations = computed(() => {
+  let organizations = session.value.data?.user.organizations;
+  if (organizations && organizations.length > 0) {
+    return organizations.filter((org) => org.id != route.params.organizationId);
+  }
+  return [];
+});
 
 const navigationItems = [
   {
@@ -201,33 +180,24 @@ const navigationItems = [
           <Button
             variant="outline"
             class="w-full justify-between h-auto py-2.5 hover:bg-muted transition-all"
-            :disabled="isSwitching"
           >
             <div class="flex items-center gap-2.5 min-w-0">
               <Avatar class="h-7 w-7 shrink-0">
                 <AvatarFallback
                   class="bg-primary/10 text-primary text-xs font-semibold"
                 >
-                  {{ getInitials(currentWorkspace.name) }}
+                  {{ getInitials(currentOrganization?.name ?? "") }}
                 </AvatarFallback>
               </Avatar>
               <div class="flex flex-col items-start min-w-0">
                 <span
                   class="text-sm font-semibold text-foreground truncate w-full"
                 >
-                  {{ currentWorkspace.name }}
+                  {{ currentOrganization?.name ?? "" }}
                 </span>
-                <span class="text-xs text-muted-foreground">{{
-                  currentWorkspace.subdomain
-                }}</span>
               </div>
             </div>
-            <ChevronDown
-              :class="[
-                'h-4 w-4 text-muted-foreground',
-                isSwitching && 'animate-spin',
-              ]"
-            />
+            <ChevronDown :class="['h-4 w-4 text-muted-foreground']" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent class="w-64" align="start">
@@ -242,15 +212,12 @@ const navigationItems = [
                 <AvatarFallback
                   class="bg-primary/10 text-primary text-sm font-semibold"
                 >
-                  {{ getInitials(currentWorkspace.name) }}
+                  {{ getInitials(currentOrganization?.name ?? "") }}
                 </AvatarFallback>
               </Avatar>
               <div class="flex-1 min-w-0">
                 <div class="text-sm font-semibold text-foreground truncate">
-                  {{ currentWorkspace.name }}
-                </div>
-                <div class="text-xs text-muted-foreground">
-                  {{ currentWorkspace.subdomain }}
+                  {{ currentOrganization?.name }}
                 </div>
               </div>
               <Check class="h-4 w-4 text-primary" />
@@ -265,11 +232,10 @@ const navigationItems = [
 
           <!-- Other Workspaces -->
           <DropdownMenuItem
-            v-for="workspace in otherWorkspaces"
+            v-for="workspace in otherOrganizations"
             :key="workspace.id"
-            @click="
-              switchWorkspace(workspace.id, workspace.name, workspace.subdomain)
-            "
+            :as="NuxtLink"
+            :to="`/${workspace.id}/dashboard`"
             class="py-3 cursor-pointer"
           >
             <div class="flex items-center gap-3 w-full">
@@ -285,7 +251,7 @@ const navigationItems = [
                   {{ workspace.name }}
                 </div>
                 <div class="text-xs text-muted-foreground">
-                  {{ workspace.subdomain }}
+                  {{ workspace.slug }}
                 </div>
               </div>
             </div>
@@ -299,7 +265,7 @@ const navigationItems = [
             class="py-2.5"
           >
             <Plus class="h-4 w-4 mr-2 text-primary" />
-            <span class="font-medium text-primary">Create Workspace</span>
+            <span class="font-medium text-primary">Create Organization</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -346,9 +312,8 @@ const navigationItems = [
                 :key="child.name"
                 variant="ghost"
                 class="w-full justify-start text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
-                @click="navigateTo(child.href)"
                 :as="NuxtLink"
-                :to="child.href"
+                :to="`/${currentOrganization?.id}${child.href}`"
               >
                 {{ child.name }}
               </Button>
@@ -364,7 +329,7 @@ const navigationItems = [
               collapsed && 'justify-center px-2',
             ]"
             :as="NuxtLink"
-            :to="item.href"
+            :to="`/${currentOrganization?.id}${item.href}`"
           >
             <div class="relative">
               <component
