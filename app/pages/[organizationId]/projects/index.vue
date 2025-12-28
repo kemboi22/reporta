@@ -31,6 +31,7 @@ const state = ref({
   selectedProject: null as any,
   showAddTeammateSheet: false,
   loading: false,
+  showStats: true,
 });
 
 const form = ref({
@@ -190,8 +191,50 @@ const saveProject = async () => {
   }
 };
 
-const addTeammate = () => {
-  state.value.showAddTeamSheet = false;
+const addTeamMember = async () => {
+  try {
+    state.value.loading = true;
+
+    await $fetch(
+      `/api/${organizationId}/projects/${state.value.selectedProject?.id}/members`,
+      {
+        method: "POST",
+        body: {
+          userId: addTeamForm.value.userId,
+          role: addTeamForm.value.role,
+        },
+      },
+    );
+
+    state.value.showAddTeamSheet = false;
+    addTeamForm.value = { userId: "", role: "MEMBER" };
+
+    await refreshNuxtData(`projects-${organizationId}`);
+  } catch (error) {
+    console.error("Failed to add team member:", error);
+  } finally {
+    state.value.loading = false;
+  }
+};
+
+const addTeamForm = ref({
+  userId: "",
+  role: "MEMBER" as "OWNER" | "ADMIN" | "MEMBER" | "VIEWER",
+});
+
+const removeTeamMember = async (memberId: string) => {
+  try {
+    await $fetch(
+      `/api/${organizationId}/projects/${state.value.selectedProject?.id}/members/${memberId}`,
+      {
+        method: "DELETE",
+      },
+    );
+
+    await refreshNuxtData(`projects-${organizationId}`);
+  } catch (error) {
+    console.error("Failed to remove team member:", error);
+  }
 };
 </script>
 
@@ -209,6 +252,78 @@ const addTeammate = () => {
         New Project
       </Button>
     </div>
+
+    <Card v-if="state.showStats" class="border border-primary/10">
+      <CardContent class="p-3">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xs font-semibold text-foreground">Project Overview</h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            class="h-6 w-6 p-0"
+            @click="state.showStats = false"
+          >
+            <X class="h-3 w-3" />
+          </Button>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="flex items-center gap-2">
+            <div
+              class="h-8 w-8 rounded-md bg-blue-500/10 flex items-center justify-center"
+            >
+              <FolderKanban class="h-3.5 w-3.5 text-blue-500" />
+            </div>
+            <div>
+              <p class="text-lg font-bold">{{ projects?.length || 0 }}</p>
+              <p class="text-[10px] text-muted-foreground">Total</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <div
+              class="h-8 w-8 rounded-md bg-emerald-500/10 flex items-center justify-center"
+            >
+              <CheckCircle2 class="h-3.5 w-3.5 text-emerald-500" />
+            </div>
+            <div>
+              <p class="text-lg font-bold text-emerald-600">
+                {{
+                  projects?.filter((p) => p.status === "COMPLETED").length || 0
+                }}
+              </p>
+              <p class="text-[10px] text-muted-foreground">Completed</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <div
+              class="h-8 w-8 rounded-md bg-amber-500/10 flex items-center justify-center"
+            >
+              <Clock class="h-3.5 w-3.5 text-amber-500" />
+            </div>
+            <div>
+              <p class="text-lg font-bold text-amber-600">
+                {{ projects?.filter((p) => p.status === "ACTIVE").length || 0 }}
+              </p>
+              <p class="text-[10px] text-muted-foreground">Active</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <div
+              class="h-8 w-8 rounded-md bg-slate-500/10 flex items-center justify-center"
+            >
+              <AlertCircle class="h-3.5 w-3.5 text-slate-500" />
+            </div>
+            <div>
+              <p class="text-lg font-bold text-slate-600">
+                {{
+                  projects?.filter((p) => p.status === "ON_HOLD").length || 0
+                }}
+              </p>
+              <p class="text-[10px] text-muted-foreground">On Hold</p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
 
     <Card>
       <CardContent class="p-4">
@@ -281,11 +396,15 @@ const addTeammate = () => {
     </Card>
 
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <Card
+      <NuxtLink
         v-for="project in getFilteredProjects()"
         :key="project.id"
-        class="hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 cursor-pointer group border-2 hover:border-primary/30"
+        :to="`/${organizationId}/projects/${project.id}`"
+        class="group"
       >
+        <Card
+          class="h-full hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 cursor-pointer border-2 hover:border-primary/30"
+        >
         <CardContent class="p-6">
           <div class="flex items-start justify-between mb-5">
             <div class="flex items-center gap-4">
@@ -417,10 +536,22 @@ const addTeammate = () => {
             </div>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </NuxtLink>
     </div>
 
-    <div class="grid md:grid-cols-4 gap-5">
+    <Button
+      v-if="!state.showStats"
+      variant="outline"
+      size="sm"
+      @click="state.showStats = true"
+      class="w-full"
+    >
+      <FolderKanban class="h-4 w-4 mr-2" />
+      Show Stats
+    </Button>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
       <Card class="hover:shadow-lg transition-shadow">
         <CardContent class="p-6">
           <div class="flex items-center gap-4 mb-3">
@@ -674,25 +805,41 @@ const addTeammate = () => {
         </SheetHeader>
         <div class="space-y-5 px-6 py-4">
           <div class="space-y-2">
-            <Label for="member-email">Email Address</Label>
-            <Input
-              id="member-email"
-              type="email"
-              placeholder="colleague@company.com"
-            />
+            <Label for="member-select">Select Member</Label>
+            <Select v-model="addTeamForm.userId">
+              <SelectTrigger id="member-select">
+                <SelectValue placeholder="Choose a team member" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem
+                  v-for="member in teamMembers"
+                  :key="member.userId"
+                  :value="member.userId"
+                >
+                  <div class="flex items-center gap-2">
+                    <Avatar class="h-5 w-5">
+                      <AvatarImage :src="member.photo" />
+                      <AvatarFallback class="text-[10px] bg-primary/10 text-primary">
+                        {{ getInitials(member.name) }}
+                      </AvatarFallback>
+                    </Avatar>
+                    {{ member.name }}
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div class="space-y-2">
             <Label for="member-role">Role</Label>
-            <Select>
-              <SelectTrigger>
+            <Select v-model="addTeamForm.role">
+              <SelectTrigger id="member-role">
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="lead">Project Lead</SelectItem>
-                <SelectItem value="developer">Developer</SelectItem>
-                <SelectItem value="designer">Designer</SelectItem>
-                <SelectItem value="qa">QA Engineer</SelectItem>
-                <SelectItem value="contributor">Contributor</SelectItem>
+                <SelectItem value="OWNER">Owner</SelectItem>
+                <SelectItem value="ADMIN">Admin</SelectItem>
+                <SelectItem value="MEMBER">Member</SelectItem>
+                <SelectItem value="VIEWER">Viewer</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -712,12 +859,20 @@ const addTeammate = () => {
                     {{ getInitials(member.user?.name || "") }}
                   </AvatarFallback>
                 </Avatar>
-                <div class="flex-1 flex items-center justify-between">
-                  <span class="text-sm">{{ member.user?.name }}</span>
-                  <Button variant="ghost" size="sm" class="h-7 text-destructive"
-                    >Remove</Button
-                  >
+                <div class="flex-1">
+                  <div class="text-sm font-medium">{{ member.user?.name }}</div>
+                  <Badge variant="outline" class="text-xs mt-1">
+                    {{ member.role }}
+                  </Badge>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  class="h-7 text-destructive"
+                  @click="removeTeamMember(member.id)"
+                >
+                  Remove
+                </Button>
               </div>
             </div>
           </div>
@@ -727,11 +882,12 @@ const addTeammate = () => {
             variant="outline"
             @click="state.showAddTeamSheet = false"
             class="h-11 px-6"
-            >Cancel</Button
           >
-          <Button @click="addTeammate" class="h-11 px-6">
+            Cancel
+          </Button>
+          <Button @click="addTeamMember" class="h-11 px-6" :disabled="!addTeamForm.userId || state.loading">
             <Plus class="h-4 w-4 mr-1.5" />
-            Add Member
+            {{ state.loading ? "Adding..." : "Add Member" }}
           </Button>
         </SheetFooter>
       </SheetContent>

@@ -1,155 +1,45 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { useRoute } from "vue-router";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
-import { FolderKanban, Users, Calendar, CheckCircle2, Circle, AlertCircle, Plus, MoreVertical, Timer } from "lucide-vue-next";
-import { definePageMeta } from "#imports";
+import {
+  FolderKanban,
+  Users,
+  Calendar,
+  CheckCircle2,
+  Circle,
+  AlertCircle,
+  Plus,
+  MoreVertical,
+  Timer,
+  ArrowLeft,
+  X,
+} from "lucide-vue-next";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 definePageMeta({
   layout: "dashboard",
 });
 
 const route = useRoute();
+const organizationId = route.params.organizationId as string;
+const projectId = route.params.id as string;
 
-const project = ref({
-  id: route.params.id,
-  name: "Website Redesign",
-  slug: "website-redesign",
-  description: "Complete redesign of company website with modern UI/UX",
-  status: "ACTIVE" as const,
-  priority: "HIGH" as const,
-  startDate: new Date("2024-01-01"),
-  endDate: new Date("2024-06-30"),
-  budget: 50000,
-  currency: "USD",
-  color: "#3b82f6",
-  icon: "🎨",
-});
+const { data: project, pending: projectPending, refresh: refreshProject } = await useLazyFetch(
+  `/api/${organizationId}/projects/${projectId}`,
+  {
+    key: `project-${projectId}`,
+  },
+);
 
-const tasks = ref([
-  {
-    id: "1",
-    title: "Design homepage mockup",
-    description: "Create initial design concepts for homepage",
-    status: "COMPLETED" as const,
-    priority: "HIGH" as const,
-    dueDate: new Date("2024-02-15"),
-    assignees: [
-      { id: "1", name: "Alice", avatar: "/placeholder-user.jpg" },
-    ],
-    estimatedHours: 16,
-    actualHours: 18,
-  },
-  {
-    id: "2",
-    title: "Implement responsive design",
-    description: "Make design mobile-responsive",
-    status: "IN_PROGRESS" as const,
-    priority: "HIGH" as const,
-    dueDate: new Date("2024-03-01"),
-    assignees: [
-      { id: "2", name: "Bob", avatar: "/placeholder-user.jpg" },
-      { id: "3", name: "Charlie", avatar: "/placeholder-user.jpg" },
-    ],
-    estimatedHours: 24,
-    actualHours: 12,
-  },
-  {
-    id: "3",
-    title: "Setup CI/CD pipeline",
-    description: "Configure automated deployment",
-    status: "TODO" as const,
-    priority: "MEDIUM" as const,
-    dueDate: new Date("2024-03-15"),
-    assignees: [
-      { id: "4", name: "David", avatar: "/placeholder-user.jpg" },
-    ],
-    estimatedHours: 8,
-    actualHours: 0,
-  },
-  {
-    id: "4",
-    title: "Write API documentation",
-    description: "Document all API endpoints",
-    status: "TODO" as const,
-    priority: "LOW" as const,
-    dueDate: new Date("2024-04-01"),
-    assignees: [],
-    estimatedHours: 12,
-    actualHours: 0,
-  },
-]);
-
-const teamMembers = ref([
-  {
-    id: "1",
-    name: "Alice",
-    email: "alice@example.com",
-    avatar: "/placeholder-user.jpg",
-    role: "OWNER",
-  },
-  {
-    id: "2",
-    name: "Bob",
-    email: "bob@example.com",
-    avatar: "/placeholder-user.jpg",
-    role: "ADMIN",
-  },
-  {
-    id: "3",
-    name: "Charlie",
-    email: "charlie@example.com",
-    avatar: "/placeholder-user.jpg",
-    role: "MEMBER",
-  },
-  {
-    id: "4",
-    name: "David",
-    email: "david@example.com",
-    avatar: "/placeholder-user.jpg",
-    role: "MEMBER",
-  },
-]);
-
-const milestones = ref([
-  {
-    id: "1",
-    name: "Design Phase Complete",
-    dueDate: new Date("2024-02-28"),
-    status: "COMPLETED" as const,
-  },
-  {
-    id: "2",
-    name: "Development Sprint 1",
-    dueDate: new Date("2024-03-31"),
-    status: "IN_PROGRESS" as const,
-  },
-  {
-    id: "3",
-    name: "Beta Launch",
-    dueDate: new Date("2024-05-15"),
-    status: "PLANNED" as const,
-  },
-  {
-    id: "4",
-    name: "Final Release",
-    dueDate: new Date("2024-06-30"),
-    status: "PLANNED" as const,
-  },
-]);
+const tasks = computed(() => project.value?.tasks || []);
+const members = computed(() => project.value?.members || []);
+const milestones = computed(() => project.value?.milestones || []);
 
 const showAddTask = ref(false);
-const showAddMember = ref(false);
 
 const newTask = ref({
   title: "",
@@ -159,19 +49,31 @@ const newTask = ref({
   estimatedHours: "",
 });
 
-const newMember = ref({
-  email: "",
-  role: "MEMBER",
-});
+const addTask = async () => {
+  try {
+    await $fetch(`/api/${organizationId}/tasks`, {
+      method: "POST",
+      body: {
+        ...newTask.value,
+        workspaceId: project.value?.workspaceId,
+        projectId,
+        estimatedHours: parseFloat(newTask.value.estimatedHours) || null,
+      },
+    });
 
-const addTask = () => {
-  console.log("Adding task:", newTask.value);
-  showAddTask.value = false;
-};
+    newTask.value = {
+      title: "",
+      description: "",
+      priority: "MEDIUM",
+      dueDate: "",
+      estimatedHours: "",
+    };
+    showAddTask.value = false;
 
-const addMember = () => {
-  console.log("Adding member:", newMember.value);
-  showAddMember.value = false;
+    await refreshProject();
+  } catch (error) {
+    console.error("Failed to add task:", error);
+  }
 };
 
 const getStatusColor = (status: string) => {
@@ -206,10 +108,10 @@ const getPriorityColor = (priority: string) => {
 
 const taskStats = computed(() => {
   return {
-    total: tasks.value.length,
-    completed: tasks.value.filter((t) => t.status === "COMPLETED").length,
-    inProgress: tasks.value.filter((t) => t.status === "IN_PROGRESS").length,
-    todo: tasks.value.filter((t) => t.status === "TODO").length,
+    total: tasks.value?.length || 0,
+    completed: tasks.value?.filter((t) => t.status === "COMPLETED").length || 0,
+    inProgress: tasks.value?.filter((t) => t.status === "IN_PROGRESS").length || 0,
+    todo: tasks.value?.filter((t) => t.status === "TODO").length || 0,
   };
 });
 
@@ -222,20 +124,12 @@ const completionPercentage = computed(() => {
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <div class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-2xl">
-          {{ project.icon }}
-        </div>
-        <div>
-          <h1 class="text-3xl font-bold text-foreground flex items-center gap-2">
-            {{ project.name }}
-            <Badge :class="[getStatusColor(project.status), 'text-white']">
-              {{ project.status }}
-            </Badge>
-          </h1>
-          <p class="text-muted-foreground mt-1">{{ project.description }}</p>
-        </div>
-      </div>
+      <NuxtLink :to="`/${organizationId}/projects`">
+        <Button variant="ghost" size="sm" class="gap-2">
+          <ArrowLeft class="h-4 w-4" />
+          Back to Projects
+        </Button>
+      </NuxtLink>
       <div class="flex items-center gap-3">
         <Button variant="outline">Settings</Button>
         <Button>
@@ -245,131 +139,152 @@ const completionPercentage = computed(() => {
       </div>
     </div>
 
-    <div class="grid md:grid-cols-4 gap-6">
-      <Card class="border-border">
-        <CardContent class="p-6">
-          <div class="flex items-center gap-3">
-            <div class="h-12 w-12 rounded-lg bg-blue-500/10 flex items-center justify-center">
-              <CheckCircle2 class="h-6 w-6 text-blue-500" />
-            </div>
-            <div>
-              <p class="text-sm text-muted-foreground">Progress</p>
-              <p class="text-2xl font-bold">{{ completionPercentage }}%</p>
-              <Progress :value="completionPercentage" class="mt-2" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      <Card class="border-border">
-        <CardContent class="p-6">
-          <div class="flex items-center gap-3">
-            <div class="h-12 w-12 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <FolderKanban class="h-6 w-6 text-emerald-500" />
-            </div>
-            <div>
-              <p class="text-sm text-muted-foreground">Total Tasks</p>
-              <p class="text-2xl font-bold">{{ taskStats.total }}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      <Card class="border-border">
-        <CardContent class="p-6">
-          <div class="flex items-center gap-3">
-            <div class="h-12 w-12 rounded-lg bg-purple-500/10 flex items-center justify-center">
-              <Users class="h-6 w-6 text-purple-500" />
-            </div>
-            <div>
-              <p class="text-sm text-muted-foreground">Team Size</p>
-              <p class="text-2xl font-bold">{{ teamMembers.length }}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      <Card class="border-border">
-        <CardContent class="p-6">
-          <div class="flex items-center gap-3">
-            <div class="h-12 w-12 rounded-lg bg-amber-500/10 flex items-center justify-center">
-              <Calendar class="h-6 w-6 text-amber-500" />
-            </div>
-            <div>
-              <p class="text-sm text-muted-foreground">Due Date</p>
-              <p class="text-lg font-bold">{{ project.endDate.toLocaleDateString() }}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div v-if="projectPending" class="animate-pulse space-y-4">
+      <div class="h-20 bg-muted rounded-lg" />
+      <div class="grid md:grid-cols-4 gap-6">
+        <div v-for="i in 4" :key="i" class="h-24 bg-muted rounded-lg" />
+      </div>
     </div>
 
-    <Tabs default-value="tasks" class="space-y-6">
-      <TabsList>
-        <TabsTrigger value="tasks">Tasks</TabsTrigger>
-        <TabsTrigger value="team">Team</TabsTrigger>
-        <TabsTrigger value="milestones">Milestones</TabsTrigger>
-        <TabsTrigger value="overview">Overview</TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="tasks" class="space-y-6">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <Badge variant="outline">{{ taskStats.todo }} TODO</Badge>
-            <Badge variant="outline">{{ taskStats.inProgress }} In Progress</Badge>
-            <Badge variant="outline">{{ taskStats.completed }} Completed</Badge>
-          </div>
-          <Dialog v-model:open="showAddTask">
-            <DialogTrigger as-child>
-              <Button>
-                <Plus class="h-4 w-4 mr-2" />
-                New Task
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Task</DialogTitle>
-              </DialogHeader>
-              <div class="space-y-4">
-                <div>
-                  <Label for="task-title">Title</Label>
-                  <Input id="task-title" v-model="newTask.title" placeholder="Task title" />
-                </div>
-                <div>
-                  <Label for="task-desc">Description</Label>
-                  <Textarea id="task-desc" v-model="newTask.description" placeholder="Task description" />
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label for="task-priority">Priority</Label>
-                    <Select v-model="newTask.priority">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="LOW">Low</SelectItem>
-                        <SelectItem value="MEDIUM">Medium</SelectItem>
-                        <SelectItem value="HIGH">High</SelectItem>
-                        <SelectItem value="URGENT">Urgent</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label for="task-hours">Est. Hours</Label>
-                    <Input id="task-hours" v-model="newTask.estimatedHours" type="number" placeholder="8" />
-                  </div>
-                </div>
-                <div>
-                  <Label for="task-due">Due Date</Label>
-                  <Input id="task-due" type="date" v-model="newTask.dueDate" />
-                </div>
-                <Button @click="addTask" class="w-full">Create Task</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+    <div v-else-if="project" class="space-y-6">
+      <div class="flex items-center gap-4">
+        <div
+          class="h-12 w-12 rounded-lg flex items-center justify-center text-2xl"
+          :style="{ backgroundColor: project.color || '#3b82f6' }"
+        >
+          {{ project.icon || "📁" }}
         </div>
+        <div class="flex-1">
+          <h1 class="text-3xl font-bold text-foreground flex items-center gap-2">
+            {{ project.name }}
+            <Badge :class="[getStatusColor(project.status), 'text-white']">
+              {{ project.status?.replace("_", "-")?.toLowerCase() }}
+            </Badge>
+          </h1>
+          <p class="text-muted-foreground mt-1">
+            {{ project.description || "No description" }}
+          </p>
+        </div>
+      </div>
 
-        <div class="grid lg:grid-cols-3 gap-6">
-          <div class="lg:col-span-2 space-y-4">
+      <div class="grid md:grid-cols-4 gap-6">
+        <Card class="border-border">
+          <CardContent class="p-6">
+            <div class="flex items-center gap-3">
+              <div class="h-12 w-12 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <CheckCircle2 class="h-6 w-6 text-blue-500" />
+              </div>
+              <div>
+                <p class="text-sm text-muted-foreground">Progress</p>
+                <p class="text-2xl font-bold">{{ completionPercentage }}%</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card class="border-border">
+          <CardContent class="p-6">
+            <div class="flex items-center gap-3">
+              <div class="h-12 w-12 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <FolderKanban class="h-6 w-6 text-emerald-500" />
+              </div>
+              <div>
+                <p class="text-sm text-muted-foreground">Tasks</p>
+                <p class="text-2xl font-bold">{{ taskStats.total }}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card class="border-border">
+          <CardContent class="p-6">
+            <div class="flex items-center gap-3">
+              <div class="h-12 w-12 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                <Users class="h-6 w-6 text-purple-500" />
+              </div>
+              <div>
+                <p class="text-sm text-muted-foreground">Team</p>
+                <p class="text-2xl font-bold">{{ members?.length || 0 }}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card class="border-border">
+          <CardContent class="p-6">
+            <div class="flex items-center gap-3">
+              <div class="h-12 w-12 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                <Calendar class="h-6 w-6 text-amber-500" />
+              </div>
+              <div>
+                <p class="text-sm text-muted-foreground">Due</p>
+                <p class="text-lg font-bold">
+                  {{ project.endDate ? new Date(project.endDate).toLocaleDateString() : "No date" }}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div class="grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold">Tasks</h2>
+            <Dialog v-model:open="showAddTask">
+              <DialogTrigger as-child>
+                <Button size="sm">
+                  <Plus class="h-4 w-4 mr-2" />
+                  New Task
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create Task</DialogTitle>
+                </DialogHeader>
+                <div class="space-y-4">
+                  <div>
+                    <Label>Title</Label>
+                    <Input v-model="newTask.title" placeholder="Task title" />
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Textarea v-model="newTask.description" placeholder="Task description" rows="3" />
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Priority</Label>
+                      <Select v-model="newTask.priority">
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="LOW">Low</SelectItem>
+                          <SelectItem value="MEDIUM">Medium</SelectItem>
+                          <SelectItem value="HIGH">High</SelectItem>
+                          <SelectItem value="URGENT">Urgent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Est. Hours</Label>
+                      <Input v-model="newTask.estimatedHours" type="number" placeholder="8" />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Due Date</Label>
+                    <Input v-model="newTask.dueDate" type="date" />
+                  </div>
+                  <Button @click="addTask" class="w-full">Create Task</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div v-if="projectPending" class="space-y-4">
+            <div v-for="i in 3" :key="i" class="h-24 bg-muted rounded-lg animate-pulse" />
+          </div>
+
+          <div v-else class="space-y-4">
             <Card
-              v-for="task in tasks"
+              v-for="task in tasks || []"
               :key="task.id"
               class="border-border hover:border-primary/50 transition-colors cursor-pointer"
             >
@@ -384,35 +299,22 @@ const completionPercentage = computed(() => {
                     <div class="flex items-start justify-between gap-4">
                       <div>
                         <h3 class="font-semibold text-lg">{{ task.title }}</h3>
-                        <p class="text-sm text-muted-foreground mt-1">{{ task.description }}</p>
+                        <p class="text-sm text-muted-foreground mt-1">
+                          {{ task.description || "No description" }}
+                        </p>
                       </div>
-                      <div class="flex items-center gap-2">
-                        <Badge :class="[getStatusColor(task.status), 'text-white']">
-                          {{ task.status }}
-                        </Badge>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical class="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <Badge :class="[getStatusColor(task.status), 'text-white']">
+                        {{ task.status?.replace("_", "-")?.toLowerCase() }}
+                      </Badge>
                     </div>
-                    <div class="flex items-center gap-4 mt-4">
-                      <div class="flex items-center gap-2">
-                        <Calendar class="h-4 w-4 text-muted-foreground" />
-                        <span class="text-sm text-muted-foreground">
-                          Due {{ task.dueDate.toLocaleDateString() }}
-                        </span>
+                    <div class="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
+                      <div v-if="task.dueDate" class="flex items-center gap-2">
+                        <Calendar class="h-4 w-4" />
+                        {{ new Date(task.dueDate).toLocaleDateString() }}
                       </div>
-                      <div class="flex items-center gap-2">
-                        <Timer class="h-4 w-4 text-muted-foreground" />
-                        <span class="text-sm text-muted-foreground">
-                          {{ task.actualHours }}/{{ task.estimatedHours }}h
-                        </span>
-                      </div>
-                      <div class="flex -space-x-2">
-                        <Avatar v-for="assignee in task.assignees" :key="assignee.id" class="h-6 w-6 border-2 border-background">
-                          <AvatarImage :src="assignee.avatar" />
-                          <AvatarFallback class="text-xs">{{ assignee.name.charAt(0) }}</AvatarFallback>
-                        </Avatar>
+                      <div v-if="task.estimatedHours" class="flex items-center gap-2">
+                        <Timer class="h-4 w-4" />
+                        {{ task.actualHours || 0 }}/{{ task.estimatedHours }}h
                       </div>
                     </div>
                   </div>
@@ -420,10 +322,12 @@ const completionPercentage = computed(() => {
               </CardContent>
             </Card>
           </div>
+        </div>
 
-          <Card class="border-border">
+        <div class="space-y-6">
+          <Card>
             <CardHeader>
-              <CardTitle>Task Breakdown</CardTitle>
+              <CardTitle class="text-lg">Progress</CardTitle>
             </CardHeader>
             <CardContent>
               <div class="space-y-4">
@@ -434,212 +338,61 @@ const completionPercentage = computed(() => {
                   </div>
                   <Progress :value="completionPercentage" class="h-2" />
                 </div>
-                <div class="space-y-2">
+                <div class="space-y-2 text-sm">
                   <div class="flex items-center gap-2">
                     <div class="h-2 w-2 rounded-full bg-emerald-500"></div>
-                    <span class="text-sm">Completed</span>
-                    <span class="text-sm font-medium ml-auto">{{ taskStats.completed }}</span>
+                    <span>Completed</span>
+                    <span class="font-medium ml-auto">{{ taskStats.completed }}</span>
                   </div>
                   <div class="flex items-center gap-2">
                     <div class="h-2 w-2 rounded-full bg-blue-500"></div>
-                    <span class="text-sm">In Progress</span>
-                    <span class="text-sm font-medium ml-auto">{{ taskStats.inProgress }}</span>
+                    <span>In Progress</span>
+                    <span class="font-medium ml-auto">{{ taskStats.inProgress }}</span>
                   </div>
                   <div class="flex items-center gap-2">
                     <div class="h-2 w-2 rounded-full bg-gray-500"></div>
-                    <span class="text-sm">TODO</span>
-                    <span class="text-sm font-medium ml-auto">{{ taskStats.todo }}</span>
+                    <span>TODO</span>
+                    <span class="font-medium ml-auto">{{ taskStats.todo }}</span>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </div>
-      </TabsContent>
 
-      <TabsContent value="team" class="space-y-6">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-semibold">Team Members</h2>
-          <Dialog v-model:open="showAddMember">
-            <DialogTrigger as-child>
-              <Button>
-                <Plus class="h-4 w-4 mr-2" />
-                Add Member
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Team Member</DialogTitle>
-              </DialogHeader>
-              <div class="space-y-4">
-                <div>
-                  <Label for="member-email">Email</Label>
-                  <Input id="member-email" type="email" v-model="newMember.email" placeholder="member@email.com" />
-                </div>
-                <div>
-                  <Label for="member-role">Role</Label>
-                  <Select v-model="newMember.role">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="OWNER">Owner</SelectItem>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
-                      <SelectItem value="MEMBER">Member</SelectItem>
-                      <SelectItem value="VIEWER">Viewer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button @click="addMember" class="w-full">Add Member</Button>
+          <Card>
+            <CardHeader>
+              <CardTitle class="text-lg">Team</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div v-if="projectPending" class="space-y-3">
+                <div v-for="i in 3" :key="i" class="h-12 bg-muted rounded animate-pulse" />
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card
-            v-for="member in teamMembers"
-            :key="member.id"
-            class="border-border"
-          >
-            <CardContent class="p-6">
-              <div class="flex items-center gap-4">
-                <Avatar class="h-12 w-12">
-                  <AvatarImage :src="member.avatar" />
-                  <AvatarFallback>{{ member.name.charAt(0) }}</AvatarFallback>
-                </Avatar>
-                <div class="flex-1">
-                  <h4 class="font-semibold">{{ member.name }}</h4>
-                  <p class="text-sm text-muted-foreground">{{ member.email }}</p>
-                  <Badge :class="[getStatusColor(member.role), 'text-white mt-2']">
-                    {{ member.role }}
-                  </Badge>
-                </div>
-                <Button variant="ghost" size="icon">
-                  <MoreVertical class="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </TabsContent>
-
-      <TabsContent value="milestones" class="space-y-6">
-        <h2 class="text-xl font-semibold">Project Milestones</h2>
-        <div class="space-y-4">
-          <Card
-            v-for="milestone in milestones"
-            :key="milestone.id"
-            class="border-border"
-          >
-            <CardContent class="p-6">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                  <div
-                    class="h-8 w-8 rounded-full flex items-center justify-center"
-                    :class="[
-                      milestone.status === 'COMPLETED' ? 'bg-emerald-500' : milestone.status === 'IN_PROGRESS' ? 'bg-blue-500' : 'bg-gray-500'
-                    ]"
-                  >
-                    <CheckCircle2 v-if="milestone.status === 'COMPLETED'" class="h-4 w-4 text-white" />
-                    <Timer v-else-if="milestone.status === 'IN_PROGRESS'" class="h-4 w-4 text-white" />
-                    <Circle v-else class="h-4 w-4 text-white" />
-                  </div>
-                  <div>
-                    <h4 class="font-semibold">{{ milestone.name }}</h4>
-                    <div class="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <Calendar class="h-3 w-3" />
-                      <span>Due {{ milestone.dueDate.toLocaleDateString() }}</span>
+              <div v-else class="space-y-3">
+                <div
+                  v-for="member in members || []"
+                  :key="member.id"
+                  class="flex items-center gap-3"
+                >
+                  <Avatar class="h-8 w-8">
+                    <AvatarImage :src="member.user?.avatar" />
+                    <AvatarFallback class="text-xs">
+                      {{ getInitials(member.user?.name || "") }}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium truncate">
+                      {{ member.user?.name }}
                     </div>
+                    <Badge variant="outline" class="text-xs mt-1">
+                      {{ member.role }}
+                    </Badge>
                   </div>
                 </div>
-                <Badge :class="[getStatusColor(milestone.status), 'text-white']">
-                  {{ milestone.status }}
-                </Badge>
               </div>
             </CardContent>
           </Card>
         </div>
-      </TabsContent>
-
-      <TabsContent value="overview" class="space-y-6">
-        <h2 class="text-xl font-semibold">Project Overview</h2>
-        <Card class="border-border">
-          <CardHeader>
-            <CardTitle>Project Details</CardTitle>
-          </CardHeader>
-          <CardContent class="space-y-4">
-            <div class="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label>Project Name</Label>
-                <Input :value="project.name" />
-              </div>
-              <div>
-                <Label>Slug</Label>
-                <Input :value="project.slug" />
-              </div>
-              <div class="md:col-span-2">
-                <Label>Description</Label>
-                <Textarea :value="project.description" />
-              </div>
-              <div>
-                <Label>Status</Label>
-                <Select :value="project.status">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PLANNING">Planning</SelectItem>
-                    <SelectItem value="ACTIVE">Active</SelectItem>
-                    <SelectItem value="ON_HOLD">On Hold</SelectItem>
-                    <SelectItem value="COMPLETED">Completed</SelectItem>
-                    <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Priority</Label>
-                <Select :value="project.priority">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="LOW">Low</SelectItem>
-                    <SelectItem value="MEDIUM">Medium</SelectItem>
-                    <SelectItem value="HIGH">High</SelectItem>
-                    <SelectItem value="URGENT">Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Start Date</Label>
-                <Input :value="project.startDate.toISOString().split('T')[0]" type="date" />
-              </div>
-              <div>
-                <Label>End Date</Label>
-                <Input :value="project.endDate.toISOString().split('T')[0]" type="date" />
-              </div>
-              <div>
-                <Label>Budget</Label>
-                <div class="flex">
-                  <Input :value="project.budget" type="number" />
-                  <Select :value="project.currency">
-                    <SelectTrigger class="w-24">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USD">USD</SelectItem>
-                      <SelectItem value="EUR">EUR</SelectItem>
-                      <SelectItem value="GBP">GBP</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-            <Button>Save Changes</Button>
-          </CardContent>
-        </Card>
-      </TabsContent>
-    </Tabs>
+      </div>
+    </div>
   </div>
 </template>
