@@ -2,6 +2,7 @@
 
 <template>
   <div class="min-h-screen bg-background">
+    <Toaster />
     <LayoutsAppNavbar />
     <div>
       <slot />

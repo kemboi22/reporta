@@ -1,16 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { Button } from "@/components/ui/button";
-import ThemeToggle from "./ThemeToggle.vue";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Menu,
   Search,
@@ -24,10 +12,12 @@ import {
   FileText,
   Upload,
 } from "lucide-vue-next";
+import { authClient } from "~/lib/auth";
 
 defineEmits(["toggle-sidebar"]);
 
 const isOnDuty = ref(false);
+const session = authClient.useSession();
 
 const currentWorkspace = ref({
   name: "Acme Corporation",
@@ -37,6 +27,15 @@ const currentWorkspace = ref({
 
 const toggleClockStatus = () => {
   isOnDuty.value = !isOnDuty.value;
+};
+const logout = async () => {
+  await authClient.signOut({
+    fetchOptions: {
+      async onSuccess(context) {
+        await navigateTo("/auth/login");
+      },
+    },
+  });
 };
 
 const recentNotifications = [
@@ -65,10 +64,6 @@ const recentNotifications = [
     unread: false,
   },
 ];
-
-const navigateTo = (path: string) => {
-  // Implement navigation logic here
-};
 </script>
 
 <template>
@@ -90,10 +85,7 @@ const navigateTo = (path: string) => {
         <Search
           class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
         />
-        <Input
-          placeholder="Search anything..."
-          class="pl-10 w-64 lg:w-96"
-        />
+        <Input placeholder="Search anything..." class="pl-10 w-64 lg:w-96" />
       </div>
     </div>
 
@@ -166,7 +158,9 @@ const navigateTo = (path: string) => {
               <div class="flex items-start gap-3">
                 <div
                   class="w-2 h-2 mt-2 rounded-full"
-                  :class="notification.unread ? 'bg-primary' : 'bg-muted-foreground'"
+                  :class="
+                    notification.unread ? 'bg-primary' : 'bg-muted-foreground'
+                  "
                 ></div>
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium text-foreground">
@@ -190,10 +184,12 @@ const navigateTo = (path: string) => {
         <DropdownMenuTrigger as-child>
           <Button variant="ghost" class="relative h-10 w-10 rounded-full p-0">
             <Avatar>
-              <AvatarImage src="/placeholder-user.jpg" />
-              <AvatarFallback class="bg-primary/10 text-primary"
-                >AD</AvatarFallback
-              >
+              <AvatarImage
+                :src="session.data?.user.image ?? `/placeholder-user.jpg`"
+              />
+              <AvatarFallback class="bg-primary/10 text-primary">{{
+                getInitials(session.data?.user.name ?? "")
+              }}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
@@ -223,19 +219,7 @@ const navigateTo = (path: string) => {
               class="w-full justify-start text-xs h-8"
               @click="navigateTo('/workspace/switch')"
             >
-              <svg
-                class="h-3.5 w-3.5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                />
-              </svg>
+              <ArrowRightLeftIcon class="h-3.5 w-3.5 mr-2" />
               Switch Workspace
             </Button>
           </div>
@@ -249,10 +233,7 @@ const navigateTo = (path: string) => {
             Settings
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            class="text-red-600"
-            @click="navigateTo('/auth/login')"
-          >
+          <DropdownMenuItem class="text-red-600" @click="logout()">
             <LogOut class="h-4 w-4 mr-2" />
             Sign Out
           </DropdownMenuItem>

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { toast } from "vue-sonner";
 import { authClient } from "~/lib/auth";
-
+definePageMeta({
+  middleware: ["guest"],
+});
 const form = ref({
   email: "",
   password: "",
@@ -20,12 +22,9 @@ const handleLogin = async () => {
       toast.error(error.message);
       return;
     }
-    if (data?.user.organizations.length > 0) {
+    if (data?.user) {
       await navigateTo(`/dashboard`);
       toast.success("Successfully signed in");
-    } else {
-      toast.success("Successfully signed in");
-      await navigateTo("/onboarding/step-1");
     }
   } catch (e) {
   } finally {

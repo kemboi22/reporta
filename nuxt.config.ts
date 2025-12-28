@@ -37,4 +37,7 @@ export default defineNuxtConfig({
   experimental: {
     typedPages: true,
   },
+  routeRules: {
+    "/": { redirect: "/auth/login" },
+  },
 });

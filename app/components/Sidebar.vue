@@ -18,9 +18,12 @@ import {
   FolderKanban,
   Building,
 } from "lucide-vue-next";
+import { authClient } from "~/lib/auth";
 defineProps<{
   collapsed: boolean;
 }>();
+
+const session = authClient.useSession();
 
 const expandedSections = ref<Record<string, boolean>>({});
 
@@ -398,20 +401,24 @@ const navigationItems = [
       <div v-if="!collapsed" class="flex items-center gap-3">
         <Avatar class="h-10 w-10">
           <AvatarImage src="/placeholder-user.jpg" />
-          <AvatarFallback class="bg-primary/10 text-primary">AD</AvatarFallback>
+          <AvatarFallback class="bg-primary/10 text-primary">{{
+            getInitials(session.data?.user.name ?? "")
+          }}</AvatarFallback>
         </Avatar>
         <div class="flex-1 min-w-0">
           <div class="text-sm font-medium text-foreground truncate">
-            Admin User
+            {{ session.data?.user.name }}
           </div>
           <div class="text-xs text-muted-foreground truncate">
-            admin@company.com
+            {{ session.data?.user.email }}
           </div>
         </div>
       </div>
       <Avatar v-else class="h-10 w-10 mx-auto">
         <AvatarImage src="/placeholder-user.jpg" />
-        <AvatarFallback class="bg-primary/10 text-primary">AD</AvatarFallback>
+        <AvatarFallback class="bg-primary/10 text-primary">{{
+          getInitials(session.data?.user.name ?? "")
+        }}</AvatarFallback>
       </Avatar>
     </div>
   </aside>

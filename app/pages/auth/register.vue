@@ -46,7 +46,8 @@ const handleRegister = async () => {
     }
     isLoading.value = false;
     if (data?.user) {
-      await navigateTo("/dashboard");
+      toast.success("Registration successfull");
+      await navigateTo("/onboarding/step-1");
     }
   } catch (e) {
     console.log(e);

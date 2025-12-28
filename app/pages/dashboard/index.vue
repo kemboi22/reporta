@@ -12,6 +12,7 @@ import { definePageMeta } from "#imports"; // Import definePageMeta
 
 definePageMeta({
   layout: "dashboard",
+  middleware: "auth",
 });
 
 const currentTime = ref("");
@@ -238,7 +239,9 @@ const getAlertIcon = (type: string) => {
     <!-- Quick Actions -->
     <Card class="border-border">
       <CardContent class="p-6">
-        <h2 class="text-lg font-semibold text-foreground mb-4">Quick Actions</h2>
+        <h2 class="text-lg font-semibold text-foreground mb-4">
+          Quick Actions
+        </h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <QuickActionButton
             v-for="action in quickActions"
