@@ -25,6 +25,7 @@ export default defineEventHandler(async (event) => {
     include: {
       workspace: true,
       department: true,
+      members: { include: { user: true } },
     },
     orderBy: { createdAt: "desc" },
   });
