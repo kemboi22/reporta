@@ -21,7 +21,7 @@ export type ProjectWithRelations = Prisma.ProjectGetPayload<{
 export const getProjectByIdWithRelations = async (
   id: string,
 ): Promise<ProjectWithRelations | null> => {
-  const cacheKey = `${CACHE_PREFIX}${id}:relations`;
+  const cacheKey = `${CACHE_PREFIX}${id}`;
   const cached = await cacheGet<ProjectWithRelations>(cacheKey);
   if (cached) return cached;
 
