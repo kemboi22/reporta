@@ -27,10 +27,38 @@ const showAddStaffDialog = ref(false);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
 
-const { data: departments } = await useFetch(
+const { data: departments, refresh: refreshDepartments } = await useFetch(
   `/api/${organizationId}/departments`,
 );
 const statuses = ["All", "Active", "On Leave", "Suspended"];
+
+const showAddDepartmentDialog = ref(false);
+const newDepartmentForm = ref({
+  name: "",
+  description: "",
+  headId: "",
+});
+
+const addDepartment = async () => {
+  try {
+    await $fetch(`/api/${organizationId}/departments`, {
+      method: "POST",
+      body: {
+        name: newDepartmentForm.value.name,
+        description: newDepartmentForm.value.description || undefined,
+      },
+    });
+    showAddDepartmentDialog.value = false;
+    newDepartmentForm.value = {
+      name: "",
+      description: "",
+      headId: "",
+    };
+    await refreshDepartments();
+  } catch (e: any) {
+    error.value = e.data?.message || "Failed to add department";
+  }
+};
 
 const { data: staffMembers, refresh: refreshStaff } = await useFetch(
   `/api/${organizationId}/staff`,
@@ -97,27 +125,6 @@ const addStaffMember = async () => {
   }
 };
 
-const getStatusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    Active: "bg-emerald-50 text-emerald-500 hover:bg-emerald-50",
-    "On Leave": "bg-amber-50 text-amber-500 hover:bg-amber-50",
-    Suspended: "bg-red-50 text-red-500 hover:bg-red-50",
-  };
-  return colors[status] || "bg-muted text-muted-foreground";
-};
-
-const getInitials = (firstName: string, lastName: string) => {
-  return `${firstName?.[0] || ""}${lastName?.[0] || ""}`;
-};
-
-const getStaffName = (staff: any) => {
-  return `${staff.firstName || ""} ${staff.lastName || ""}`.trim() || "Unknown";
-};
-
-const getStaffPhoto = (staff: any) => {
-  return staff.user?.image || "/placeholder-user.jpg";
-};
-
 watch([searchQuery, selectedDepartment], () => {
   refreshStaff();
 });
@@ -134,141 +141,189 @@ watch([searchQuery, selectedDepartment], () => {
         </p>
       </div>
 
-      <Dialog v-model:open="showAddStaffDialog">
-        <DialogTrigger as-child>
-          <Button>
-            <Plus class="h-4 w-4 mr-2" />
-            Add Staff Member
-          </Button>
-        </DialogTrigger>
-        <DialogContent class="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Add New Staff Member</DialogTitle>
-            <DialogDescription
-              >Enter the details of the new staff member</DialogDescription
-            >
-          </DialogHeader>
-          <div class="grid gap-4 py-4">
-            <div
-              v-if="error"
-              class="p-3 bg-destructive/10 text-destructive rounded-md text-sm"
-            >
-              {{ error }}
-            </div>
-            <div class="grid grid-cols-2 gap-4">
+      <div class="flex items-center gap-3">
+        <Dialog v-model:open="showAddDepartmentDialog">
+          <DialogTrigger as-child>
+            <Button variant="outline">
+              <Plus class="h-4 w-4 mr-2" />
+              Add Department
+            </Button>
+          </DialogTrigger>
+          <DialogContent class="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add New Department</DialogTitle>
+              <DialogDescription>Create a new department</DialogDescription>
+            </DialogHeader>
+            <div class="space-y-4 py-4">
+              <div
+                v-if="error"
+                class="p-3 bg-destructive/10 text-destructive rounded-md text-sm"
+              >
+                {{ error }}
+              </div>
               <div class="space-y-2">
-                <Label for="firstName">First Name</Label>
+                <Label for="deptName">Department Name</Label>
                 <Input
-                  id="firstName"
-                  v-model="newStaffForm.firstName"
-                  placeholder="John"
+                  id="deptName"
+                  v-model="newDepartmentForm.name"
+                  placeholder="e.g., Engineering"
                 />
               </div>
               <div class="space-y-2">
-                <Label for="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  v-model="newStaffForm.lastName"
-                  placeholder="Doe"
+                <Label for="deptDescription">Description</Label>
+                <Textarea
+                  id="deptDescription"
+                  v-model="newDepartmentForm.description"
+                  placeholder="Optional description..."
                 />
               </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="space-y-2">
-                <Label for="email">Email</Label>
-                <Input
-                  id="email"
-                  v-model="newStaffForm.email"
-                  type="email"
-                  placeholder="john.doe@hospital.com"
-                />
-              </div>
-              <div class="space-y-2">
-                <Label for="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  v-model="newStaffForm.phone"
-                  placeholder="+1 234-567-8900"
-                />
+              <div class="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  @click="showAddDepartmentDialog = false"
+                  >Cancel</Button
+                >
+                <Button @click="addDepartment">Add Department</Button>
               </div>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="space-y-2">
-                <Label for="employeeId">Employee ID</Label>
-                <Input
-                  id="employeeId"
-                  v-model="newStaffForm.employeeId"
-                  placeholder="EMP007"
-                />
+          </DialogContent>
+        </Dialog>
+        <Dialog v-model:open="showAddStaffDialog">
+          <DialogTrigger as-child>
+            <Button>
+              <Plus class="h-4 w-4 mr-2" />
+              Add Staff Member
+            </Button>
+          </DialogTrigger>
+          <DialogContent class="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Add New Staff Member</DialogTitle>
+              <DialogDescription
+                >Enter the details of the new staff member</DialogDescription
+              >
+            </DialogHeader>
+            <div class="grid gap-4 py-4">
+              <div
+                v-if="error"
+                class="p-3 bg-destructive/10 text-destructive rounded-md text-sm"
+              >
+                {{ error }}
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <Label for="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    v-model="newStaffForm.firstName"
+                    placeholder="John"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <Label for="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    v-model="newStaffForm.lastName"
+                    placeholder="Doe"
+                  />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <Label for="email">Email</Label>
+                  <Input
+                    id="email"
+                    v-model="newStaffForm.email"
+                    type="email"
+                    placeholder="john.doe@hospital.com"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <Label for="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    v-model="newStaffForm.phone"
+                    placeholder="+1 234-567-8900"
+                  />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <Label for="employeeId">Employee ID</Label>
+                  <Input
+                    id="employeeId"
+                    v-model="newStaffForm.employeeId"
+                    placeholder="EMP007"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <Label for="hireDate">Hire Date</Label>
+                  <Input
+                    id="hireDate"
+                    v-model="newStaffForm.hireDate"
+                    type="date"
+                  />
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <Label for="department">Department</Label>
+                  <Select v-model="newStaffForm.departmentId">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem :value="null">No Department</SelectItem>
+                      <SelectItem
+                        v-for="dept in departments"
+                        :key="dept.id"
+                        :value="dept.id"
+                      >
+                        {{ dept.name }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div class="space-y-2">
+                  <Label for="position">Position/Role</Label>
+                  <Input
+                    id="position"
+                    v-model="newStaffForm.position"
+                    placeholder="Nurse"
+                  />
+                </div>
               </div>
               <div class="space-y-2">
-                <Label for="hireDate">Hire Date</Label>
-                <Input
-                  id="hireDate"
-                  v-model="newStaffForm.hireDate"
-                  type="date"
-                />
-              </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="space-y-2">
-                <Label for="department">Department</Label>
-                <Select v-model="newStaffForm.departmentId">
+                <Label for="employmentType">Employment Type</Label>
+                <Select v-model="newStaffForm.employmentType">
                   <SelectTrigger>
-                    <SelectValue placeholder="Select department" />
+                    <SelectValue placeholder="Select employment type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem :value="null">No Department</SelectItem>
-                    <SelectItem
-                      v-for="dept in departments"
-                      :key="dept.id"
-                      :value="dept.id"
-                    >
-                      {{ dept.name }}
-                    </SelectItem>
+                    <SelectItem value="FULL_TIME">Full Time</SelectItem>
+                    <SelectItem value="PART_TIME">Part Time</SelectItem>
+                    <SelectItem value="CONTRACT">Contract</SelectItem>
+                    <SelectItem value="INTERN">Intern</SelectItem>
+                    <SelectItem value="FREELANCE">Freelance</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div class="space-y-2">
-                <Label for="position">Position/Role</Label>
-                <Input
-                  id="position"
-                  v-model="newStaffForm.position"
-                  placeholder="Nurse"
-                />
+              <div class="flex justify-end gap-3">
+                <Button variant="outline" @click="showAddStaffDialog = false"
+                  >Cancel</Button
+                >
+                <Button
+                  class="bg-blue-600 hover:bg-blue-700 text-white"
+                  @click="addStaffMember"
+                  :disabled="isLoading"
+                >
+                  <span v-if="isLoading">Adding...</span>
+                  <span v-else>Add Staff Member</span>
+                </Button>
               </div>
             </div>
-            <div class="space-y-2">
-              <Label for="employmentType">Employment Type</Label>
-              <Select v-model="newStaffForm.employmentType">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select employment type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="FULL_TIME">Full Time</SelectItem>
-                  <SelectItem value="PART_TIME">Part Time</SelectItem>
-                  <SelectItem value="CONTRACT">Contract</SelectItem>
-                  <SelectItem value="INTERN">Intern</SelectItem>
-                  <SelectItem value="FREELANCE">Freelance</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div class="flex justify-end gap-3">
-              <Button variant="outline" @click="showAddStaffDialog = false"
-                >Cancel</Button
-              >
-              <Button
-                class="bg-blue-600 hover:bg-blue-700 text-white"
-                @click="addStaffMember"
-                :disabled="isLoading"
-              >
-                <span v-if="isLoading">Adding...</span>
-                <span v-else>Add Staff Member</span>
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
 
     <!-- Filters and Search -->
@@ -363,9 +418,13 @@ watch([searchQuery, selectedDepartment], () => {
         <CardContent class="p-6">
           <div class="flex items-start justify-between mb-4">
             <Avatar class="h-16 w-16">
-              <AvatarImage :src="getStaffPhoto(staff)" />
+              <AvatarImage
+                :src="staff.user?.image || '/placeholder-user.jpg'"
+              />
               <AvatarFallback class="bg-primary/10 text-primary text-lg">
-                {{ getInitials(staff.firstName, staff.lastName) }}
+                {{
+                  `${staff.firstName?.[0] || ""}${staff.lastName?.[0] || ""}`
+                }}
               </AvatarFallback>
             </Avatar>
             <Button variant="ghost" size="icon" class="h-8 w-8">
@@ -376,7 +435,10 @@ watch([searchQuery, selectedDepartment], () => {
           <div class="space-y-3">
             <div>
               <h3 class="text-lg font-semibold text-foreground">
-                {{ getStaffName(staff) }}
+                {{
+                  `${staff.firstName || ""} ${staff.lastName || ""}`.trim() ||
+                  "Unknown"
+                }}
               </h3>
               <p class="text-sm text-muted-foreground">
                 {{ staff.employeeId || "No ID" }}
@@ -388,7 +450,11 @@ watch([searchQuery, selectedDepartment], () => {
                 staff.department?.name || "No Department"
               }}</Badge>
               <Badge
-                :class="getStatusColor(staff.isActive ? 'Active' : 'Inactive')"
+                :class="{
+                  'bg-emerald-50 text-emerald-500 hover:bg-emerald-50':
+                    staff.isActive,
+                  'bg-red-50 text-red-500 hover:bg-red-50': !staff.isActive,
+                }"
                 >{{ staff.isActive ? "Active" : "Inactive" }}</Badge
               >
             </div>
@@ -409,7 +475,12 @@ watch([searchQuery, selectedDepartment], () => {
             </div>
 
             <div class="flex gap-2 pt-2">
-              <Button variant="outline" size="sm" class="flex-1">
+              <Button
+                variant="outline"
+                size="sm"
+                class="flex-1"
+                @click="navigateTo(`/${organizationId}/hr/staff/${staff.id}`)"
+              >
                 View Profile
               </Button>
               <Button variant="outline" size="sm" class="flex-1">
@@ -482,14 +553,21 @@ watch([searchQuery, selectedDepartment], () => {
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center gap-3">
                     <Avatar class="h-10 w-10">
-                      <AvatarImage :src="getStaffPhoto(staff)" />
+                      <AvatarImage
+                        :src="staff.user?.image || '/placeholder-user.jpg'"
+                      />
                       <AvatarFallback class="bg-primary/10 text-primary">
-                        {{ getInitials(staff.firstName, staff.lastName) }}
+                        {{
+                          `${staff.firstName?.[0] || ""}${staff.lastName?.[0] || ""}`
+                        }}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <div class="text-sm font-medium text-foreground">
-                        {{ getStaffName(staff) }}
+                        {{
+                          `${staff.firstName || ""} ${staff.lastName || ""}`.trim() ||
+                          "Unknown"
+                        }}
                       </div>
                       <div class="text-sm text-muted-foreground">
                         {{ staff.employmentType?.replace("_", " ") || "N/A" }}
@@ -515,9 +593,11 @@ watch([searchQuery, selectedDepartment], () => {
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <Badge
-                    :class="
-                      getStatusColor(staff.isActive ? 'Active' : 'Inactive')
-                    "
+                    :class="{
+                      'bg-emerald-50 text-emerald-500 hover:bg-emerald-50':
+                        staff.isActive,
+                      'bg-red-50 text-red-500 hover:bg-red-50': !staff.isActive,
+                    }"
                     >{{ staff.isActive ? "Active" : "Inactive" }}</Badge
                   >
                 </td>
@@ -532,7 +612,15 @@ watch([searchQuery, selectedDepartment], () => {
                 <td
                   class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
                 >
-                  <Button variant="ghost" size="sm"> View </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    @click="
+                      navigateTo(`/${organizationId}/hr/staff/${staff.id}`)
+                    "
+                  >
+                    View
+                  </Button>
                 </td>
               </tr>
             </tbody>
