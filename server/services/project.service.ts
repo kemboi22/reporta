@@ -18,6 +18,32 @@ export type ProjectWithRelations = Prisma.ProjectGetPayload<{
   };
 }>;
 
+export const getProjectByIdWithRelations = async (
+  id: string,
+): Promise<ProjectWithRelations | null> => {
+  const cacheKey = `${CACHE_PREFIX}${id}:relations`;
+  const cached = await cacheGet<ProjectWithRelations>(cacheKey);
+  if (cached) return cached;
+
+  const project = await prisma.project.findUnique({
+    where: { id },
+    include: {
+      workspace: true,
+      department: true,
+      tasks: true,
+      members: { include: { user: true } },
+      documents: true,
+      milestones: true,
+    },
+  });
+
+  if (project) {
+    await cacheSet(cacheKey, project, CACHE_TTL);
+  }
+
+  return project;
+};
+
 export const getProjectById = async (id: string): Promise<Project | null> => {
   const cacheKey = `${CACHE_PREFIX}${id}`;
   const cached = await cacheGet<Project>(cacheKey);
@@ -32,11 +58,11 @@ export const getProjectById = async (id: string): Promise<Project | null> => {
   }
 
   return project;
-}
+};
 
 export const getProjectBySlug = async (
   workspaceId: string,
-  slug: string
+  slug: string,
 ): Promise<Project | null> => {
   const cacheKey = `${CACHE_PREFIX}ws:${workspaceId}:slug:${slug}`;
   const cached = await cacheGet<Project>(cacheKey);
@@ -56,7 +82,7 @@ export const getProjectBySlug = async (
   }
 
   return project;
-}
+};
 
 export const getProjects = async (params?: {
   skip?: number;
@@ -74,10 +100,10 @@ export const getProjects = async (params?: {
     include,
     orderBy,
   });
-}
+};
 
 export const createProject = async (
-  data: ProjectCreateInput
+  data: ProjectCreateInput,
 ): Promise<Project> => {
   const project = await prisma.project.create({ data });
 
@@ -85,11 +111,11 @@ export const createProject = async (
   await cacheSet(cacheKey, project, CACHE_TTL);
 
   return project;
-}
+};
 
 export const updateProject = async (
   id: string,
-  data: ProjectUpdateInput
+  data: ProjectUpdateInput,
 ): Promise<Project> => {
   const project = await prisma.project.update({
     where: { id },
@@ -99,7 +125,7 @@ export const updateProject = async (
   await invalidateProjectCache(id);
 
   return project;
-}
+};
 
 export const deleteProject = async (id: string): Promise<Project> => {
   const project = await prisma.project.delete({
@@ -109,8 +135,8 @@ export const deleteProject = async (id: string): Promise<Project> => {
   await invalidateProjectCache(id);
 
   return project;
-}
+};
 
 const invalidateProjectCache = async (id: string): Promise<void> => {
   await cacheDel(`${CACHE_PREFIX}${id}`);
-}
+};

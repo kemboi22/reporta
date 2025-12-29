@@ -33,7 +33,7 @@ export const getTaskById = async (id: string): Promise<Task | null> => {
   }
 
   return task;
-}
+};
 
 export const getTasks = async (params?: {
   skip?: number;
@@ -51,18 +51,26 @@ export const getTasks = async (params?: {
     include,
     orderBy,
   });
-}
+};
 
 export const createTask = async (data: TaskCreateInput): Promise<Task> => {
-  const task = await prisma.task.create({ data });
+  const task = await prisma.task.create({
+    data: {
+      ...data,
+      dueDate: data.dueDate ? new Date(data.dueDate.toString()) : "",
+    },
+  });
 
   const cacheKey = `${CACHE_PREFIX}${task.id}`;
   await cacheSet(cacheKey, task, CACHE_TTL);
 
   return task;
-}
+};
 
-export const updateTask = async (id: string, data: TaskUpdateInput): Promise<Task> => {
+export const updateTask = async (
+  id: string,
+  data: TaskUpdateInput,
+): Promise<Task> => {
   const task = await prisma.task.update({
     where: { id },
     data,
@@ -71,7 +79,7 @@ export const updateTask = async (id: string, data: TaskUpdateInput): Promise<Tas
   await invalidateTaskCache(id);
 
   return task;
-}
+};
 
 export const deleteTask = async (id: string): Promise<Task> => {
   const task = await prisma.task.delete({
@@ -81,8 +89,8 @@ export const deleteTask = async (id: string): Promise<Task> => {
   await invalidateTaskCache(id);
 
   return task;
-}
+};
 
 const invalidateTaskCache = async (id: string): Promise<void> => {
   await cacheDel(`${CACHE_PREFIX}${id}`);
-}
+};
