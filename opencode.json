@@ -10,11 +10,6 @@
       "type": "remote",
       "url": "https://nuxt.com/mcp",
       "enabled": true
-    },
-    "prisma": {
-      "type": "remote",
-      "url": "https://mcp.prisma.io/mcp",
-      "enabled": true
     }
   }
 }
