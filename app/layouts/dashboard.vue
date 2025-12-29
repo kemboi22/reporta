@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
-
+import "vue-sonner/style.css";
 const sidebarCollapsed = ref(false);
 </script>
 <template>
@@ -16,6 +15,7 @@ const sidebarCollapsed = ref(false);
       <div class="flex-1 flex flex-col overflow-hidden">
         <!-- Top Navigation -->
         <TopNav @toggle-sidebar="sidebarCollapsed = !sidebarCollapsed" />
+        <Toaster />
 
         <!-- Page Content -->
         <main class="flex-1 overflow-y-auto p-6">
