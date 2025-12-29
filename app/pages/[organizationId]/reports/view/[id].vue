@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,14 +30,20 @@ const route = useRoute();
 const organizationId = route.params.organizationId as string;
 const reportId = route.params.id as string;
 
-const { data: report, pending } = await useLazyFetch(`/api/${organizationId}/reports/${reportId}`, {
-  key: `report-${reportId}`,
-});
+const { data: report, pending } = await useLazyFetch(
+  `/api/${organizationId}/reports/${reportId}`,
+  {
+    key: `report-${reportId}`,
+  },
+);
 
-const { data: templates } = await useLazyFetch(`/api/${organizationId}/templates`, {
-  key: `templates-${organizationId}`,
-  transform: (data) => data || [],
-});
+const { data: templates } = await useLazyFetch(
+  `/api/${organizationId}/templates`,
+  {
+    key: `templates-${organizationId}`,
+    transform: (data) => data || [],
+  },
+);
 
 const { data: staff } = await useLazyFetch(`/api/${organizationId}/staff`, {
   key: `staff-${organizationId}`,
@@ -109,7 +121,11 @@ const saveReport = async () => {
             <div class="space-y-2">
               <div>
                 <Label>Report Title</Label>
-                <Input v-model="formData.title" :value="report.title" disabled />
+                <Input
+                  v-model="formData.title"
+                  :value="report.title"
+                  disabled
+                />
               </div>
               <div>
                 <Label>Template</Label>
@@ -118,7 +134,7 @@ const saveReport = async () => {
                     <SelectValue placeholder="Select template" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Select Template</SelectItem>
+                    <SelectItem :value="null">Select Template</SelectItem>
                     <SelectItem
                       v-for="template in templates"
                       :key="template.id"
@@ -168,8 +184,12 @@ const saveReport = async () => {
             <CardTitle>Report Info</CardTitle>
           </CardHeader>
           <CardContent class="space-y-4">
-            <p class="text-sm text-muted-foreground">Template: {{ report.template?.name || "Custom Report" }}</p>
-            <p class="text-sm text-muted-foreground">Created: {{ new Date(report.createdAt).toLocaleDateString() }}</p>
+            <p class="text-sm text-muted-foreground">
+              Template: {{ report.template?.name || "Custom Report" }}
+            </p>
+            <p class="text-sm text-muted-foreground">
+              Created: {{ new Date(report.createdAt).toLocaleDateString() }}
+            </p>
           </CardContent>
         </Card>
       </div>
