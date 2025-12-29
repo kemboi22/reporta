@@ -33,7 +33,7 @@ const completeOnboarding = async () => {
     });
 
     if (result) {
-      await navigateTo("/dashboard");
+      await navigateTo(`/${result.organization.id}/dashboard`);
     }
   } catch (e: any) {
     error.value = e.data?.message || "Failed to complete onboarding";

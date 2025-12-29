@@ -100,11 +100,12 @@ export const completeOnboarding = async (
       },
     });
 
+    const workspaceSlug = `${normalizedSubdomain}-main`;
     const workspace = await tx.workspace.create({
       data: {
         organizationId: organization.id,
         name: "Main Workspace",
-        slug: "main",
+        slug: workspaceSlug,
       },
     });
 
@@ -116,8 +117,9 @@ export const completeOnboarding = async (
       },
     });
 
-    await tx.staff.create({
-      data: {
+    await tx.staff.upsert({
+      where: { userId: user.id },
+      create: {
         organizationId: organization.id,
         userId: user.id,
         firstName: admin.firstName,
@@ -127,6 +129,12 @@ export const completeOnboarding = async (
         isActive: true,
         hireDate: new Date(),
         employmentType: "FULL_TIME",
+      },
+      update: {
+        organizationId: organization.id,
+        firstName: admin.firstName,
+        lastName: admin.lastName,
+        email: admin.email,
       },
     });
 
