@@ -23,10 +23,10 @@ const handleLogin = async () => {
       return;
     }
     if (data?.user) {
-      const session = authClient.useSession();
-      let organizations = session.value.data?.user?.organizations;
+      const session = await authClient.getSession();
+      let organizations = session.data?.user?.organizations;
       if (organizations && organizations?.length > 0) {
-        await navigateTo(`/${organizations[0]}/dashboard`);
+        await navigateTo(`/${organizations[0]?.id}/dashboard`);
       } else {
         await navigateTo(`/onboarding/step-1`);
       }
