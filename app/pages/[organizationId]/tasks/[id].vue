@@ -35,16 +35,17 @@ const newChecklistItem = ref("");
 const newAssignee = ref("");
 const editingData = ref<any>(null);
 
-const {
-  data: task,
-  pending,
-  refresh,
-} = await useLazyFetch(`/api/${organizationId}/tasks/${taskId}`);
+const { data: task, pending } = await useLazyFetch(
+  `/api/${organizationId}/tasks/${taskId}`,
+  {
+    key: `task-${taskId}`,
+  },
+);
 
 const { data: usersData } = await useLazyFetch(`/api/${organizationId}/staff`);
 
-const checklist = computed(() => task.value?.checklist || []);
 const comments = computed(() => task.value?.comments || []);
+const checklist = computed(() => task.value?.checklist || []);
 const timeLogs = computed(() => task.value?.timeLogs || []);
 const assignees = computed(() => task.value?.assignees || []);
 
@@ -90,6 +91,18 @@ const totalTimeLogged = computed(() => {
   );
 });
 
+const formatDate = (date: string) => {
+  return new Date(date).toLocaleDateString();
+};
+
+const formatDateTime = (date: string) => {
+  return new Date(date).toLocaleString();
+};
+
+const refreshData = async () => {
+  await refreshNuxtData(`task-${taskId}`);
+};
+
 const addComment = async () => {
   if (!newComment.value.trim()) return;
   try {
@@ -99,7 +112,7 @@ const addComment = async () => {
     });
     newComment.value = "";
     showAddComment.value = false;
-    await refresh();
+    await refreshData();
   } catch (error) {
     console.error("Failed to add comment:", error);
   }
@@ -114,7 +127,7 @@ const addChecklistItem = async () => {
     });
     newChecklistItem.value = "";
     showAddChecklist.value = false;
-    await refresh();
+    await refreshData();
   } catch (error) {
     console.error("Failed to add checklist item:", error);
   }
@@ -129,7 +142,7 @@ const toggleChecklistItem = async (item: any) => {
         body: { isCompleted: !item.isCompleted },
       },
     );
-    await refresh();
+    await refreshData();
   } catch (error) {
     console.error("Failed to update checklist item:", error);
   }
@@ -144,7 +157,7 @@ const startTimer = async () => {
         startTime: new Date().toISOString(),
       },
     });
-    await refresh();
+    await refreshData();
   } catch (error) {
     console.error("Failed to start timer:", error);
   }
@@ -158,7 +171,7 @@ const stopTimer = async (log: any) => {
         endTime: new Date().toISOString(),
       },
     });
-    await refresh();
+    await refreshData();
   } catch (error) {
     console.error("Failed to stop timer:", error);
   }
@@ -170,7 +183,7 @@ const updateStatus = async (status: string) => {
       method: "PUT",
       body: { status },
     });
-    await refresh();
+    await refreshData();
   } catch (error) {
     console.error("Failed to update status:", error);
   }
@@ -204,7 +217,7 @@ const saveEdit = async () => {
     });
     showEditDialog.value = false;
     editingData.value = null;
-    await refresh();
+    await refreshData();
   } catch (error) {
     console.error("Failed to save task:", error);
   }
@@ -219,18 +232,10 @@ const assignUser = async () => {
     });
     showAssignDialog.value = false;
     newAssignee.value = "";
-    await refresh();
+    await refreshData();
   } catch (error) {
     console.error("Failed to assign user:", error);
   }
-};
-
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString();
-};
-
-const formatDateTime = (date: string) => {
-  return new Date(date).toLocaleString();
 };
 </script>
 
