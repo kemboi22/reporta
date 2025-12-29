@@ -22,6 +22,7 @@ export default defineEventHandler(async (event) => {
       content: body.content,
     },
   });
+  await cacheDel(`task:${taskId}`);
 
   setResponseStatus(event, 201);
   return comment;
