@@ -101,6 +101,7 @@ export const createTask = async (data: any): Promise<Task> => {
 
   const cacheKey = `${CACHE_PREFIX}${task.id}`;
   await cacheSet(cacheKey, task, CACHE_TTL);
+  await cacheDel(`project:${task.projectId}`);
 
   return task;
 };

@@ -37,6 +37,15 @@ const editingTask = ref<any>(null);
 const assigningTask = ref<any>(null);
 const newAssignee = ref<string>("");
 
+const newTask = ref({
+  title: "",
+  description: "",
+  priority: "MEDIUM",
+  dueDate: "",
+  assigneeIds: [] as string[],
+  projectId: "",
+});
+
 const columns = [
   { id: "TODO", title: "To Do", color: "bg-blue-500" },
   { id: "IN_PROGRESS", title: "In Progress", color: "bg-purple-500" },
@@ -81,7 +90,8 @@ const tasks = computed(() => {
 });
 
 const projects = computed(() => {
-  return (projectsData.value || []).map((p: any) => ({
+  return (projectsData.value || []).map((p) => ({
+    ...p,
     id: p.id,
     name: p.name,
     color: p.color || "bg-blue-500",
@@ -96,15 +106,6 @@ const users = computed(() => {
     email: u.email,
   }));
 });
-
-const getInitials = (name: string) => {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-};
 
 const getPriorityColor = (priority: string) => {
   const colors: Record<string, string> = {
@@ -269,8 +270,36 @@ const saveTask = async () => {
 };
 
 const createTask = async () => {
-  showCreateTaskSheet.value = false;
-  await refreshTasks();
+  if (!newTask.value.title) return;
+
+  try {
+    await $fetch(`/api/${organizationId}/tasks`, {
+      method: "POST",
+      body: {
+        title: newTask.value.title,
+        description: newTask.value.description,
+        priority: newTask.value.priority,
+        dueDate: newTask.value.dueDate,
+        projectId: newTask.value.projectId || null,
+        assigneeIds: newTask.value.assigneeIds,
+        workspaceId: projects.value.find((p) => p.id == newTask.value.projectId)
+          .workspaceId,
+      },
+    });
+
+    newTask.value = {
+      title: "",
+      description: "",
+      priority: "MEDIUM",
+      dueDate: "",
+      assigneeIds: [],
+      projectId: "",
+    };
+    showCreateTaskSheet.value = false;
+    await refreshTasks();
+  } catch (error) {
+    console.error("Failed to create task:", error);
+  }
 };
 
 const deleteTask = async (taskId: string) => {
@@ -349,16 +378,92 @@ const allTasks = computed(() => {
           <div class="px-6 py-6 space-y-6">
             <div class="space-y-3">
               <Label for="title" class="text-base">Title</Label>
-              <Input id="title" placeholder="Task title" class="h-11" />
+              <Input
+                id="title"
+                v-model="newTask.title"
+                placeholder="Task title"
+                class="h-11"
+              />
             </div>
             <div class="space-y-3">
               <Label for="description" class="text-base">Description</Label>
               <Textarea
                 id="description"
+                v-model="newTask.description"
                 placeholder="Describe task..."
                 rows="4"
                 class="resize-none"
               />
+            </div>
+            <div class="grid grid-cols-2 gap-6">
+              <div class="space-y-3">
+                <Label for="project" class="text-base">Project</Label>
+                <Select v-model="newTask.projectId">
+                  <SelectTrigger class="h-11">
+                    <SelectValue placeholder="Select project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem :value="null">No Project</SelectItem>
+                    <SelectItem
+                      v-for="project in projects"
+                      :key="project.id"
+                      :value="project.id"
+                    >
+                      {{ project.name }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div class="space-y-3">
+                <Label for="priority" class="text-base">Priority</Label>
+                <Select v-model="newTask.priority">
+                  <SelectTrigger class="h-11">
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="URGENT">Urgent</SelectItem>
+                    <SelectItem value="HIGH">High</SelectItem>
+                    <SelectItem value="MEDIUM">Medium</SelectItem>
+                    <SelectItem value="LOW">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-6">
+              <div class="space-y-3">
+                <Label for="assignee" class="text-base">Assign To</Label>
+                <Select v-model="newTask.assigneeIds" multiple>
+                  <SelectTrigger class="h-11">
+                    <SelectValue placeholder="Select people" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem
+                      v-for="user in users"
+                      :key="user.id"
+                      :value="user.id"
+                    >
+                      <div class="flex items-center gap-2">
+                        <Avatar class="h-6 w-6">
+                          <AvatarImage :src="user.avatar" />
+                          <AvatarFallback class="text-[10px]">
+                            {{ getInitials(user.name) }}
+                          </AvatarFallback>
+                        </Avatar>
+                        {{ user.name }}
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div class="space-y-3">
+                <Label for="dueDate" class="text-base">Due Date</Label>
+                <Input
+                  id="dueDate"
+                  v-model="newTask.dueDate"
+                  type="date"
+                  class="h-11"
+                />
+              </div>
             </div>
             <Button @click="createTask" class="w-full h-12">Create Task</Button>
           </div>
@@ -911,14 +1016,20 @@ const allTasks = computed(() => {
                     v-for="col in columns"
                     :key="col.id"
                     :value="col.id"
-                  >{{ col.title }}</SelectItem>
+                    >{{ col.title }}</SelectItem
+                  >
                 </SelectContent>
               </Select>
             </div>
           </div>
         </div>
         <div class="flex justify-end gap-3 px-6 pb-6 border-t">
-          <Button variant="outline" @click="showEditTaskSheet = false" class="h-11 px-6">Cancel</Button>
+          <Button
+            variant="outline"
+            @click="showEditTaskSheet = false"
+            class="h-11 px-6"
+            >Cancel</Button
+          >
           <Button @click="saveTask" class="h-11 px-6">Save Changes</Button>
         </div>
       </SheetContent>
@@ -961,12 +1072,14 @@ const allTasks = computed(() => {
           </div>
         </div>
         <DialogFooter class="px-6 pt-4 border-t">
-          <Button variant="outline" @click="showAssignDialog = false" class="h-11 px-6">
+          <Button
+            variant="outline"
+            @click="showAssignDialog = false"
+            class="h-11 px-6"
+          >
             Cancel
           </Button>
-          <Button @click="assignUser" class="h-11 px-6">
-            Assign
-          </Button>
+          <Button @click="assignUser" class="h-11 px-6"> Assign </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
