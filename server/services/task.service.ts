@@ -65,11 +65,13 @@ export const getTasks = async (params?: {
 
 export const createTask = async (data: any): Promise<Task> => {
   const { assigneeIds, ...taskData } = data;
-  
+
   const task = await prisma.task.create({
     data: {
       ...taskData,
-      dueDate: taskData.dueDate ? new Date(taskData.dueDate.toString()) : undefined,
+      dueDate: taskData.dueDate
+        ? new Date(taskData.dueDate.toString())
+        : undefined,
     },
   });
 
@@ -105,10 +107,15 @@ export const createTask = async (data: any): Promise<Task> => {
 
 export const updateTask = async (id: string, data: any): Promise<Task> => {
   const { assigneeIds, ...taskData } = data;
+  if (taskData.dueDate) {
+    taskData.dueDate = new Date(taskData.dueDate);
+  }
 
   const task = await prisma.task.update({
     where: { id },
-    data: taskData,
+    data: {
+      ...taskData,
+    },
   });
 
   if (assigneeIds !== undefined) {

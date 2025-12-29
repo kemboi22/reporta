@@ -341,25 +341,26 @@ const allTasks = computed(() => {
             Create Task
           </Button>
         </SheetTrigger>
-        <SheetContent class="w-full sm:w-[500px]">
-          <SheetHeader>
+        <SheetContent class="w-full sm:w-[600px]">
+          <SheetHeader class="px-6 pt-6 pb-2">
             <SheetTitle>Create New Task</SheetTitle>
             <SheetDescription>Add a new task to your board</SheetDescription>
           </SheetHeader>
-          <div class="space-y-4 py-4">
-            <div class="space-y-2">
-              <Label for="title">Title</Label>
-              <Input id="title" placeholder="Task title" />
+          <div class="px-6 py-6 space-y-6">
+            <div class="space-y-3">
+              <Label for="title" class="text-base">Title</Label>
+              <Input id="title" placeholder="Task title" class="h-11" />
             </div>
-            <div class="space-y-2">
-              <Label for="description">Description</Label>
+            <div class="space-y-3">
+              <Label for="description" class="text-base">Description</Label>
               <Textarea
                 id="description"
                 placeholder="Describe task..."
                 rows="4"
+                class="resize-none"
               />
             </div>
-            <Button @click="createTask" class="w-full">Create Task</Button>
+            <Button @click="createTask" class="w-full h-12">Create Task</Button>
           </div>
         </SheetContent>
       </Sheet>
@@ -810,29 +811,30 @@ const allTasks = computed(() => {
     </div>
 
     <Sheet v-model:open="showEditTaskSheet">
-      <SheetContent class="w-full sm:w-[500px]">
-        <SheetHeader>
+      <SheetContent class="w-full sm:w-[600px]">
+        <SheetHeader class="px-6 pt-6 pb-2">
           <SheetTitle>Edit Task</SheetTitle>
           <SheetDescription>Update task details</SheetDescription>
         </SheetHeader>
-        <div v-if="editingTask" class="space-y-4 py-4">
-          <div class="space-y-2">
-            <Label for="edit-title">Task Title</Label>
-            <Input id="edit-title" v-model="editingTask.title" />
+        <div v-if="editingTask" class="px-6 py-6 space-y-6">
+          <div class="space-y-3">
+            <Label for="edit-title" class="text-base">Task Title</Label>
+            <Input id="edit-title" v-model="editingTask.title" class="h-11" />
           </div>
-          <div class="space-y-2">
-            <Label for="edit-description">Description</Label>
+          <div class="space-y-3">
+            <Label for="edit-description" class="text-base">Description</Label>
             <Textarea
               id="edit-description"
               v-model="editingTask.description"
               rows="3"
+              class="resize-none"
             />
           </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-              <Label for="edit-project">Project</Label>
+          <div class="grid grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <Label for="edit-project" class="text-base">Project</Label>
               <Select v-model="editingTask.projectId">
-                <SelectTrigger>
+                <SelectTrigger class="h-11">
                   <SelectValue placeholder="Select project" />
                 </SelectTrigger>
                 <SelectContent>
@@ -847,10 +849,10 @@ const allTasks = computed(() => {
                 </SelectContent>
               </Select>
             </div>
-            <div class="space-y-2">
-              <Label for="edit-priority">Priority</Label>
+            <div class="space-y-3">
+              <Label for="edit-priority" class="text-base">Priority</Label>
               <Select v-model="editingTask.priority">
-                <SelectTrigger>
+                <SelectTrigger class="h-11">
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
                 <SelectContent>
@@ -862,14 +864,14 @@ const allTasks = computed(() => {
               </Select>
             </div>
           </div>
-          <div class="space-y-2">
-            <Label for="edit-assignee">Assign To</Label>
+          <div class="space-y-3">
+            <Label for="edit-assignee" class="text-base">Assign To</Label>
             <Select v-model="newAssignee">
-              <SelectTrigger>
+              <SelectTrigger class="h-11">
                 <SelectValue placeholder="Select person" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem :value="null">Unassigned</SelectItem>
+                <SelectItem value="">Unassigned</SelectItem>
                 <SelectItem
                   v-for="user in users"
                   :key="user.id"
@@ -888,11 +890,9 @@ const allTasks = computed(() => {
               </SelectContent>
             </Select>
           </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-              <Label for="edit-dueDate" class="text-sm font-medium"
-                >Due Date</Label
-              >
+          <div class="grid grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <Label for="edit-dueDate" class="text-base">Due Date</Label>
               <Input
                 id="edit-dueDate"
                 v-model="editingTask.dueDate"
@@ -900,10 +900,8 @@ const allTasks = computed(() => {
                 class="h-11"
               />
             </div>
-            <div class="space-y-2">
-              <Label for="edit-status" class="text-sm font-medium"
-                >Status</Label
-              >
+            <div class="space-y-3">
+              <Label for="edit-status" class="text-base">Status</Label>
               <Select v-model="editingTask.status">
                 <SelectTrigger class="h-11">
                   <SelectValue />
@@ -913,35 +911,32 @@ const allTasks = computed(() => {
                     v-for="col in columns"
                     :key="col.id"
                     :value="col.id"
-                    >{{ col.title }}</SelectItem
-                  >
+                  >{{ col.title }}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
         </div>
-        <div class="flex justify-end gap-3">
-          <Button variant="outline" @click="showEditTaskSheet = false"
-            >Cancel</Button
-          >
-          <Button @click="saveTask">Save Changes</Button>
+        <div class="flex justify-end gap-3 px-6 pb-6 border-t">
+          <Button variant="outline" @click="showEditTaskSheet = false" class="h-11 px-6">Cancel</Button>
+          <Button @click="saveTask" class="h-11 px-6">Save Changes</Button>
         </div>
       </SheetContent>
     </Sheet>
 
     <Dialog v-model:open="showAssignDialog">
-      <DialogContent>
+      <DialogContent class="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Assign Task</DialogTitle>
-          <DialogDescription
-            >Assign this task to a team member</DialogDescription
-          >
+          <DialogDescription>
+            Assign this task to a team member
+          </DialogDescription>
         </DialogHeader>
         <div class="space-y-4 py-4">
           <div class="space-y-2">
             <Label>Select Person</Label>
             <Select v-model="newAssignee">
-              <SelectTrigger>
+              <SelectTrigger class="h-11">
                 <SelectValue placeholder="Select person" />
               </SelectTrigger>
               <SelectContent>
@@ -965,12 +960,14 @@ const allTasks = computed(() => {
             </Select>
           </div>
         </div>
-        <div class="flex justify-end gap-3">
-          <Button variant="outline" @click="showAssignDialog = false"
-            >Cancel</Button
-          >
-          <Button @click="assignUser">Assign</Button>
-        </div>
+        <DialogFooter class="px-6 pt-4 border-t">
+          <Button variant="outline" @click="showAssignDialog = false" class="h-11 px-6">
+            Cancel
+          </Button>
+          <Button @click="assignUser" class="h-11 px-6">
+            Assign
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   </div>
