@@ -1,25 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   Search,
   Plus,
@@ -29,6 +8,7 @@ import {
   Mail,
   Phone,
   MapPin,
+  AlertCircle,
 } from "lucide-vue-next";
 import { definePageMeta } from "#imports";
 
@@ -36,103 +16,86 @@ definePageMeta({
   layout: "dashboard",
 });
 
+const route = useRoute();
+const organizationId = route.params.organizationId as string;
+
 const viewMode = ref<"grid" | "list">("grid");
 const searchQuery = ref("");
-const selectedDepartment = ref("all");
+const selectedDepartment = ref("");
 const selectedStatus = ref("all");
 const showAddStaffDialog = ref(false);
+const isLoading = ref(false);
+const error = ref<string | null>(null);
 
-const departments = [
-  "All",
-  "Nursing",
-  "Emergency",
-  "Pharmacy",
-  "Surgery",
-  "Radiology",
-  "Administration",
-];
+const { data: departments } = await useFetch(
+  `/api/${organizationId}/departments`,
+);
 const statuses = ["All", "Active", "On Leave", "Suspended"];
 
-const staffMembers = [
+const { data: staffMembers, refresh: refreshStaff } = await useFetch(
+  `/api/${organizationId}/staff`,
   {
-    id: 1,
-    name: "Sarah Johnson",
-    employeeId: "EMP001",
-    department: "Nursing",
-    role: "Senior Nurse",
-    status: "Active",
-    email: "sarah.j@hospital.com",
-    phone: "+1 234-567-8901",
-    photo: "/placeholder-user.jpg",
-    hireDate: "2020-03-15",
-    shift: "Morning",
+    query: {
+      search: searchQuery,
+      departmentId: selectedDepartment,
+    },
   },
-  {
-    id: 2,
-    name: "Mike Chen",
-    employeeId: "EMP002",
-    department: "Emergency",
-    role: "ER Doctor",
-    status: "Active",
-    email: "mike.c@hospital.com",
-    phone: "+1 234-567-8902",
-    photo: "/placeholder-user.jpg",
-    hireDate: "2019-06-20",
-    shift: "Night",
-  },
-  {
-    id: 3,
-    name: "Emma Davis",
-    employeeId: "EMP003",
-    department: "Pharmacy",
-    role: "Pharmacist",
-    status: "On Leave",
-    email: "emma.d@hospital.com",
-    phone: "+1 234-567-8903",
-    photo: "/placeholder-user.jpg",
-    hireDate: "2021-01-10",
-    shift: "Morning",
-  },
-  {
-    id: 4,
-    name: "James Wilson",
-    employeeId: "EMP004",
-    department: "Surgery",
-    role: "Surgeon",
-    status: "Active",
-    email: "james.w@hospital.com",
-    phone: "+1 234-567-8904",
-    photo: "/placeholder-user.jpg",
-    hireDate: "2018-09-05",
-    shift: "Afternoon",
-  },
-  {
-    id: 5,
-    name: "Lisa Anderson",
-    employeeId: "EMP005",
-    department: "Radiology",
-    role: "Radiologist",
-    status: "Active",
-    email: "lisa.a@hospital.com",
-    phone: "+1 234-567-8905",
-    photo: "/placeholder-user.jpg",
-    hireDate: "2020-11-22",
-    shift: "Morning",
-  },
-  {
-    id: 6,
-    name: "Robert Taylor",
-    employeeId: "EMP006",
-    department: "Administration",
-    role: "HR Manager",
-    status: "Active",
-    email: "robert.t@hospital.com",
-    phone: "+1 234-567-8906",
-    photo: "/placeholder-user.jpg",
-    hireDate: "2017-04-12",
-    shift: "Morning",
-  },
-];
+);
+
+const newStaffForm = ref({
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  employeeId: "",
+  departmentId: "",
+  position: "",
+  employmentType: "FULL_TIME" as const,
+  hireDate: "",
+});
+
+const addStaffMember = async () => {
+  isLoading.value = true;
+  error.value = null;
+
+  try {
+    await $fetch(`/api/${organizationId}/staff`, {
+      method: "POST",
+      body: {
+        firstName: newStaffForm.value.firstName,
+        lastName: newStaffForm.value.lastName,
+        email: newStaffForm.value.email,
+        phone: newStaffForm.value.phone || undefined,
+        employeeId: newStaffForm.value.employeeId || undefined,
+        departmentId: newStaffForm.value.departmentId || undefined,
+        position: newStaffForm.value.position || undefined,
+        employmentType: newStaffForm.value.employmentType,
+        hireDate: newStaffForm.value.hireDate
+          ? new Date(newStaffForm.value.hireDate)
+          : new Date(),
+        isActive: true,
+      },
+    });
+
+    showAddStaffDialog.value = false;
+    newStaffForm.value = {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      employeeId: "",
+      departmentId: "",
+      position: "",
+      employmentType: "FULL_TIME",
+      hireDate: "",
+    };
+    await refreshStaff();
+  } catch (e: any) {
+    error.value = e.data?.message || "Failed to add staff member";
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 const getStatusColor = (status: string) => {
   const colors: Record<string, string> = {
@@ -143,12 +106,21 @@ const getStatusColor = (status: string) => {
   return colors[status] || "bg-muted text-muted-foreground";
 };
 
-const getInitials = (name: string) => {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("");
+const getInitials = (firstName: string, lastName: string) => {
+  return `${firstName?.[0] || ""}${lastName?.[0] || ""}`;
 };
+
+const getStaffName = (staff: any) => {
+  return `${staff.firstName || ""} ${staff.lastName || ""}`.trim() || "Unknown";
+};
+
+const getStaffPhoto = (staff: any) => {
+  return staff.user?.image || "/placeholder-user.jpg";
+};
+
+watch([searchQuery, selectedDepartment], () => {
+  refreshStaff();
+});
 </script>
 
 <template>
@@ -157,12 +129,14 @@ const getInitials = (name: string) => {
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-3xl font-bold text-foreground">Staff Directory</h1>
-        <p class="text-muted-foreground mt-1">Manage your organization's workforce</p>
+        <p class="text-muted-foreground mt-1">
+          Manage your organization's workforce
+        </p>
       </div>
 
       <Dialog v-model:open="showAddStaffDialog">
         <DialogTrigger as-child>
-          <Button class="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button>
             <Plus class="h-4 w-4 mr-2" />
             Add Staff Member
           </Button>
@@ -175,14 +149,28 @@ const getInitials = (name: string) => {
             >
           </DialogHeader>
           <div class="grid gap-4 py-4">
+            <div
+              v-if="error"
+              class="p-3 bg-destructive/10 text-destructive rounded-md text-sm"
+            >
+              {{ error }}
+            </div>
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
-                <Label for="fullName">Full Name</Label>
-                <Input id="fullName" placeholder="John Doe" />
+                <Label for="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  v-model="newStaffForm.firstName"
+                  placeholder="John"
+                />
               </div>
               <div class="space-y-2">
-                <Label for="employeeId">Employee ID</Label>
-                <Input id="employeeId" placeholder="EMP007" />
+                <Label for="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  v-model="newStaffForm.lastName"
+                  placeholder="Doe"
+                />
               </div>
             </div>
             <div class="grid grid-cols-2 gap-4">
@@ -190,41 +178,93 @@ const getInitials = (name: string) => {
                 <Label for="email">Email</Label>
                 <Input
                   id="email"
+                  v-model="newStaffForm.email"
                   type="email"
                   placeholder="john.doe@hospital.com"
                 />
               </div>
               <div class="space-y-2">
                 <Label for="phone">Phone</Label>
-                <Input id="phone" placeholder="+1 234-567-8900" />
+                <Input
+                  id="phone"
+                  v-model="newStaffForm.phone"
+                  placeholder="+1 234-567-8900"
+                />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <Label for="employeeId">Employee ID</Label>
+                <Input
+                  id="employeeId"
+                  v-model="newStaffForm.employeeId"
+                  placeholder="EMP007"
+                />
+              </div>
+              <div class="space-y-2">
+                <Label for="hireDate">Hire Date</Label>
+                <Input
+                  id="hireDate"
+                  v-model="newStaffForm.hireDate"
+                  type="date"
+                />
               </div>
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
                 <Label for="department">Department</Label>
-                <Select>
+                <Select v-model="newStaffForm.departmentId">
                   <SelectTrigger>
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="nursing">Nursing</SelectItem>
-                    <SelectItem value="emergency">Emergency</SelectItem>
-                    <SelectItem value="pharmacy">Pharmacy</SelectItem>
+                    <SelectItem :value="null">No Department</SelectItem>
+                    <SelectItem
+                      v-for="dept in departments"
+                      :key="dept.id"
+                      :value="dept.id"
+                    >
+                      {{ dept.name }}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div class="space-y-2">
-                <Label for="role">Role</Label>
-                <Input id="role" placeholder="Nurse" />
+                <Label for="position">Position/Role</Label>
+                <Input
+                  id="position"
+                  v-model="newStaffForm.position"
+                  placeholder="Nurse"
+                />
               </div>
+            </div>
+            <div class="space-y-2">
+              <Label for="employmentType">Employment Type</Label>
+              <Select v-model="newStaffForm.employmentType">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select employment type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="FULL_TIME">Full Time</SelectItem>
+                  <SelectItem value="PART_TIME">Part Time</SelectItem>
+                  <SelectItem value="CONTRACT">Contract</SelectItem>
+                  <SelectItem value="INTERN">Intern</SelectItem>
+                  <SelectItem value="FREELANCE">Freelance</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div class="flex justify-end gap-3">
               <Button variant="outline" @click="showAddStaffDialog = false"
                 >Cancel</Button
               >
-              <Button class="bg-blue-600 hover:bg-blue-700 text-white"
-                >Add Staff Member</Button
+              <Button
+                class="bg-blue-600 hover:bg-blue-700 text-white"
+                @click="addStaffMember"
+                :disabled="isLoading"
               >
+                <span v-if="isLoading">Adding...</span>
+                <span v-else>Add Staff Member</span>
+              </Button>
             </div>
           </div>
         </DialogContent>
@@ -254,12 +294,13 @@ const getInitials = (name: string) => {
                 <SelectValue placeholder="Department" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem :value="null">All Departments</SelectItem>
                 <SelectItem
                   v-for="dept in departments"
-                  :key="dept"
-                  :value="dept.toLowerCase()"
+                  :key="dept.id"
+                  :value="dept.id"
                 >
-                  {{ dept }}
+                  {{ dept.name }}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -308,6 +349,12 @@ const getInitials = (name: string) => {
       v-if="viewMode === 'grid'"
       class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
     >
+      <div
+        v-if="!staffMembers || staffMembers.length === 0"
+        class="col-span-full text-center py-12 text-muted-foreground"
+      >
+        No staff members found
+      </div>
       <Card
         v-for="staff in staffMembers"
         :key="staff.id"
@@ -316,9 +363,9 @@ const getInitials = (name: string) => {
         <CardContent class="p-6">
           <div class="flex items-start justify-between mb-4">
             <Avatar class="h-16 w-16">
-              <AvatarImage :src="staff.photo" />
+              <AvatarImage :src="getStaffPhoto(staff)" />
               <AvatarFallback class="bg-primary/10 text-primary text-lg">
-                {{ getInitials(staff.name) }}
+                {{ getInitials(staff.firstName, staff.lastName) }}
               </AvatarFallback>
             </Avatar>
             <Button variant="ghost" size="icon" class="h-8 w-8">
@@ -329,38 +376,40 @@ const getInitials = (name: string) => {
           <div class="space-y-3">
             <div>
               <h3 class="text-lg font-semibold text-foreground">
-                {{ staff.name }}
+                {{ getStaffName(staff) }}
               </h3>
-              <p class="text-sm text-muted-foreground">{{ staff.employeeId }}</p>
+              <p class="text-sm text-muted-foreground">
+                {{ staff.employeeId || "No ID" }}
+              </p>
             </div>
 
             <div class="flex items-center gap-2">
               <Badge class="bg-primary/10 text-primary hover:bg-primary/20">{{
-                staff.department
+                staff.department?.name || "No Department"
               }}</Badge>
-              <Badge :class="getStatusColor(staff.status)">{{
-                staff.status
-              }}</Badge>
+              <Badge
+                :class="getStatusColor(staff.isActive ? 'Active' : 'Inactive')"
+                >{{ staff.isActive ? "Active" : "Inactive" }}</Badge
+              >
             </div>
 
             <div class="space-y-2 pt-2 border-t border-border">
-              <div class="flex items-center gap-2 text-sm text-muted-foreground">
+              <div
+                class="flex items-center gap-2 text-sm text-muted-foreground"
+              >
                 <Mail class="h-4 w-4" />
                 <span class="truncate">{{ staff.email }}</span>
               </div>
-              <div class="flex items-center gap-2 text-sm text-muted-foreground">
+              <div
+                class="flex items-center gap-2 text-sm text-muted-foreground"
+              >
                 <Phone class="h-4 w-4" />
-                <span>{{ staff.phone }}</span>
+                <span>{{ staff.phone || "No phone" }}</span>
               </div>
             </div>
 
             <div class="flex gap-2 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                class="flex-1"
-                @click="navigateTo(`/hr/staff/${staff.id}`)"
-              >
+              <Button variant="outline" size="sm" class="flex-1">
                 View Profile
               </Button>
               <Button variant="outline" size="sm" class="flex-1">
@@ -397,7 +446,7 @@ const getInitials = (name: string) => {
                 <th
                   class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 >
-                  Role
+                  Position
                 </th>
                 <th
                   class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
@@ -417,6 +466,14 @@ const getInitials = (name: string) => {
               </tr>
             </thead>
             <tbody class="bg-background divide-y divide-border">
+              <tr v-if="!staffMembers || staffMembers.length === 0">
+                <td
+                  colspan="7"
+                  class="px-6 py-12 text-center text-muted-foreground"
+                >
+                  No staff members found
+                </td>
+              </tr>
               <tr
                 v-for="staff in staffMembers"
                 :key="staff.id"
@@ -425,51 +482,57 @@ const getInitials = (name: string) => {
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center gap-3">
                     <Avatar class="h-10 w-10">
-                      <AvatarImage :src="staff.photo" />
+                      <AvatarImage :src="getStaffPhoto(staff)" />
                       <AvatarFallback class="bg-primary/10 text-primary">
-                        {{ getInitials(staff.name) }}
+                        {{ getInitials(staff.firstName, staff.lastName) }}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <div class="text-sm font-medium text-foreground">
-                        {{ staff.name }}
+                        {{ getStaffName(staff) }}
                       </div>
                       <div class="text-sm text-muted-foreground">
-                        {{ staff.shift }} Shift
+                        {{ staff.employmentType?.replace("_", " ") || "N/A" }}
                       </div>
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                  {{ staff.employeeId }}
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground"
+                >
+                  {{ staff.employeeId || "N/A" }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <Badge class="bg-primary/10 text-primary hover:bg-primary/20">{{
-                    staff.department
-                  }}</Badge>
+                  <Badge
+                    class="bg-primary/10 text-primary hover:bg-primary/20"
+                    >{{ staff.department?.name || "No Department" }}</Badge
+                  >
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                  {{ staff.role }}
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground"
+                >
+                  {{ staff.position || "N/A" }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <Badge :class="getStatusColor(staff.status)">{{
-                    staff.status
-                  }}</Badge>
+                  <Badge
+                    :class="
+                      getStatusColor(staff.isActive ? 'Active' : 'Inactive')
+                    "
+                    >{{ staff.isActive ? "Active" : "Inactive" }}</Badge
+                  >
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground"
+                >
                   <div>{{ staff.email }}</div>
-                  <div class="text-muted-foreground">{{ staff.phone }}</div>
+                  <div class="text-muted-foreground">
+                    {{ staff.phone || "No phone" }}
+                  </div>
                 </td>
                 <td
                   class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
                 >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    @click="navigateTo(`/hr/staff/${staff.id}`)"
-                  >
-                    View
-                  </Button>
+                  <Button variant="ghost" size="sm"> View </Button>
                 </td>
               </tr>
             </tbody>
