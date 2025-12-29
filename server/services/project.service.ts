@@ -30,7 +30,7 @@ export const getProjectByIdWithRelations = async (
     include: {
       workspace: true,
       department: true,
-      tasks: true,
+      tasks: { include: { assignees: { include: { user: true } } } },
       members: { include: { user: true } },
       documents: true,
       milestones: true,

@@ -44,11 +44,15 @@ export const getTasks = async (params?: {
 }): Promise<Task[]> => {
   const { skip = 0, take = 50, where, include, orderBy } = params || {};
 
+  const defaultInclude: Prisma.TaskInclude = {
+    assignees: { include: { user: true } },
+  };
+
   return prisma.task.findMany({
     skip,
     take,
     where,
-    include,
+    include: include || defaultInclude,
     orderBy,
   });
 };

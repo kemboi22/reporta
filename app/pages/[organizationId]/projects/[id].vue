@@ -78,8 +78,8 @@ const addTask = async () => {
 
 const getStatusColor = (status: string) => {
   const colors: Record<string, string> = {
-    TODO: "bg-gray-500",
-    IN_PROGRESS: "bg-blue-500",
+    TODO: "bg-blue-500",
+    IN_PROGRESS: "bg-purple-500",
     COMPLETED: "bg-emerald-500",
     CANCELLED: "bg-red-500",
   };
@@ -104,6 +104,15 @@ const getPriorityColor = (priority: string) => {
     URGENT: "text-red-500",
   };
   return colors[priority] || "text-gray-500";
+};
+
+const getInitials = (name: string) => {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 };
 
 const taskStats = computed(() => {
@@ -283,8 +292,11 @@ const completionPercentage = computed(() => {
           </div>
 
           <div v-else class="space-y-4">
+            <div v-if="tasks.length === 0" class="text-center py-12 text-muted-foreground">
+              No tasks yet. Create your first task above.
+            </div>
             <Card
-              v-for="task in tasks || []"
+              v-for="task in tasks"
               :key="task.id"
               class="border-border hover:border-primary/50 transition-colors cursor-pointer"
             >
@@ -369,7 +381,7 @@ const completionPercentage = computed(() => {
               </div>
               <div v-else class="space-y-3">
                 <div
-                  v-for="member in members || []"
+                  v-for="member in members"
                   :key="member.id"
                   class="flex items-center gap-3"
                 >

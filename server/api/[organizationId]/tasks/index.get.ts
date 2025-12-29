@@ -1,4 +1,5 @@
 import { getTasks } from "~~/server/services";
+import { prisma } from "~~/server/utils/db";
 
 export default defineEventHandler(async (event) => {
   const organizationId = getRouterParam(event, "organizationId");
@@ -8,7 +9,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: "Organization ID is required" });
   }
 
-  const where: any = {};
+  const where: any = {
+    workspace: { organizationId },
+  };
   
   if (workspaceId) {
     where.workspaceId = workspaceId;
@@ -32,6 +35,10 @@ export default defineEventHandler(async (event) => {
     skip: skip ? Number(skip) : undefined,
     take: take ? Number(take) : undefined,
     where,
+    include: {
+      assignees: { include: { user: true } },
+      comments: true,
+    },
     orderBy: { createdAt: "desc" },
   });
   
