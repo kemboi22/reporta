@@ -17,121 +17,115 @@ import {
   Eye,
   Filter,
   FileText,
-  Calendar,
   User,
   CheckCircle2,
+  Calendar,
 } from "lucide-vue-next";
-import { definePageMeta, navigateTo } from "#imports";
+import { definePageMeta } from "#imports";
 
 definePageMeta({
   layout: "dashboard",
 });
+
+const route = useRoute();
+const organizationId = route.params.organizationId as string;
 
 const searchQuery = ref("");
 const selectedTemplate = ref("all");
 const selectedStatus = ref("all");
 const selectedDateRange = ref("7days");
 
-const reports = [
+const { data: reports, refresh: refreshReports } = await useLazyFetch(
+  `/api/${organizationId}/reports`,
   {
-    id: 1,
-    templateName: "Daily Ward Report",
-    submittedBy: "Sarah Johnson",
-    submittedAt: "2024-01-15 09:30 AM",
-    department: "Nursing",
-    status: "Approved",
-    data: {
-      "Ward Name": "Ward A",
-      "Total Patients": 24,
-      "New Admissions": 3,
-      Discharges: 2,
-    },
+    key: `reports-${organizationId}`,
+    transform: (data) => data || [],
   },
+);
+
+const { data: templates, refresh: refreshTemplates } = await useLazyFetch(
+  `/api/${organizationId}/templates`,
   {
-    id: 2,
-    templateName: "Medication Inventory",
-    submittedBy: "Mike Chen",
-    submittedAt: "2024-01-14 02:15 PM",
-    department: "Pharmacy",
-    status: "Pending",
-    data: {
-      "Stock Level": "Good",
-      "Items Low": 5,
-      "Expired Items": 0,
-    },
+    key: `templates-${organizationId}`,
+    transform: (data) => data || [],
   },
-  {
-    id: 3,
-    templateName: "Incident Report Form",
-    submittedBy: "Emily Davis",
-    submittedAt: "2024-01-14 11:20 AM",
-    department: "Safety",
-    status: "Under Review",
-    data: {
-      "Incident Type": "Near Miss",
-      Severity: "Low",
-      Location: "Ward B",
-    },
-  },
-  {
-    id: 4,
-    templateName: "Equipment Maintenance Log",
-    submittedBy: "James Wilson",
-    submittedAt: "2024-01-13 04:45 PM",
-    department: "Maintenance",
-    status: "Approved",
-    data: {
-      Equipment: "MRI Machine",
-      Status: "Functional",
-      "Next Service": "2024-02-13",
-    },
-  },
-  {
-    id: 5,
-    templateName: "Patient Satisfaction Survey",
-    submittedBy: "Lisa Anderson",
-    submittedAt: "2024-01-13 10:00 AM",
-    department: "Quality",
-    status: "Approved",
-    data: {
-      "Overall Rating": "4.5/5",
-      "Response Count": 28,
-      Satisfaction: "90%",
-    },
-  },
-];
+);
+
+const filteredReports = computed(() => {
+  let filtered = reports.value || [];
+
+  if (searchQuery.value) {
+    filtered = filtered.filter((r: any) => 
+      r.title?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      r.template?.name?.toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
+  }
+
+  if (selectedStatus.value !== "all") {
+    filtered = filtered.filter((r: any) => r.status === selectedStatus.value);
+  }
+
+  return filtered;
+});
 
 const getStatusColor = (status: string) => {
   const colors: Record<string, string> = {
-    Approved: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100",
-    Pending: "bg-amber-100 text-amber-700 hover:bg-amber-100",
-    "Under Review": "bg-blue-100 text-blue-700 hover:bg-blue-100",
-    Rejected: "bg-red-100 text-red-700 hover:bg-red-100",
+    APPROVED: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100",
+    PENDING: "bg-amber-100 text-amber-700 hover:bg-amber-100",
+    UNDER_REVIEW: "bg-blue-100 text-blue-700 hover:bg-blue-100",
   };
-  return colors[status] || colors["Pending"];
+  return colors[status] || "bg-gray-100 text-gray-700";
 };
 
-const viewReport = (reportId: number) => {
-  navigateTo(`/reports/view/${reportId}`);
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString();
 };
+
+const totalSubmitted = computed(() => reports.value?.length || 0);
+const approvedReports = computed(() => (reports.value || []).filter((r: any) => r.status === "APPROVED").length);
+const pendingReports = computed(() => (reports.value || []).filter((r: any) => r.status === "PENDING").length);
 </script>
 
 <template>
   <div class="space-y-6">
-    <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-3xl font-bold text-foreground">Submitted Reports</h1>
         <p class="text-muted-foreground mt-1">View and manage all submitted reports</p>
       </div>
-
-      <Button class="bg-blue-600 hover:bg-blue-700 text-white">
+      <Button>
         <Download class="h-4 w-4 mr-2" />
         Export All
       </Button>
     </div>
 
-    <!-- Filters -->
+    <div class="grid md:grid-cols-4 gap-6">
+      <Card>
+        <CardContent class="p-6">
+          <p class="text-sm text-muted-foreground mb-1">Total Submitted</p>
+          <p class="text-3xl font-bold">{{ totalSubmitted }}</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent class="p-6">
+          <p class="text-sm text-muted-foreground mb-1">Approved</p>
+          <p class="text-3xl font-bold text-emerald-600">{{ approvedReports }}</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent class="p-6">
+          <p class="text-sm text-muted-foreground mb-1">Pending Review</p>
+          <p class="text-3xl font-bold text-amber-600">{{ pendingReports }}</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent class="p-6">
+          <p class="text-sm text-muted-foreground mb-1">Active Templates</p>
+          <p class="text-3xl font-bold">{{ templates?.length || 0 }}</p>
+        </CardContent>
+      </Card>
+    </div>
+
     <Card class="border-border">
       <CardContent class="p-6">
         <div class="flex flex-col md:flex-row gap-4">
@@ -148,13 +142,17 @@ const viewReport = (reportId: number) => {
 
           <Select v-model="selectedTemplate">
             <SelectTrigger class="w-48">
-              <SelectValue placeholder="All Templates" />
+              <SelectValue placeholder="Template" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Templates</SelectItem>
-              <SelectItem value="ward">Daily Ward Report</SelectItem>
-              <SelectItem value="inventory">Medication Inventory</SelectItem>
-              <SelectItem value="incident">Incident Report</SelectItem>
+              <SelectItem
+                v-for="template in templates"
+                :key="template.id"
+                :value="template.id"
+              >
+                {{ template.name }}
+              </SelectItem>
             </SelectContent>
           </Select>
 
@@ -164,137 +162,82 @@ const viewReport = (reportId: number) => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="review">Under Review</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select v-model="selectedDateRange">
-            <SelectTrigger class="w-40">
-              <SelectValue placeholder="Date Range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="7days">Last 7 Days</SelectItem>
-              <SelectItem value="30days">Last 30 Days</SelectItem>
-              <SelectItem value="custom">Custom Range</SelectItem>
+              <SelectItem value="APPROVED">Approved</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </CardContent>
     </Card>
 
-    <!-- Reports List -->
-    <div class="space-y-4">
-      <Card
-        v-for="report in reports"
-        :key="report.id"
-        class="border-border hover:shadow-md transition-all cursor-pointer"
-        @click="viewReport(report.id)"
-      >
-        <CardContent class="p-6">
-          <div class="flex items-start justify-between">
-            <div class="flex gap-4 flex-1">
-              <div
-                class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0"
-              >
-                <FileText class="h-6 w-6 text-blue-600" />
-              </div>
-
-              <div class="flex-1 min-w-0">
-                <div class="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 class="text-lg font-semibold text-foreground">
-                      {{ report.templateName }}
-                    </h3>
-                    <div
-                      class="flex items-center gap-4 mt-1 text-sm text-muted-foreground"
-                    >
-                      <div class="flex items-center gap-1.5">
-                        <User class="h-4 w-4" />
-                        <span>{{ report.submittedBy }}</span>
-                      </div>
-                      <div class="flex items-center gap-1.5">
-                        <Calendar class="h-4 w-4" />
-                        <span>{{ report.submittedAt }}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Badge :class="getStatusColor(report.status)">
-                    {{ report.status }}
-                  </Badge>
-                </div>
-
-                <div class="flex items-center gap-2 mb-3">
-                  <Badge class="bg-blue-100 text-blue-700 hover:bg-blue-100">
-                    {{ report.department }}
-                  </Badge>
-                </div>
-
-                <!-- Report Data Preview -->
-                <div class="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
-                  <div v-for="(value, key) in report.data" :key="key">
-                    <p class="text-xs text-muted-foreground mb-1">{{ key }}</p>
-                    <p class="text-sm font-semibold text-foreground">
-                      {{ value }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="flex gap-2 ml-4">
-              <Button
-                variant="outline"
-                size="sm"
-                @click.stop="viewReport(report.id)"
-              >
-                <Eye class="h-4 w-4 mr-2" />
-                View
-              </Button>
-              <Button variant="outline" size="sm" @click.stop>
-                <Download class="h-4 w-4 mr-2" />
-                Export
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div v-if="!filteredReports || filteredReports.length === 0" class="text-center py-12 text-muted-foreground">
+      <FileText class="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+      <p>No submitted reports found.</p>
     </div>
 
-    <!-- Stats -->
-    <div class="grid md:grid-cols-4 gap-6">
-      <Card class="border-border">
+    <div v-else class="space-y-4">
+      <Card
+        v-for="report in filteredReports"
+        :key="report.id"
+        class="border-border hover:shadow-md transition-all"
+      >
         <CardContent class="p-6">
-          <p class="text-sm text-muted-foreground mb-1">Total Submitted</p>
-          <p class="text-3xl font-bold text-foreground">156</p>
-          <p class="text-sm text-emerald-600 mt-2">+12% this week</p>
-        </CardContent>
-      </Card>
+          <div class="flex items-start justify-between mb-4">
+            <div class="flex items-center gap-4">
+              <div class="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <FileText class="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <h4 class="font-semibold text-foreground">{{ report.title }}</h4>
+                <Badge class="bg-blue-100 text-blue-700 mt-1">
+                  {{ report.template?.name || "Report" }}
+                </Badge>
+              </div>
+            </div>
 
-      <Card class="border-border">
-        <CardContent class="p-6">
-          <p class="text-sm text-muted-foreground mb-1">Approved</p>
-          <p class="text-3xl font-bold text-emerald-600">142</p>
-          <p class="text-sm text-muted-foreground mt-2">91% approval rate</p>
-        </CardContent>
-      </Card>
+            <div class="flex gap-2">
+              <Badge :class="getStatusColor(report.status)">{{ report.status }}</Badge>
+              <span class="text-sm text-muted-foreground">
+                {{ formatDate(report.createdAt) }}
+              </span>
+            </div>
+          </div>
 
-      <Card class="border-border">
-        <CardContent class="p-6">
-          <p class="text-sm text-muted-foreground mb-1">Pending Review</p>
-          <p class="text-3xl font-bold text-amber-600">8</p>
-          <p class="text-sm text-muted-foreground mt-2">Awaiting action</p>
-        </CardContent>
-      </Card>
+          <div class="grid md:grid-cols-3 gap-4 mt-4">
+            <div>
+              <p class="text-sm text-muted-foreground mb-2">Submitted By</p>
+              <div class="flex items-center gap-2">
+                <User class="h-4 w-4 text-muted-foreground" />
+                <span class="font-medium">{{ report.submittedBy?.name || "Unknown" }}</span>
+              </div>
+            </div>
+            <div>
+              <p class="text-sm text-muted-foreground mb-2">Department</p>
+              <div class="flex items-center gap-2">
+                <FileText class="h-4 w-4 text-muted-foreground" />
+                <span class="font-medium">{{ report.department?.name || "N/A" }}</span>
+              </div>
+            </div>
+            <div>
+              <p class="text-sm text-muted-foreground mb-2">Date</p>
+              <div class="flex items-center gap-2">
+                <Calendar class="h-4 w-4 text-muted-foreground" />
+                <span class="font-medium">{{ formatDate(report.createdAt) }}</span>
+              </div>
+            </div>
+          </div>
 
-      <Card class="border-border">
-        <CardContent class="p-6">
-          <p class="text-sm text-muted-foreground mb-1">Avg Response Time</p>
-          <p class="text-3xl font-bold text-blue-600">2.4h</p>
-          <p class="text-sm text-emerald-600 mt-2">-15% faster</p>
+          <div class="flex justify-end gap-2 mt-4 pt-4 border-t">
+            <Button variant="outline" size="sm" @click="navigateTo(`/${organizationId}/reports/view/${report.id}`)">
+              <Eye class="h-4 w-4 mr-2" />
+              View
+            </Button>
+            <Button variant="outline" size="sm">
+              <Download class="h-4 w-4 mr-2" />
+              Download
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
