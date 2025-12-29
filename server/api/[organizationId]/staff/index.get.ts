@@ -26,6 +26,9 @@ export default defineEventHandler(async (event) => {
     skip: skip ? Number(skip) : undefined,
     take: take ? Number(take) : undefined,
     where,
+    include: {
+      user: true,
+    },
   });
   
   return staff;

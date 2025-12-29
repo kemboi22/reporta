@@ -86,12 +86,16 @@ export const getStaffList = async (params?: {
   include?: Prisma.StaffInclude;
 }): Promise<Staff[]> => {
   const { skip = 0, take = 50, where, include } = params || {};
+  
+  const defaultInclude: Prisma.StaffInclude = {
+    user: true,
+  };
 
   return prisma.staff.findMany({
     skip,
     take,
     where,
-    include,
+    include: include || defaultInclude,
   });
 }
 

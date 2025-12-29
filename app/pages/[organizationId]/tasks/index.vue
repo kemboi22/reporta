@@ -12,6 +12,8 @@ import {
   Edit2,
   Trash2,
   FolderKanban,
+  Eye,
+  UserPlus,
 } from "lucide-vue-next";
 import { definePageMeta } from "#imports";
 
@@ -25,12 +27,15 @@ const organizationId = route.params.organizationId as string;
 const viewMode = ref<"kanban" | "list">("kanban");
 const showCreateTaskSheet = ref(false);
 const showEditTaskSheet = ref(false);
+const showAssignDialog = ref(false);
 const selectedFilter = ref("all");
 const selectedProject = ref<string | null>(null);
 const searchQuery = ref("");
 const draggedTask = ref<{ columnId: string; taskId: string } | null>(null);
 const dragOverColumn = ref<string | null>(null);
 const editingTask = ref<any>(null);
+const assigningTask = ref<any>(null);
+const newAssignee = ref<string>("");
 
 const columns = [
   { id: "TODO", title: "To Do", color: "bg-blue-500" },
@@ -39,19 +44,22 @@ const columns = [
   { id: "CANCELLED", title: "Cancelled", color: "bg-red-500" },
 ];
 
-const { data: tasksData, pending: tasksPending, refresh: refreshTasks } = await useLazyFetch(
-  `/api/${organizationId}/tasks`,
-  {
-    query: {
-      projectId: selectedProject,
-      take: 100,
-    },
+const {
+  data: tasksData,
+  pending: tasksPending,
+  refresh: refreshTasks,
+} = await useLazyFetch(`/api/${organizationId}/tasks`, {
+  query: {
+    projectId: selectedProject,
+    take: 100,
   },
-);
+});
 
 const { data: projectsData } = await useLazyFetch(
   `/api/${organizationId}/projects`,
 );
+
+const { data: usersData } = await useLazyFetch(`/api/${organizationId}/staff`);
 
 const tasks = computed(() => {
   const allTasks = tasksData.value || [];
@@ -61,14 +69,14 @@ const tasks = computed(() => {
     COMPLETED: [],
     CANCELLED: [],
   };
-  
+
   allTasks.forEach((task: any) => {
     const status = task.status || "TODO";
     if (result[status]) {
       result[status].push(task);
     }
   });
-  
+
   return result;
 });
 
@@ -77,6 +85,15 @@ const projects = computed(() => {
     id: p.id,
     name: p.name,
     color: p.color || "bg-blue-500",
+  }));
+});
+
+const users = computed(() => {
+  return (usersData.value || []).map((u: any) => ({
+    id: u.id,
+    name: u.firstName + " " + u.lastName,
+    avatar: u.avatar,
+    email: u.email,
   }));
 });
 
@@ -139,7 +156,10 @@ const getFilteredTasks = (columnId: string) => {
   return columnTasks.filter((task) => {
     const matchesSearch =
       task.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      (task.description && task.description.toLowerCase().includes(searchQuery.value.toLowerCase()));
+      (task.description &&
+        task.description
+          .toLowerCase()
+          .includes(searchQuery.value.toLowerCase()));
     const matchesProject =
       !selectedProject.value || task.projectId === selectedProject.value;
     const matchesFilter =
@@ -195,10 +215,45 @@ const openEditTaskSheet = (status: string, taskId: string) => {
   }
 };
 
+const openAssignDialog = (task: any) => {
+  assigningTask.value = task;
+  newAssignee.value = task.assignees?.[0]?.userId || "";
+  showAssignDialog.value = true;
+};
+
+const assignUser = async () => {
+  if (!assigningTask.value || !newAssignee.value) return;
+
+  try {
+    const task = assigningTask.value;
+    const currentAssignees = task.assignees || [];
+
+    if (currentAssignees.length > 0) {
+      await $fetch(`/api/${organizationId}/tasks/${task.id}`, {
+        method: "PUT",
+        body: { assigneeIds: [newAssignee.value] },
+      });
+    } else {
+      await $fetch(`/api/${organizationId}/tasks/${task.id}`, {
+        method: "PUT",
+        body: { assigneeIds: [newAssignee.value] },
+      });
+    }
+
+    showAssignDialog.value = false;
+    assigningTask.value = null;
+    newAssignee.value = "";
+    await refreshTasks();
+  } catch (error) {
+    console.error("Failed to assign user:", error);
+  }
+};
+
 const saveTask = async () => {
   if (editingTask.value) {
     try {
-      const { id, ...updates } = editingTask.value;
+      const { id, assignees, comments, ...updates } = editingTask.value;
+
       await $fetch(`/api/${organizationId}/tasks/${id}`, {
         method: "PUT",
         body: updates,
@@ -218,14 +273,31 @@ const createTask = async () => {
   await refreshTasks();
 };
 
-const totalTasks = computed(() => (tasksData.value?.length || 0));
+const deleteTask = async (taskId: string) => {
+  if (!confirm("Are you sure you want to delete this task?")) return;
+
+  try {
+    await $fetch(`/api/${organizationId}/tasks/${taskId}`, {
+      method: "DELETE",
+    });
+    await refreshTasks();
+  } catch (error) {
+    console.error("Failed to delete task:", error);
+  }
+};
+
+const totalTasks = computed(() => tasksData.value?.length || 0);
 
 const inProgressTasks = computed(() => {
-  return tasksData.value?.filter((t: any) => t.status === "IN_PROGRESS").length || 0;
+  return (
+    tasksData.value?.filter((t: any) => t.status === "IN_PROGRESS").length || 0
+  );
 });
 
 const completedTasks = computed(() => {
-  return tasksData.value?.filter((t: any) => t.status === "COMPLETED").length || 0;
+  return (
+    tasksData.value?.filter((t: any) => t.status === "COMPLETED").length || 0
+  );
 });
 
 const completionRate = computed(() => {
@@ -239,7 +311,10 @@ const allTasks = computed(() => {
   return tasksList.filter((task: any) => {
     const matchesSearch =
       task.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      (task.description && task.description.toLowerCase().includes(searchQuery.value.toLowerCase()));
+      (task.description &&
+        task.description
+          .toLowerCase()
+          .includes(searchQuery.value.toLowerCase()));
     const matchesProject =
       !selectedProject.value || task.projectId === selectedProject.value;
     const matchesFilter =
@@ -278,7 +353,11 @@ const allTasks = computed(() => {
             </div>
             <div class="space-y-2">
               <Label for="description">Description</Label>
-              <Textarea id="description" placeholder="Describe the task..." rows="4" />
+              <Textarea
+                id="description"
+                placeholder="Describe task..."
+                rows="4"
+              />
             </div>
             <Button @click="createTask" class="w-full">Create Task</Button>
           </div>
@@ -438,12 +517,29 @@ const allTasks = computed(() => {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
+                              @click="
+                                navigateTo(
+                                  `/${organizationId}/tasks/${task.id}`,
+                                )
+                              "
+                            >
+                              <Eye class="h-4 w-4 mr-2" />
+                              View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               @click="openEditTaskSheet(column.id, task.id)"
                             >
                               <Edit2 class="h-4 w-4 mr-2" />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem class="text-destructive">
+                            <DropdownMenuItem @click="openAssignDialog(task)">
+                              <UserPlus class="h-4 w-4 mr-2" />
+                              Assign
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              class="text-destructive"
+                              @click="deleteTask(task.id)"
+                            >
                               <Trash2 class="h-4 w-4 mr-2" />
                               Delete
                             </DropdownMenuItem>
@@ -464,9 +560,14 @@ const allTasks = computed(() => {
                         <div
                           class="flex items-center gap-3 text-xs text-muted-foreground"
                         >
-                          <div v-if="task.dueDate" class="flex items-center gap-1">
+                          <div
+                            v-if="task.dueDate"
+                            class="flex items-center gap-1"
+                          >
                             <Calendar class="h-3 w-3" />
-                            <span>{{ new Date(task.dueDate).toLocaleDateString() }}</span>
+                            <span>{{
+                              new Date(task.dueDate).toLocaleDateString()
+                            }}</span>
                           </div>
                           <div
                             v-if="task.comments?.length > 0"
@@ -484,14 +585,30 @@ const allTasks = computed(() => {
                           </div>
                         </div>
                         <div class="flex items-center gap-2">
-                          <Avatar v-if="task.assignees && task.assignees[0]" class="h-6 w-6">
+                          <Avatar
+                            v-if="task.assignees && task.assignees[0]"
+                            class="h-6 w-6"
+                          >
                             <AvatarImage
                               :src="task.assignees[0].user?.avatar"
                             />
-                            <AvatarFallback class="text-[10px] bg-primary/10 text-primary">
-                              {{ getInitials(task.assignees[0].user?.name || "") }}
+                            <AvatarFallback
+                              class="text-[10px] bg-primary/10 text-primary"
+                            >
+                              {{
+                                getInitials(task.assignees[0].user?.name || "")
+                              }}
                             </AvatarFallback>
                           </Avatar>
+                          <Button
+                            v-else
+                            variant="ghost"
+                            size="icon"
+                            class="h-6 w-6"
+                            @click.stop="openAssignDialog(task)"
+                          >
+                            <UserPlus class="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
@@ -553,7 +670,10 @@ const allTasks = computed(() => {
                 >
               </TableCell>
               <TableCell>
-                <div v-if="task.assignees && task.assignees[0]" class="flex items-center gap-2">
+                <div
+                  v-if="task.assignees && task.assignees[0]"
+                  class="flex items-center gap-2"
+                >
                   <Avatar class="h-6 w-6">
                     <AvatarImage :src="task.assignees[0].user?.avatar" />
                     <AvatarFallback class="text-[10px]">{{
@@ -564,6 +684,15 @@ const allTasks = computed(() => {
                     task.assignees[0].user?.name
                   }}</span>
                 </div>
+                <Button
+                  v-else
+                  variant="ghost"
+                  size="icon"
+                  class="h-6 w-6"
+                  @click="openAssignDialog(task)"
+                >
+                  <UserPlus class="h-3.5 w-3.5" />
+                </Button>
               </TableCell>
               <TableCell class="text-sm text-muted-foreground">{{
                 task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "-"
@@ -582,12 +711,21 @@ const allTasks = computed(() => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
+                      @click="navigateTo(`/${organizationId}/tasks/${task.id}`)"
+                    >
+                      <Eye class="h-4 w-4 mr-2" />
+                      View
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       @click="openEditTaskSheet(task.status, task.id)"
                     >
                       <Edit2 class="h-4 w-4 mr-2" />
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem class="text-destructive">
+                    <DropdownMenuItem
+                      class="text-destructive"
+                      @click="deleteTask(task.id)"
+                    >
                       <Trash2 class="h-4 w-4 mr-2" />
                       Delete
                     </DropdownMenuItem>
@@ -622,7 +760,9 @@ const allTasks = computed(() => {
             <div
               class="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-950 flex items-center justify-center"
             >
-              <FolderKanban class="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              <FolderKanban
+                class="h-4 w-4 text-purple-600 dark:text-purple-400"
+              />
             </div>
           </div>
           <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">
@@ -638,7 +778,9 @@ const allTasks = computed(() => {
             <div
               class="h-8 w-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center"
             >
-              <FolderKanban class="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <FolderKanban
+                class="h-4 w-4 text-emerald-600 dark:text-emerald-400"
+              />
             </div>
           </div>
           <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
@@ -720,9 +862,37 @@ const allTasks = computed(() => {
               </Select>
             </div>
           </div>
+          <div class="space-y-2">
+            <Label for="edit-assignee">Assign To</Label>
+            <Select v-model="newAssignee">
+              <SelectTrigger>
+                <SelectValue placeholder="Select person" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="null">Unassigned</SelectItem>
+                <SelectItem
+                  v-for="user in users"
+                  :key="user.id"
+                  :value="user.id"
+                >
+                  <div class="flex items-center gap-2">
+                    <Avatar class="h-6 w-6">
+                      <AvatarImage :src="user.avatar" />
+                      <AvatarFallback class="text-[10px]">
+                        {{ getInitials(user.name) }}
+                      </AvatarFallback>
+                    </Avatar>
+                    {{ user.name }}
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
-              <Label for="edit-dueDate" class="text-sm font-medium">Due Date</Label>
+              <Label for="edit-dueDate" class="text-sm font-medium"
+                >Due Date</Label
+              >
               <Input
                 id="edit-dueDate"
                 v-model="editingTask.dueDate"
@@ -731,7 +901,9 @@ const allTasks = computed(() => {
               />
             </div>
             <div class="space-y-2">
-              <Label for="edit-status" class="text-sm font-medium">Status</Label>
+              <Label for="edit-status" class="text-sm font-medium"
+                >Status</Label
+              >
               <Select v-model="editingTask.status">
                 <SelectTrigger class="h-11">
                   <SelectValue />
@@ -741,17 +913,65 @@ const allTasks = computed(() => {
                     v-for="col in columns"
                     :key="col.id"
                     :value="col.id"
-                  >{{ col.title }}</SelectItem>
+                    >{{ col.title }}</SelectItem
+                  >
                 </SelectContent>
               </Select>
             </div>
           </div>
         </div>
         <div class="flex justify-end gap-3">
-          <Button variant="outline" @click="showEditTaskSheet = false">Cancel</Button>
+          <Button variant="outline" @click="showEditTaskSheet = false"
+            >Cancel</Button
+          >
           <Button @click="saveTask">Save Changes</Button>
         </div>
       </SheetContent>
     </Sheet>
+
+    <Dialog v-model:open="showAssignDialog">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Assign Task</DialogTitle>
+          <DialogDescription
+            >Assign this task to a team member</DialogDescription
+          >
+        </DialogHeader>
+        <div class="space-y-4 py-4">
+          <div class="space-y-2">
+            <Label>Select Person</Label>
+            <Select v-model="newAssignee">
+              <SelectTrigger>
+                <SelectValue placeholder="Select person" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="null">Unassigned</SelectItem>
+                <SelectItem
+                  v-for="user in users"
+                  :key="user.id"
+                  :value="user.id"
+                >
+                  <div class="flex items-center gap-2">
+                    <Avatar class="h-6 w-6">
+                      <AvatarImage :src="user.avatar" />
+                      <AvatarFallback class="text-[10px]">
+                        {{ getInitials(user.name) }}
+                      </AvatarFallback>
+                    </Avatar>
+                    {{ user.name }}
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3">
+          <Button variant="outline" @click="showAssignDialog = false"
+            >Cancel</Button
+          >
+          <Button @click="assignUser">Assign</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

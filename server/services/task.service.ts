@@ -26,6 +26,12 @@ export const getTaskById = async (id: string): Promise<Task | null> => {
 
   const task = await prisma.task.findUnique({
     where: { id },
+    include: {
+      assignees: { include: { user: true } },
+      comments: true,
+      checklist: true,
+      timeLogs: true,
+    },
   });
 
   if (task) {
@@ -57,13 +63,39 @@ export const getTasks = async (params?: {
   });
 };
 
-export const createTask = async (data: TaskCreateInput): Promise<Task> => {
+export const createTask = async (data: any): Promise<Task> => {
+  const { assigneeIds, ...taskData } = data;
+  
   const task = await prisma.task.create({
     data: {
-      ...data,
-      dueDate: data.dueDate ? new Date(data.dueDate.toString()) : "",
+      ...taskData,
+      dueDate: taskData.dueDate ? new Date(taskData.dueDate.toString()) : undefined,
     },
   });
+
+  if (assigneeIds && assigneeIds.length > 0) {
+    const staffRecords = await prisma.staff.findMany({
+      where: {
+        id: { in: assigneeIds },
+        userId: { not: null },
+      },
+      select: { userId: true },
+    });
+
+    const validUserIds = staffRecords
+      .map((s: any) => s.userId)
+      .filter((id: string | null) => id !== null) as string[];
+
+    if (validUserIds.length > 0) {
+      await prisma.taskAssignee.createMany({
+        data: validUserIds.map((userId) => ({
+          taskId: task.id,
+          userId,
+        })),
+        skipDuplicates: true,
+      });
+    }
+  }
 
   const cacheKey = `${CACHE_PREFIX}${task.id}`;
   await cacheSet(cacheKey, task, CACHE_TTL);
@@ -71,14 +103,43 @@ export const createTask = async (data: TaskCreateInput): Promise<Task> => {
   return task;
 };
 
-export const updateTask = async (
-  id: string,
-  data: TaskUpdateInput,
-): Promise<Task> => {
+export const updateTask = async (id: string, data: any): Promise<Task> => {
+  const { assigneeIds, ...taskData } = data;
+
   const task = await prisma.task.update({
     where: { id },
-    data,
+    data: taskData,
   });
+
+  if (assigneeIds !== undefined) {
+    await prisma.taskAssignee.deleteMany({
+      where: { taskId: id },
+    });
+
+    if (assigneeIds.length > 0) {
+      const staffRecords = await prisma.staff.findMany({
+        where: {
+          id: { in: assigneeIds },
+          userId: { not: null },
+        },
+        select: { userId: true },
+      });
+
+      const validUserIds = staffRecords
+        .map((s: any) => s.userId)
+        .filter((id: string | null) => id !== null) as string[];
+
+      if (validUserIds.length > 0) {
+        await prisma.taskAssignee.createMany({
+          data: validUserIds.map((userId) => ({
+            taskId: id,
+            userId,
+          })),
+          skipDuplicates: true,
+        });
+      }
+    }
+  }
 
   await invalidateTaskCache(id);
 
