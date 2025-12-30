@@ -118,7 +118,7 @@ export const completeOnboarding = async (
     });
 
     await tx.staff.upsert({
-      where: { userId: user.id },
+      where: { organizationId_userId: { organizationId: organization.id, userId: user.id } },
       create: {
         organizationId: organization.id,
         userId: user.id,
@@ -131,7 +131,6 @@ export const completeOnboarding = async (
         employmentType: "FULL_TIME",
       },
       update: {
-        organizationId: organization.id,
         firstName: admin.firstName,
         lastName: admin.lastName,
         email: admin.email,
