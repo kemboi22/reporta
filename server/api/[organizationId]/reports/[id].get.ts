@@ -1,4 +1,4 @@
-import { getReportById } from "~~/server/services";
+import { prisma } from "~~/server/utils/db";
 
 export default defineEventHandler(async (event) => {
   const organizationId = getRouterParam(event, "organizationId");
@@ -8,7 +8,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: "Report ID is required" });
   }
 
-  const report = await getReportById(id);
+  const report = await prisma.report.findUnique({
+    where: { id },
+    include: {
+      template: true,
+      workspace: true,
+    },
+  });
   
   if (!report) {
     throw createError({ statusCode: 404, message: "Report not found" });
