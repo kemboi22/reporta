@@ -158,11 +158,13 @@ const saveTemplate = async () => {
           fields: { sections: form.value.sections },
         },
       });
+      await refreshNuxtData(`templates-${organizationId}`);
     }
     toast.success("Template saved successfully");
     await navigateTo(`/${organizationId}/reports/templates`);
   } catch (error) {
     console.error("Failed to save template:", error);
+    toast.error("Failed to save template");
   }
 };
 </script>

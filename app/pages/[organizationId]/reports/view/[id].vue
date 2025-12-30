@@ -1,26 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Download, Printer, Edit, Trash2, Eye, FileText, Calendar, User, ChevronRight, CheckCircle2, Clock, AlertCircle } from "lucide-vue-next";
-import { definePageMeta } from "#imports";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { FileText, Calendar, User, ArrowLeft, Printer, Trash2, Download, Info } from "lucide-vue-next";
 
 definePageMeta({
   layout: "dashboard",
@@ -30,152 +15,133 @@ const route = useRoute();
 const organizationId = route.params.organizationId as string;
 const reportId = route.params.id as string;
 
-const { data: report, pending, refresh } = await useLazyFetch(
-  `/api/${organizationId}/reports/${reportId}`,
-  {
-    key: `report-${reportId}`,
-  },
-);
+const { data: report, pending, refresh } = await useLazyFetch(`/api/${organizationId}/reports/${reportId}`);
 
-const { data: template } = await useLazyFetch(
-  () => report.value?.templateId ? `/api/${organizationId}/templates/${report.value.templateId}` : null,
-  {
-    key: () => `template-${report.value?.templateId}`,
-  },
-);
+const notes = ref("");
 
-const formData = ref({
-  title: "",
-  notes: "",
-});
-
-const sections = computed(() => {
-  if (!template.value?.fields) return [];
-  return (template.value.fields as any).sections || [];
-});
-
-const downloadReport = () => {
-  window.print();
+const getStatusColor = (status: string) => {
+  const colors: Record<string, string> = {
+    DRAFT: "bg-slate-100 text-slate-700 hover:bg-slate-200",
+    IN_PROGRESS: "bg-blue-100 text-blue-700 hover:bg-blue-200",
+    SUBMITTED: "bg-purple-100 text-purple-700 hover:bg-purple-200",
+    UNDER_REVIEW: "bg-amber-100 text-amber-700 hover:bg-amber-200",
+    APPROVED: "bg-emerald-100 text-emerald-700 hover:bg-emerald-200",
+    REJECTED: "bg-red-100 text-red-700 hover:bg-red-200",
+  };
+  return colors[status] || "bg-gray-100 text-gray-700";
 };
 
+const getStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    DRAFT: "Draft",
+    IN_PROGRESS: "In Progress",
+    SUBMITTED: "Submitted",
+    UNDER_REVIEW: "Under Review",
+    APPROVED: "Approved",
+    REJECTED: "Rejected",
+  };
+  return labels[status] || status;
+};
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const printReport = () => window.print();
+
 const deleteReport = async () => {
-  if (!confirm("Are you sure you want to delete this report?")) return;
+  if (!confirm("Are you sure you want to delete this report? This action cannot be undone.")) return;
 
   try {
-    await $fetch(`/api/${organizationId}/reports/${reportId}`, {
-      method: "DELETE",
-    });
+    await $fetch(`/api/${organizationId}/reports/${reportId}`, { method: "DELETE" });
     navigateTo(`/${organizationId}/reports/submitted`);
   } catch (error) {
     console.error("Failed to delete report:", error);
   }
 };
 
-const updateReport = async (updates: any) => {
+const saveNotes = async () => {
   try {
     await $fetch(`/api/${organizationId}/reports/${reportId}`, {
       method: "PUT",
-      body: updates,
+      body: { notes: notes.value },
     });
     refresh();
   } catch (error) {
-    console.error("Failed to update report:", error);
+    console.error("Failed to save notes:", error);
   }
-};
-
-const getStatusInfo = (status: string) => {
-  const info: Record<string, any> = {
-    DRAFT: { color: "bg-gray-100 text-gray-700 hover:bg-gray-100", icon: Clock, label: "Draft" },
-    IN_PROGRESS: { color: "bg-blue-100 text-blue-700 hover:bg-blue-100", icon: Clock, label: "In Progress" },
-    SUBMITTED: { color: "bg-purple-100 text-purple-700 hover:bg-purple-100", icon: FileText, label: "Submitted" },
-    APPROVED: { color: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100", icon: CheckCircle2, label: "Approved" },
-    REJECTED: { color: "bg-red-100 text-red-700 hover:bg-red-100", icon: AlertCircle, label: "Rejected" },
-  };
-  return info[status] || { color: "bg-gray-100 text-gray-700", icon: FileText, label: status };
 };
 </script>
 
 <template>
-  <div v-if="pending" class="flex items-center justify-center py-12">
-    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  <div v-if="pending" class="flex items-center justify-center h-[60vh]">
+    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
   </div>
 
   <div v-else-if="report" class="space-y-6">
-    <div class="flex items-center justify-between">
-      <div class="flex items-start gap-4">
-        <div class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-          <FileText class="h-6 w-6 text-primary" />
-        </div>
-        <div>
-          <h1 class="text-3xl font-bold text-foreground">{{ report.title }}</h1>
-          <div class="flex items-center gap-3 mt-2">
-            <Badge :class="getStatusInfo(report.status).color">
-              <component :is="getStatusInfo(report.status).icon" class="w-3 h-3 mr-1" />
-              {{ getStatusInfo(report.status).label }}
-            </Badge>
-            <span class="text-sm text-muted-foreground flex items-center gap-1">
-              <Calendar class="w-4 h-4" />
-              {{ new Date(report.createdAt).toLocaleDateString() }}
-            </span>
-          </div>
+    <div class="flex items-center gap-4">
+      <Button variant="ghost" size="icon" @click="navigateTo(`/${organizationId}/reports/submitted`)" class="rounded-full">
+        <ArrowLeft class="h-5 w-5" />
+      </Button>
+      <div class="flex-1">
+        <h1 class="text-3xl font-bold">{{ report.title }}</h1>
+        <div class="flex items-center gap-3 mt-2">
+          <Badge :class="getStatusColor(report.status)" class="font-medium">
+            {{ getStatusLabel(report.status) }}
+          </Badge>
+          <span class="text-sm text-muted-foreground flex items-center gap-1.5">
+            <Calendar class="w-4 h-4" />
+            {{ formatDate(report.createdAt) }}
+          </span>
         </div>
       </div>
-      <div class="flex gap-3">
-        <Button variant="outline" @click="downloadReport">
+      <div class="flex gap-2">
+        <Button variant="outline" @click="printReport">
           <Printer class="h-4 w-4 mr-2" />
           Print
         </Button>
-        <Button variant="outline" @click="deleteReport" class="text-destructive hover:text-destructive">
+        <Button variant="outline" @click="deleteReport" class="text-destructive">
           <Trash2 class="h-4 w-4 mr-2" />
           Delete
         </Button>
       </div>
     </div>
 
-    <div class="grid lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2 space-y-6">
+    <div class="grid lg:grid-cols-4 gap-6">
+      <div class="lg:col-span-3 space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle class="flex items-center gap-2">
-              <FileText class="w-5 h-5" />
-              Report Content
-            </CardTitle>
-            <CardDescription>View all submitted information</CardDescription>
+            <div class="flex items-center justify-between">
+              <CardTitle class="flex items-center gap-2">
+                <FileText class="h-5 w-5 text-primary" />
+                Report Content
+              </CardTitle>
+              <Badge v-if="report.template" variant="outline" class="text-xs">
+                {{ report.template.name }}
+              </Badge>
+            </div>
           </CardHeader>
           <CardContent>
-            <div v-if="sections.length === 0" class="border-2 border-dashed rounded-lg py-12 text-center">
-              <FileText class="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p class="text-muted-foreground">No template structure available</p>
+            <div v-if="!report.content || Object.keys(report.content).length === 0" class="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed rounded-lg">
+              <Info class="h-12 w-12 text-muted-foreground/50 mb-4" />
+              <p class="text-muted-foreground font-medium">No content filled</p>
+              <p class="text-sm text-muted-foreground mt-1">This report has no data yet</p>
             </div>
 
-            <div v-else class="space-y-6">
-              <div v-for="(section, sIndex) in sections" :key="section.id" class="space-y-4">
-                <div v-if="section.title" class="border-b pb-2">
-                  <h3 class="text-lg font-semibold flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm">
-                      {{ sIndex + 1 }}
-                    </span>
-                    {{ section.title }}
-                  </h3>
+            <div v-else class="space-y-3">
+              <div v-for="(value, key) in report.content" :key="key" class="group">
+                <div class="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  {{ key }}
                 </div>
-
-                <div v-if="section.fields.length === 0" class="text-center py-4 text-sm text-muted-foreground border border-dashed rounded">
-                  No fields in this section
-                </div>
-
-                <div v-else class="space-y-4">
-                  <div v-for="field in section.fields" :key="field.id" class="space-y-2">
-                    <Label class="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      {{ field.label }}
-                      <Badge v-if="field.required" variant="destructive" class="h-4 px-1.5 py-0 text-xs">Required</Badge>
-                    </Label>
-                    <div class="rounded-md border bg-muted/30 p-4">
-                      <p v-if="report.content && report.content[field.id]" class="text-foreground">
-                        {{ report.content[field.id] }}
-                      </p>
-                      <p v-else class="text-muted-foreground italic">Not filled</p>
-                    </div>
-                  </div>
+                <div class="p-4 bg-muted/50 rounded-lg border group-hover:border-primary/50 transition-colors">
+                  <p class="text-foreground whitespace-pre-wrap">{{ value }}</p>
                 </div>
               </div>
             </div>
@@ -184,77 +150,67 @@ const getStatusInfo = (status: string) => {
 
         <Card>
           <CardHeader>
-            <CardTitle class="flex items-center gap-2">
-              <ChevronRight class="w-5 h-5" />
-              Notes & Comments
-            </CardTitle>
+            <CardTitle>Notes & Comments</CardTitle>
           </CardHeader>
           <CardContent>
             <Textarea 
-              v-model="formData.notes" 
+              v-model="notes" 
               placeholder="Add notes or comments about this report..." 
-              rows="4" 
+              rows="5" 
               class="resize-none"
             />
-            <Button @click="updateReport({ notes: formData.notes })" class="mt-3" size="sm">
-              Save Notes
-            </Button>
+            <div class="flex justify-end mt-4">
+              <Button @click="saveNotes">
+                Save Notes
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <div class="space-y-6">
+      <div class="space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle class="text-lg">Report Details</CardTitle>
+            <CardTitle class="text-base">Report Details</CardTitle>
           </CardHeader>
           <CardContent class="space-y-4">
             <div>
-              <Label class="text-sm text-muted-foreground">Template</Label>
-              <p class="font-medium mt-1">{{ template?.name || "Unknown Template" }}</p>
+              <div class="text-xs text-muted-foreground mb-1">Status</div>
+              <Badge :class="getStatusColor(report.status)" class="font-medium">
+                {{ getStatusLabel(report.status) }}
+              </Badge>
             </div>
+
+            <Separator />
+
             <div>
-              <Label class="text-sm text-muted-foreground">Status</Label>
-              <div class="mt-1">
-                <Select :model-value="report.status" @update:model-value="(val) => updateReport({ status: val })">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="DRAFT">Draft</SelectItem>
-                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                    <SelectItem value="SUBMITTED">Submitted</SelectItem>
-                    <SelectItem value="APPROVED">Approved</SelectItem>
-                    <SelectItem value="REJECTED">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <div class="text-xs text-muted-foreground mb-1">Created</div>
+              <div class="text-sm font-medium">{{ formatDate(report.createdAt) }}</div>
             </div>
-            <div class="pt-4 border-t space-y-3">
-              <div class="flex items-center justify-between text-sm">
-                <span class="text-muted-foreground">Created</span>
-                <span class="font-medium">{{ new Date(report.createdAt).toLocaleDateString() }}</span>
-              </div>
-              <div v-if="report.updatedAt" class="flex items-center justify-between text-sm">
-                <span class="text-muted-foreground">Updated</span>
-                <span class="font-medium">{{ new Date(report.updatedAt).toLocaleDateString() }}</span>
-              </div>
+
+            <div v-if="report.updatedAt">
+              <div class="text-xs text-muted-foreground mb-1">Last Updated</div>
+              <div class="text-sm font-medium">{{ formatDate(report.updatedAt) }}</div>
+            </div>
+
+            <div v-if="report.submittedAt">
+              <div class="text-xs text-muted-foreground mb-1">Submitted</div>
+              <div class="text-sm font-medium">{{ formatDate(report.submittedAt) }}</div>
             </div>
           </CardContent>
         </Card>
 
-        <Card v-if="report.submittedBy">
+        <Card>
           <CardHeader>
-            <CardTitle class="text-lg">Submitted By</CardTitle>
+            <CardTitle class="text-base">Submitted By</CardTitle>
           </CardHeader>
-          <CardContent class="space-y-4">
+          <CardContent>
             <div class="flex items-center gap-3">
               <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                 <User class="h-5 w-5 text-primary" />
               </div>
-              <div>
-                <p class="font-medium">{{ report.submittedBy.name || "Unknown" }}</p>
-                <p class="text-sm text-muted-foreground">{{ report.submittedBy.email || "" }}</p>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-sm truncate">{{ report.submittedBy || "Unknown" }}</p>
               </div>
             </div>
           </CardContent>
@@ -262,11 +218,15 @@ const getStatusInfo = (status: string) => {
 
         <Card>
           <CardHeader>
-            <CardTitle class="text-lg">Quick Actions</CardTitle>
+            <CardTitle class="text-base">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent class="space-y-2">
+            <Button variant="outline" class="w-full justify-start" @click="printReport">
+              <Download class="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
             <Button variant="outline" class="w-full justify-start" @click="navigateTo(`/${organizationId}/reports/submitted`)">
-              <ChevronRight class="w-4 h-4 mr-2" />
+              <ArrowLeft class="h-4 w-4 mr-2" />
               Back to Reports
             </Button>
           </CardContent>
@@ -275,3 +235,11 @@ const getStatusInfo = (status: string) => {
     </div>
   </div>
 </template>
+
+<style scoped>
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+</style>
