@@ -17,7 +17,6 @@ definePageMeta({
 const route = useRoute();
 const organizationId = route.params.organizationId as string;
 const templateId = route.query.templateId as string;
-
 const {
   data: template,
   pending,
@@ -51,12 +50,6 @@ const form = ref({
   description: "",
   sections: [] as TemplateSection[],
 });
-
-if (!isNew.value && template.value) {
-  form.value.name = template.value.name;
-  form.value.description = template.value.description || "";
-  form.value.sections = (template.value.fields as any)?.sections || [];
-}
 
 const addSection = () => {
   form.value.sections.push({
@@ -167,6 +160,16 @@ const saveTemplate = async () => {
     toast.error("Failed to save template");
   }
 };
+watch(
+  () => template.value,
+  (t) => {
+    if (!isNew.value && template.value) {
+      form.value.name = template.value.name;
+      form.value.description = template.value.description || "";
+      form.value.sections = (template.value.fields as any)?.sections || [];
+    }
+  },
+);
 </script>
 
 <template>
