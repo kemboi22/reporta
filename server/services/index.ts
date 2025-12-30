@@ -11,3 +11,4 @@ export * from "./leave-request.service";
 export * from "./report.service";
 export * from "./document.service";
 export * from "./onboarding.service";
+export * from "./dashboard.service";
