@@ -1,6 +1,6 @@
 <template>
   <div>
-    <NuxtLoadingIndicator />
+    <NuxtLoadingIndicator color="var(--primary)" />
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
@@ -8,9 +8,9 @@
 </template>
 
 <script setup lang="ts">
-const { initTheme } = useTheme()
+const { initTheme } = useTheme();
 
 onMounted(() => {
-  initTheme()
-})
+  initTheme();
+});
 </script>
