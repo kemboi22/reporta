@@ -1,4 +1,4 @@
-import { getStaffById } from "~~/server/services";
+import { prisma } from "~~/server/utils/db";
 
 export default defineEventHandler(async (event) => {
   const organizationId = getRouterParam(event, "organizationId");
@@ -8,7 +8,14 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: "Staff ID is required" });
   }
 
-  const staff = await getStaffById(id);
+  const staff = await prisma.staff.findUnique({
+    where: { id },
+    include: {
+      user: true,
+      department: true,
+      organization: true,
+    },
+  });
   
   if (!staff) {
     throw createError({ statusCode: 404, message: "Staff not found" });

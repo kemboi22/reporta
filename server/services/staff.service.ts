@@ -33,11 +33,11 @@ export const getStaffById = async (id: string): Promise<Staff | null> => {
   }
 
   return staff;
-}
+};
 
 export const getStaffByEmail = async (
   organizationId: string,
-  email: string
+  email: string,
 ): Promise<Staff | null> => {
   const cacheKey = `${CACHE_PREFIX}org:${organizationId}:email:${email}`;
   const cached = await cacheGet<Staff>(cacheKey);
@@ -55,11 +55,11 @@ export const getStaffByEmail = async (
   }
 
   return staff;
-}
+};
 
 export const getStaffByEmployeeId = async (
   organizationId: string,
-  employeeId: string
+  employeeId: string,
 ): Promise<Staff | null> => {
   const cacheKey = `${CACHE_PREFIX}org:${organizationId}:employeeId:${employeeId}`;
   const cached = await cacheGet<Staff>(cacheKey);
@@ -77,7 +77,7 @@ export const getStaffByEmployeeId = async (
   }
 
   return staff;
-}
+};
 
 export const getStaffList = async (params?: {
   skip?: number;
@@ -86,7 +86,7 @@ export const getStaffList = async (params?: {
   include?: Prisma.StaffInclude;
 }): Promise<Staff[]> => {
   const { skip = 0, take = 50, where, include } = params || {};
-  
+
   const defaultInclude: Prisma.StaffInclude = {
     user: true,
   };
@@ -97,7 +97,7 @@ export const getStaffList = async (params?: {
     where,
     include: include || defaultInclude,
   });
-}
+};
 
 export const createStaff = async (data: StaffCreateInput): Promise<Staff> => {
   const staff = await prisma.staff.create({ data });
@@ -106,9 +106,39 @@ export const createStaff = async (data: StaffCreateInput): Promise<Staff> => {
   await cacheSet(cacheKey, staff, CACHE_TTL);
 
   return staff;
-}
+};
 
-export const updateStaff = async (id: string, data: StaffUpdateInput): Promise<Staff> => {
+export const updateStaff = async (
+  id: string,
+  organizationId: string,
+  data: StaffUpdateInput,
+): Promise<Staff> => {
+  const currentStaff = await prisma.staff.findUnique({
+    where: { id },
+    select: { userId: true },
+  });
+
+  const dataAny = data as any;
+  if (
+    dataAny.userId != undefined &&
+    dataAny.userId != null &&
+    dataAny.userId != currentStaff?.userId
+  ) {
+    const existingStaff = await prisma.staff.findFirst({
+      where: {
+        userId: dataAny.userId as string,
+        id: { not: id },
+        organizationId: organizationId,
+      },
+    });
+
+    if (existingStaff) {
+      throw new Error(
+        `User ID is already associated with staff member ${existingStaff.firstName} ${existingStaff.lastName}`,
+      );
+    }
+  }
+
   const staff = await prisma.staff.update({
     where: { id },
     data,
@@ -117,7 +147,7 @@ export const updateStaff = async (id: string, data: StaffUpdateInput): Promise<S
   await invalidateStaffCache(id);
 
   return staff;
-}
+};
 
 export const deleteStaff = async (id: string): Promise<Staff> => {
   const staff = await prisma.staff.delete({
@@ -127,8 +157,8 @@ export const deleteStaff = async (id: string): Promise<Staff> => {
   await invalidateStaffCache(id);
 
   return staff;
-}
+};
 
 const invalidateStaffCache = async (id: string): Promise<void> => {
   await cacheDel(`${CACHE_PREFIX}${id}`);
-}
+};

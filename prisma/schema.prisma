@@ -115,7 +115,7 @@ model User {
   notifications           Notification[]
   taskAssignments         TaskAssignee[]
   projectMemberships      ProjectMember[]
-  staff                   Staff?
+  staff                   Staff[]
   notificationPreferences NotificationPreference?
   backupCodes             TwoFactorBackupCode[]
   loginAttempts           LoginAttempt[]
@@ -286,7 +286,7 @@ model Staff {
   id               String         @id @default(uuid())
   organizationId   String
   departmentId     String?
-  userId           String?        @unique // Link to user account
+  userId           String? // Link to user account
   firstName        String
   lastName         String
   email            String
@@ -321,6 +321,7 @@ model Staff {
   shifts            ShiftAssignment[]
 
   @@unique([organizationId, email])
+  @@unique([organizationId, userId])
   @@map("staff")
 }
 

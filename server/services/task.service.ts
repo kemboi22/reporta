@@ -79,14 +79,20 @@ export const createTask = async (data: any): Promise<Task> => {
     const staffRecords = await prisma.staff.findMany({
       where: {
         id: { in: assigneeIds },
-        userId: { not: null },
       },
-      select: { userId: true },
+      select: { userId: true, id: true },
     });
 
+    const staffWithoutUsers = staffRecords.filter((s) => !s.userId);
+    if (staffWithoutUsers.length > 0) {
+      const error: any = new Error(`Cannot assign task to staff members without user accounts. Staff IDs without users: ${staffWithoutUsers.map((s) => s.id).join(", ")}`);
+      error.statusCode = 400;
+      throw error;
+    }
+
     const validUserIds = staffRecords
-      .map((s: any) => s.userId)
-      .filter((id: string | null) => id !== null) as string[];
+      .map((s) => s.userId)
+      .filter((id): id is string => id !== null);
 
     if (validUserIds.length > 0) {
       await prisma.taskAssignee.createMany({
@@ -99,11 +105,9 @@ export const createTask = async (data: any): Promise<Task> => {
     }
   }
 
-  const cacheKey = `${CACHE_PREFIX}${task.id}`;
-  await cacheSet(cacheKey, task, CACHE_TTL);
   await cacheDel(`project:${task.projectId}`);
 
-  return task;
+  return getTaskById(task.id) as Promise<Task>;
 };
 
 export const updateTask = async (id: string, data: any): Promise<Task> => {
@@ -128,14 +132,20 @@ export const updateTask = async (id: string, data: any): Promise<Task> => {
       const staffRecords = await prisma.staff.findMany({
         where: {
           id: { in: assigneeIds },
-          userId: { not: null },
         },
-        select: { userId: true },
+        select: { userId: true, id: true },
       });
 
+      const staffWithoutUsers = staffRecords.filter((s) => !s.userId);
+      if (staffWithoutUsers.length > 0) {
+        const error: any = new Error(`Cannot assign task to staff members without user accounts. Staff IDs without users: ${staffWithoutUsers.map((s) => s.id).join(", ")}`);
+        error.statusCode = 400;
+        throw error;
+      }
+
       const validUserIds = staffRecords
-        .map((s: any) => s.userId)
-        .filter((id: string | null) => id !== null) as string[];
+        .map((s) => s.userId)
+        .filter((id): id is string => id !== null);
 
       if (validUserIds.length > 0) {
         await prisma.taskAssignee.createMany({
@@ -149,9 +159,7 @@ export const updateTask = async (id: string, data: any): Promise<Task> => {
     }
   }
 
-  await invalidateTaskCache(id);
-
-  return task;
+  return getTaskById(id) as Promise<Task>;
 };
 
 export const deleteTask = async (id: string): Promise<Task> => {
