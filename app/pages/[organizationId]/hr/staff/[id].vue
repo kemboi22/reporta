@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Mail, Phone, MapPin, Calendar, Building2, Briefcase, DollarSign, Clock, FileText, Settings, Edit, MoreVertical, ArrowLeft } from "lucide-vue-next";
+import { User, Mail, Phone, MapPin, Calendar, Building2, Briefcase, DollarSign, Clock, FileText, Settings, Edit, MoreVertical, ArrowLeft, UserPlus, Link, Link2 } from "lucide-vue-next";
 import { definePageMeta } from "#imports";
 
 definePageMeta({
@@ -20,10 +20,48 @@ const route = useRoute();
 const organizationId = route.params.organizationId as string;
 const staffId = route.params.id as string;
 
-const { data: staff, pending: isLoading, error } = await useFetch(`/api/${organizationId}/staff/${staffId}`);
+const { data: staff, pending: isLoading, error, refresh: refreshStaff } = await useFetch(`/api/${organizationId}/staff/${staffId}`);
+
+const { data: orgUsers, refresh: refreshOrgUsers } = await useLazyFetch(`/api/${organizationId}/users`);
 
 const showEditDialog = ref(false);
-const editedStaff = ref({});
+const editedStaff = ref({
+  userId: staff.value?.userId || null,
+});
+
+const showLinkUserDialog = ref(false);
+const selectedUserId = ref<string | null>(null);
+
+const linkUserAccount = async () => {
+  try {
+    await $fetch(`/api/${organizationId}/staff/${staffId}`, {
+      method: "PUT",
+      body: {
+        userId: selectedUserId.value,
+      },
+    });
+    showLinkUserDialog.value = false;
+    await refreshNuxtData();
+    await refreshStaff();
+  } catch (e: any) {
+    console.error("Failed to link user account:", e);
+  }
+};
+
+const unlinkUserAccount = async () => {
+  try {
+    await $fetch(`/api/${organizationId}/staff/${staffId}`, {
+      method: "PUT",
+      body: {
+        userId: null,
+      },
+    });
+    await refreshNuxtData();
+    await refreshStaff();
+  } catch (e: any) {
+    console.error("Failed to unlink user account:", e);
+  }
+};
 
 const editStaff = async () => {
   try {
@@ -120,15 +158,70 @@ const averageRating = ref(0);
             </h1>
             <Badge v-if="staff?.isActive" class="bg-emerald-500 text-white">Active</Badge>
             <Badge v-else class="bg-gray-500 text-white">Inactive</Badge>
+            <Badge v-if="staff?.userId" class="bg-blue-500 text-white">
+              <Link2 class="h-3 w-3 mr-1" />
+              Linked to User
+            </Badge>
+            <Badge v-else class="bg-amber-500 text-white">
+              No User Account
+            </Badge>
           </div>
           <p class="text-muted-foreground">{{ staff?.position }}</p>
           <p class="text-sm text-muted-foreground">{{ staff?.department?.name }}</p>
+          <p v-if="staff?.user" class="text-sm text-muted-foreground">
+            User: {{ staff?.user?.name }} ({{ staff?.user?.email }})
+          </p>
         </div>
       </div>
       <div class="flex items-center gap-3">
         <Button variant="outline">
           <Settings class="h-4 w-4 mr-2" />
           Settings
+        </Button>
+        <Dialog v-model:open="showLinkUserDialog" v-if="!staff?.userId">
+          <DialogTrigger as-child>
+            <Button>
+              <UserPlus class="h-4 w-4 mr-2" />
+              Link User Account
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Link User Account</DialogTitle>
+            </DialogHeader>
+            <div class="space-y-4">
+              <div>
+                <Label>Select User</Label>
+                <Select v-model="selectedUserId">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a user account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem
+                      v-for="user in orgUsers"
+                      :key="user.id"
+                      :value="user.id"
+                      :disabled="user.staff?.id && user.staff.id !== staffId"
+                    >
+                      <div class="flex items-center gap-2">
+                        <span>{{ user.name }} ({{ user.email }})</span>
+                        <Badge v-if="user.staff?.id === staffId" class="bg-emerald-500 text-white text-xs">Current</Badge>
+                        <Badge v-else-if="user.staff" class="bg-amber-500 text-white text-xs">Linked to {{ user.staff.firstName }} {{ user.staff.lastName }}</Badge>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div class="flex gap-2">
+                <Button @click="linkUserAccount">Link Account</Button>
+                <Button variant="outline" @click="showLinkUserDialog = false">Cancel</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <Button variant="outline" @click="unlinkUserAccount" v-if="staff?.userId">
+          <UserPlus class="h-4 w-4 mr-2" />
+          Unlink User Account
         </Button>
         <Dialog v-model:open="showEditDialog">
           <DialogTrigger as-child>
@@ -142,6 +235,34 @@ const averageRating = ref(0);
               <DialogTitle>Edit Staff Profile</DialogTitle>
             </DialogHeader>
             <div class="grid md:grid-cols-2 gap-4">
+              <div class="md:col-span-2">
+                <Label>User Account</Label>
+                <Select v-model="editedStaff.userId">
+                  <SelectTrigger>
+                    <SelectValue :placeholder="staff?.userId ? 'Change linked user' : 'Select a user to link'" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem :value="null">
+                      No user account
+                    </SelectItem>
+                    <SelectItem
+                      v-for="user in orgUsers"
+                      :key="user.id"
+                      :value="user.id"
+                      :disabled="user.staff?.id && user.staff.id !== staffId"
+                    >
+                      <div class="flex items-center gap-2">
+                        <span>{{ user.name }} ({{ user.email }})</span>
+                        <Badge v-if="user.staff?.id === staffId" class="bg-emerald-500 text-white text-xs">Current</Badge>
+                        <Badge v-else-if="user.staff" class="bg-amber-500 text-white text-xs">Linked to {{ user.staff.firstName }} {{ user.staff.lastName }}</Badge>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p class="text-xs text-muted-foreground mt-1">
+                  Link a user account to allow this staff member to be assigned tasks, log in, and more.
+                </p>
+              </div>
               <div>
                 <Label>First Name</Label>
                 <Input v-model="editedStaff.firstName" />

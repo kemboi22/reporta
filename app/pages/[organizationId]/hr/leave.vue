@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,77 +23,42 @@ definePageMeta({
   layout: "dashboard",
 });
 
+const route = useRoute();
+const organizationId = route.params.organizationId as string;
+
+const { data: leaveRequests, refresh: refreshLeaveRequests } = await useLazyFetch(
+  `/api/${organizationId}/leave-requests`,
+  {
+    key: `leave-requests-${organizationId}`,
+    transform: (data) => data || [],
+  },
+);
+
+const { data: staff } = await useLazyFetch(`/api/${organizationId}/staff`, {
+  key: `staff-${organizationId}`,
+  transform: (data) => data || [],
+});
+
 const selectedStatus = ref("all");
 const selectedType = ref("all");
+const showApproveDialog = ref(false);
+const showRejectDialog = ref(false);
+const selectedRequest = ref<any>(null);
+const rejectionReason = ref("");
 
-const leaveRequests = [
-  {
-    id: 1,
-    staff: {
-      name: "Sarah Johnson",
-      employeeId: "EMP001",
-      department: "Nursing",
-      photo: "/placeholder-user.jpg",
-    },
-    type: "Annual Leave",
-    startDate: "2024-12-25",
-    endDate: "2024-12-27",
-    days: 3,
-    reason: "Family vacation during holidays",
-    status: "Pending",
-    submittedDate: "2024-12-15",
-    coverage: "Mike Chen",
-  },
-  {
-    id: 2,
-    staff: {
-      name: "Emma Davis",
-      employeeId: "EMP003",
-      department: "Pharmacy",
-      photo: "/placeholder-user.jpg",
-    },
-    type: "Sick Leave",
-    startDate: "2024-12-20",
-    endDate: "2024-12-22",
-    days: 3,
-    reason: "Medical appointment and recovery",
-    status: "Approved",
-    submittedDate: "2024-12-18",
-    coverage: "Lisa Anderson",
-  },
-  {
-    id: 3,
-    staff: {
-      name: "James Wilson",
-      employeeId: "EMP004",
-      department: "Surgery",
-      photo: "/placeholder-user.jpg",
-    },
-    type: "Personal Leave",
-    startDate: "2024-12-28",
-    endDate: "2024-12-30",
-    days: 3,
-    reason: "Personal matters",
-    status: "Pending",
-    submittedDate: "2024-12-16",
-    coverage: "Robert Taylor",
-  },
-];
-
-const leaveBalances = [
-  { type: "Annual Leave", used: 8, total: 20, color: "bg-blue-600" },
-  { type: "Sick Leave", used: 3, total: 10, color: "bg-emerald-600" },
-  { type: "Personal Leave", used: 2, total: 5, color: "bg-purple-600" },
-];
-
-const getStatusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    Pending: "bg-amber-50 text-amber-500 hover:bg-amber-50",
-    Approved: "bg-emerald-50 text-emerald-500 hover:bg-emerald-50",
-    Rejected: "bg-red-50 text-red-500 hover:bg-red-50",
-  };
-  return colors[status] || "bg-muted text-muted-foreground";
-};
+const filteredRequests = computed(() => {
+  let filtered = leaveRequests.value || [];
+  
+  if (selectedStatus.value !== "all") {
+    filtered = filtered.filter((r: any) => r.status === selectedStatus.value);
+  }
+  
+  if (selectedType.value !== "all") {
+    filtered = filtered.filter((r: any) => r.type === selectedType.value);
+  }
+  
+  return filtered;
+});
 
 const getInitials = (name: string) => {
   return name
@@ -99,76 +67,118 @@ const getInitials = (name: string) => {
     .join("");
 };
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+const getStatusColor = (status: string) => {
+  const colors: Record<string, string> = {
+    PENDING: "bg-amber-50 text-amber-500 hover:bg-amber-50",
+    APPROVED: "bg-emerald-50 text-emerald-500 hover:bg-emerald-50",
+    REJECTED: "bg-red-50 text-red-500 hover:bg-red-50",
+  };
+  return colors[status] || "bg-gray-50 text-gray-500";
 };
+
+const getTypeColor = (type: string) => {
+  const colors: Record<string, string> = {
+    SICK: "bg-red-100 text-red-700",
+    VACATION: "bg-blue-100 text-blue-700",
+    PERSONAL: "bg-purple-100 text-purple-700",
+    MATERNITY: "bg-pink-100 text-pink-700",
+    UNPAID: "bg-gray-100 text-gray-700",
+  };
+  return colors[type] || "bg-gray-100 text-gray-700";
+};
+
+const approveRequest = async () => {
+  if (!selectedRequest.value) return;
+
+  try {
+    await $fetch(`/api/${organizationId}/leave-requests/${selectedRequest.value.id}/approve`, {
+      method: "POST",
+    });
+    showApproveDialog.value = false;
+    selectedRequest.value = null;
+    await refreshLeaveRequests();
+  } catch (error) {
+    console.error("Failed to approve request:", error);
+  }
+};
+
+const rejectRequest = async () => {
+  if (!selectedRequest.value || !rejectionReason.value) return;
+
+  try {
+    await $fetch(`/api/${organizationId}/leave-requests/${selectedRequest.value.id}/reject`, {
+      method: "POST",
+      body: { reason: rejectionReason.value },
+    });
+    showRejectDialog.value = false;
+    selectedRequest.value = null;
+    rejectionReason.value = "";
+    await refreshLeaveRequests();
+  } catch (error) {
+    console.error("Failed to reject request:", error);
+  }
+};
+
+const totalLeave = computed(() => leaveRequests.value?.length || 0);
+const pendingLeave = computed(() => (leaveRequests.value || []).filter((r: any) => r.status === "PENDING").length);
+const approvedLeave = computed(() => (leaveRequests.value || []).filter((r: any) => r.status === "APPROVED").length);
 </script>
 
 <template>
   <div class="space-y-6">
-    <!-- Page Header -->
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-3xl font-bold text-foreground">Leave Management</h1>
         <p class="text-muted-foreground mt-1">Review and manage leave requests</p>
       </div>
-
       <Button class="bg-blue-600 hover:bg-blue-700 text-white">
         <Calendar class="h-4 w-4 mr-2" />
         View Calendar
       </Button>
     </div>
 
-    <!-- Leave Balance Overview -->
     <div class="grid md:grid-cols-3 gap-6">
-      <Card
-        v-for="balance in leaveBalances"
-        :key="balance.type"
-        class="border-border"
-      >
+      <Card>
         <CardContent class="p-6">
-          <div class="flex items-start justify-between mb-4">
-            <div>
-              <p class="text-sm text-muted-foreground mb-1">{{ balance.type }}</p>
-              <p class="text-2xl font-bold text-foreground">
-                {{ balance.used }}/{{ balance.total }} days
-              </p>
+          <div class="flex items-center gap-3">
+            <div class="h-12 w-12 rounded-lg bg-blue-500/10 flex items-center justify-center">
+              <Calendar class="h-6 w-6 text-blue-500" />
             </div>
-            <div
-              :class="[
-                'w-12 h-12 rounded-lg flex items-center justify-center',
-                balance.color.replace('600', '100'),
-              ]"
-            >
-              <Calendar
-                :class="[balance.color.replace('bg-', 'text-'), 'h-6 w-6']"
-              />
+            <div>
+              <p class="text-sm text-muted-foreground">Total Requests</p>
+              <p class="text-2xl font-bold">{{ totalLeave }}</p>
             </div>
           </div>
-
-          <div class="space-y-2">
-            <div class="flex justify-between text-sm">
-              <span class="text-muted-foreground">Used</span>
-              <span class="font-medium text-foreground"
-                >{{ balance.used }} days</span
-              >
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent class="p-6">
+          <div class="flex items-center gap-3">
+            <div class="h-12 w-12 rounded-lg bg-amber-500/10 flex items-center justify-center">
+              <Clock class="h-6 w-6 text-amber-500" />
             </div>
-            <div class="w-full bg-muted rounded-full h-2">
-              <div
-                :class="[balance.color, 'h-2 rounded-full transition-all']"
-                :style="{ width: `${(balance.used / balance.total) * 100}%` }"
-              ></div>
+            <div>
+              <p class="text-sm text-muted-foreground">Pending</p>
+              <p class="text-2xl font-bold text-amber-600">{{ pendingLeave }}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent class="p-6">
+          <div class="flex items-center gap-3">
+            <div class="h-12 w-12 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <Check class="h-6 w-6 text-emerald-500" />
+            </div>
+            <div>
+              <p class="text-sm text-muted-foreground">Approved</p>
+              <p class="text-2xl font-bold text-emerald-600">{{ approvedLeave }}</p>
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
 
-    <!-- Filters -->
     <Card class="border-border">
       <CardContent class="p-6">
         <div class="flex flex-col md:flex-row gap-4">
@@ -177,7 +187,7 @@ const formatDate = (dateString: string) => {
               class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
             />
             <Input
-              placeholder="Search by staff name or employee ID..."
+              placeholder="Search by staff name..."
               class="pl-10"
             />
           </div>
@@ -188,164 +198,142 @@ const formatDate = (dateString: string) => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="APPROVED">Approved</SelectItem>
+              <SelectItem value="REJECTED">Rejected</SelectItem>
             </SelectContent>
           </Select>
 
           <Select v-model="selectedType">
             <SelectTrigger class="w-40">
-              <SelectValue placeholder="Leave Type" />
+              <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="annual">Annual Leave</SelectItem>
-              <SelectItem value="sick">Sick Leave</SelectItem>
-              <SelectItem value="personal">Personal Leave</SelectItem>
+              <SelectItem value="SICK">Sick Leave</SelectItem>
+              <SelectItem value="VACATION">Vacation</SelectItem>
+              <SelectItem value="PERSONAL">Personal</SelectItem>
+              <SelectItem value="MATERNITY">Maternity</SelectItem>
+              <SelectItem value="UNPAID">Unpaid</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </CardContent>
     </Card>
 
-    <!-- Leave Requests -->
-    <Tabs default-value="pending" class="space-y-6">
-      <TabsList class="bg-muted">
-        <TabsTrigger value="pending">Pending (2)</TabsTrigger>
-        <TabsTrigger value="approved">Approved</TabsTrigger>
-        <TabsTrigger value="rejected">Rejected</TabsTrigger>
-        <TabsTrigger value="all">All Requests</TabsTrigger>
-      </TabsList>
+    <div v-if="!leaveRequests || leaveRequests.length === 0" class="text-center py-12 text-muted-foreground">
+      No leave requests found.
+    </div>
 
-      <TabsContent value="pending" class="space-y-4">
-        <Card
-          v-for="request in leaveRequests.filter((r) => r.status === 'Pending')"
-          :key="request.id"
-          class="border-border"
-        >
-          <CardContent class="p-6">
-            <div class="flex flex-col md:flex-row gap-6">
-              <!-- Staff Info -->
-              <div class="flex items-start gap-4 flex-1">
-                <Avatar class="h-12 w-12">
-                  <AvatarImage :src="request.staff.photo" />
-                  <AvatarFallback class="bg-blue-100 text-blue-700">
-                    {{ getInitials(request.staff.name) }}
-                  </AvatarFallback>
-                </Avatar>
+    <div v-else class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <Card
+        v-for="request in filteredRequests"
+        :key="request.id"
+        class="border-border"
+      >
+        <CardContent class="p-6">
+          <div class="flex items-start gap-4">
+            <Avatar class="h-12 w-12">
+              <AvatarImage :src="request.staff?.user?.image" />
+              <AvatarFallback class="bg-blue-100 text-blue-700">
+                {{ getInitials(request.staff?.user?.name || "") }}
+              </AvatarFallback>
+            </Avatar>
 
-                <div class="flex-1">
-                  <h3 class="font-semibold text-foreground">
-                    {{ request.staff.name }}
-                  </h3>
-                  <p class="text-sm text-muted-foreground">
-                    {{ request.staff.employeeId }} •
-                    {{ request.staff.department }}
-                  </p>
+            <div class="flex-1">
+              <div class="flex items-start justify-between mb-2">
+                <h4 class="font-semibold text-foreground">{{ request.staff?.user?.name }}</h4>
+                <Badge :class="getTypeColor(request.type)">{{ request.type }}</Badge>
+              </div>
 
-                  <div class="flex items-center gap-4 mt-3">
-                    <Badge
-                      class="bg-blue-100 text-blue-700 hover:bg-blue-100"
-                      >{{ request.type }}</Badge
-                    >
-                    <Badge :class="getStatusColor(request.status)">{{
-                      request.status
-                    }}</Badge>
-                  </div>
+              <p class="text-sm text-muted-foreground">{{ request.staff?.position || "" }}</p>
+
+              <div class="mt-3 space-y-2">
+                <div class="flex items-center gap-2 text-sm">
+                  <span class="text-muted-foreground">Period:</span>
+                  <span class="font-medium">{{ new Date(request.startDate).toLocaleDateString() }} - {{ new Date(request.endDate).toLocaleDateString() }}</span>
+                  <span class="font-medium">({{request.days || 0}} days)</span>
+                </div>
+
+                <div class="text-sm">
+                  <span class="text-muted-foreground">Reason:</span>
+                  <span class="font-medium">{{ request.reason || "No reason provided" }}</span>
                 </div>
               </div>
 
-              <!-- Leave Details -->
-              <div class="flex-1 space-y-3">
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <p class="text-xs text-muted-foreground mb-1">Start Date</p>
-                    <p class="text-sm font-medium text-foreground">
-                      {{ formatDate(request.startDate) }}
-                    </p>
-                  </div>
-                  <div>
-                    <p class="text-xs text-muted-foreground mb-1">End Date</p>
-                    <p class="text-sm font-medium text-foreground">
-                      {{ formatDate(request.endDate) }}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <p class="text-xs text-muted-foreground mb-1">Duration</p>
-                  <p class="text-sm font-medium text-foreground">
-                    {{ request.days }} days
-                  </p>
-                </div>
-
-                <div>
-                  <p class="text-xs text-muted-foreground mb-1">Coverage</p>
-                  <p class="text-sm font-medium text-foreground">
-                    {{ request.coverage }}
-                  </p>
-                </div>
-
-                <div>
-                  <p class="text-xs text-muted-foreground mb-1">Reason</p>
-                  <p class="text-sm text-foreground">{{ request.reason }}</p>
-                </div>
-              </div>
-
-              <!-- Actions -->
-              <div class="flex flex-col gap-2 md:w-32">
-                <Button class="bg-emerald-600 hover:bg-emerald-700 text-white">
-                  <Check class="h-4 w-4 mr-2" />
-                  Approve
-                </Button>
-                <Button
-                  variant="outline"
-                  class="text-red-600 border-red-200 hover:bg-red-50"
-                >
-                  <X class="h-4 w-4 mr-2" />
-                  Reject
-                </Button>
-                <Button variant="outline">
-                  <Clock class="h-4 w-4 mr-2" />
-                  Details
-                </Button>
+              <div class="flex items-center gap-2 mt-3">
+                <Badge :class="getStatusColor(request.status)">{{ request.status }}</Badge>
+                <span class="text-xs text-muted-foreground">
+                  Submitted {{ new Date(request.createdAt).toLocaleDateString() }}
+                </span>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
 
-      <TabsContent value="approved">
-        <Card class="border-border">
-          <CardContent class="p-12 text-center">
-            <Calendar class="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p class="text-muted-foreground">
-              Approved leave requests will appear here
-            </p>
-          </CardContent>
-        </Card>
-      </TabsContent>
+            <div class="flex gap-2 mt-4">
+              <Button
+                v-if="request.status === 'PENDING'"
+                variant="outline"
+                size="sm"
+                @click="selectedRequest = request; showApproveDialog = true"
+              >
+                <Check class="h-4 w-4 mr-2" />
+                Approve
+              </Button>
+              <Button
+                v-if="request.status === 'PENDING'"
+                variant="outline"
+                size="sm"
+                class="text-red-600 border-red-200"
+                @click="selectedRequest = request; showRejectDialog = true"
+              >
+                <X class="h-4 w-4 mr-2" />
+                Reject
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
 
-      <TabsContent value="rejected">
-        <Card class="border-border">
-          <CardContent class="p-12 text-center">
-            <Calendar class="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p class="text-muted-foreground">
-              Rejected leave requests will appear here
-            </p>
-          </CardContent>
-        </Card>
-      </TabsContent>
+    <Dialog v-model:open="showApproveDialog">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Approve Leave Request</DialogTitle>
+        </DialogHeader>
+        <div class="space-y-4">
+          <p>Are you sure you want to approve this leave request for <strong>{{ selectedRequest?.staff?.user?.name }}</strong>?</p>
+          <div class="flex justify-end gap-3">
+            <Button variant="outline" @click="showApproveDialog = false">Cancel</Button>
+            <Button @click="approveRequest">Approve</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
 
-      <TabsContent value="all">
-        <Card class="border-border">
-          <CardContent class="p-12 text-center">
-            <Calendar class="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p class="text-muted-foreground">All leave requests will appear here</p>
-          </CardContent>
-        </Card>
-      </TabsContent>
-    </Tabs>
+    <Dialog v-model:open="showRejectDialog">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Reject Leave Request</DialogTitle>
+        </DialogHeader>
+        <div class="space-y-4">
+          <div>
+            <Label for="rejection-reason">Rejection Reason</Label>
+            <Textarea
+              id="rejection-reason"
+              v-model="rejectionReason"
+              placeholder="Provide a reason for rejection..."
+              rows="3"
+            />
+          </div>
+          <p class="text-sm text-muted-foreground">
+            Rejecting leave request for <strong>{{ selectedRequest?.staff?.user?.name }}</strong>
+          </p>
+          <div class="flex justify-end gap-3">
+            <Button variant="outline" @click="showRejectDialog = false">Cancel</Button>
+            <Button variant="destructive" @click="rejectRequest">Reject</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
