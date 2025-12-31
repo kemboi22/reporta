@@ -1,0 +1,4 @@
+# Ignore uploads directory
+uploads/
+*.tmp
+*.part
