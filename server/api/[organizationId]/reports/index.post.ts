@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
     content: body.content || {},
     workspace: { connect: { id: workspace.id } },
     submittedBy: session.user.name,
-    status: "DRAFT",
+    status: "SUBMITTED",
   };
 
   if (body.templateId) {

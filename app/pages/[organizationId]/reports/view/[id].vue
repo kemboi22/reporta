@@ -16,7 +16,23 @@ import {
   MessageSquare,
   Eye,
   EyeOff,
+  XCircle,
+  Check,
 } from "lucide-vue-next";
+import { toast } from "vue-sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { authClient } from "~/lib/auth";
 
 definePageMeta({
   layout: "dashboard",
@@ -34,6 +50,17 @@ const {
 
 const newComment = ref("");
 const showComments = ref(true);
+const rejectReason = ref("");
+const isApproving = ref(false);
+const isRejecting = ref(false);
+
+const session = authClient.useSession();
+
+const canApproveOrReject = computed(() => {
+  return (
+    report.value && ["SUBMITTED", "UNDER_REVIEW"].includes(report.value.status)
+  );
+});
 
 const getStatusColor = (status: string) => {
   const colors: Record<string, string> = {
@@ -100,6 +127,54 @@ const addComment = async () => {
     refresh();
   } catch (error) {
     console.error("Failed to add comment:", error);
+  }
+};
+
+const approveReport = async () => {
+  if (!session.value.data?.user) {
+    toast.error("You must be logged in to approve reports");
+    return;
+  }
+
+  isApproving.value = true;
+  try {
+    await $fetch(`/api/${organizationId}/reports/${reportId}/approve`, {
+      method: "POST",
+      body: { reviewedBy: session.value.data.user.id },
+    });
+    toast.success("Report approved successfully");
+    refresh();
+  } catch (error) {
+    console.error("Failed to approve report:", error);
+    toast.error("Failed to approve report");
+  } finally {
+    isApproving.value = false;
+  }
+};
+
+const rejectReport = async () => {
+  if (!session.value.data?.user) {
+    toast.error("You must be logged in to reject reports");
+    return;
+  }
+
+  isRejecting.value = true;
+  try {
+    await $fetch(`/api/${organizationId}/reports/${reportId}/reject`, {
+      method: "POST",
+      body: {
+        reviewedBy: session.value.data.user.id,
+        reason: rejectReason.value,
+      },
+    });
+    toast.success("Report rejected successfully");
+    rejectReason.value = "";
+    refresh();
+  } catch (error) {
+    console.error("Failed to reject report:", error);
+    toast.error("Failed to reject report");
+  } finally {
+    isRejecting.value = false;
   }
 };
 
@@ -172,6 +247,72 @@ const getFieldIcon = (key: string, value: any) => {
         </div>
 
         <div class="flex items-center gap-2">
+          <Button
+            v-if="canApproveOrReject"
+            variant="outline"
+            size="sm"
+            class="gap-2"
+            @click="navigateTo(`/${organizationId}/reports/submitted`)"
+          >
+            <ArrowLeft class="h-4 w-4" />
+            Back
+          </Button>
+          <Button
+            v-if="canApproveOrReject"
+            variant="default"
+            size="sm"
+            class="gap-2 bg-emerald-600 hover:bg-emerald-700"
+            @click="approveReport"
+            :disabled="isApproving"
+          >
+            <CheckCircle2 class="h-4 w-4" />
+            {{ isApproving ? "Approving..." : "Approve" }}
+          </Button>
+          <AlertDialog v-if="canApproveOrReject">
+            <AlertDialogTrigger as-child>
+              <Button variant="destructive" size="sm" class="gap-2">
+                <XCircle class="h-4 w-4" />
+                Reject
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Reject Report</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to reject this report? This action can
+                  be undone by re-submitting the report.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div class="py-4">
+                <Textarea
+                  v-model="rejectReason"
+                  placeholder="Reason for rejection (optional)..."
+                  rows="3"
+                  class="resize-none"
+                />
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  @click="rejectReport"
+                  :disabled="isRejecting || !rejectReason.trim()"
+                  class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {{ isRejecting ? "Rejecting..." : "Reject Report" }}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <Button
+            v-else
+            variant="outline"
+            size="sm"
+            class="gap-2"
+            @click="navigateTo(`/${organizationId}/reports/submitted`)"
+          >
+            <ArrowLeft class="h-4 w-4" />
+            Back
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -336,8 +477,14 @@ const getFieldIcon = (key: string, value: any) => {
           </CardHeader>
           <CardContent class="p-4 space-y-3">
             <div class="flex items-start gap-2">
-              <CheckCircle2
-                class="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5"
+              <component
+                :is="report.status === 'APPROVED' ? CheckCircle2 : XCircle"
+                :class="[
+                  'h-4 w-4 mt-0.5 flex-shrink-0',
+                  report.status === 'APPROVED'
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-red-600 dark:text-red-400',
+                ]"
               />
               <div class="flex-1">
                 <p class="text-sm font-medium">
@@ -346,8 +493,8 @@ const getFieldIcon = (key: string, value: any) => {
               </div>
             </div>
             <div class="text-xs text-muted-foreground space-y-1">
-              <p>By: Dr. Michael Chen</p>
-              <p>On: {{ formatDate(report.updatedAt) }}</p>
+              <p>By: {{ report.reviewedBy || "Unknown" }}</p>
+              <p>On: {{ formatDate(report.reviewedAt || report.updatedAt) }}</p>
             </div>
           </CardContent>
         </Card>

@@ -96,6 +96,36 @@ export const deleteReport = async (id: string): Promise<Report> => {
   return report;
 }
 
+export const approveReport = async (id: string, reviewedBy: string): Promise<Report> => {
+  const report = await prisma.report.update({
+    where: { id },
+    data: {
+      status: "APPROVED",
+      reviewedBy,
+      reviewedAt: new Date(),
+    },
+  });
+
+  await invalidateReportCache(id, report.workspaceId);
+
+  return report;
+}
+
+export const rejectReport = async (id: string, reviewedBy: string): Promise<Report> => {
+  const report = await prisma.report.update({
+    where: { id },
+    data: {
+      status: "REJECTED",
+      reviewedBy,
+      reviewedAt: new Date(),
+    },
+  });
+
+  await invalidateReportCache(id, report.workspaceId);
+
+  return report;
+}
+
 export const getTemplateById = async (id: string): Promise<ReportTemplate | null> => {
   const cacheKey = `${TEMPLATE_PREFIX}${id}`;
   const cached = await cacheGet<ReportTemplate>(cacheKey);

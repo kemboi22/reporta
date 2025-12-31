@@ -26,8 +26,12 @@ import {
   Grid3x3,
   List,
   Building,
+  Check,
+  X,
 } from "lucide-vue-next";
 import { definePageMeta } from "#imports";
+import { toast } from "vue-sonner";
+import { authClient } from "~/lib/auth";
 
 definePageMeta({
   layout: "dashboard",
@@ -43,6 +47,11 @@ const selectedDateRange = ref("all");
 const selectedDepartment = ref("all");
 const sortBy = ref("newest");
 const viewMode = ref<"grid" | "list">("grid");
+
+const { data: session } = await authClient.useSession();
+
+const isApproving = ref<string | null>(null);
+const isRejecting = ref<string | null>(null);
 
 const { data: reports, refresh: refreshReports } = await useLazyFetch(
   `/api/${organizationId}/reports`,
@@ -157,6 +166,54 @@ const hasActiveFilters = computed(() => {
     selectedDepartment.value !== "all" || 
     selectedDateRange.value !== "all";
 });
+
+const canApproveOrReject = (status: string) => {
+  return ["SUBMITTED", "UNDER_REVIEW"].includes(status);
+};
+
+const approveReport = async (reportId: string) => {
+  if (!session.value?.user?.id) {
+    toast.error("You must be logged in to approve reports");
+    return;
+  }
+
+  isApproving.value = reportId;
+  try {
+    await $fetch(`/api/${organizationId}/reports/${reportId}/approve`, {
+      method: "POST",
+      body: { reviewedBy: session.value.user.id },
+    });
+    toast.success("Report approved successfully");
+    refreshReports();
+  } catch (error) {
+    console.error("Failed to approve report:", error);
+    toast.error("Failed to approve report");
+  } finally {
+    isApproving.value = null;
+  }
+};
+
+const rejectReport = async (reportId: string) => {
+  if (!session.value?.user?.id) {
+    toast.error("You must be logged in to reject reports");
+    return;
+  }
+
+  isRejecting.value = reportId;
+  try {
+    await $fetch(`/api/${organizationId}/reports/${reportId}/reject`, {
+      method: "POST",
+      body: { reviewedBy: session.value.user.id },
+    });
+    toast.success("Report rejected successfully");
+    refreshReports();
+  } catch (error) {
+    console.error("Failed to reject report:", error);
+    toast.error("Failed to reject report");
+  } finally {
+    isRejecting.value = null;
+  }
+};
 </script>
 
 <template>
@@ -412,7 +469,29 @@ const hasActiveFilters = computed(() => {
               <Eye class="h-3 w-3 mr-1" />
               View
             </Button>
+            <template v-if="canApproveOrReject(report.status)">
+              <Button
+                variant="outline"
+                size="sm"
+                class="flex-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border-emerald-200"
+                @click.stop="approveReport(report.id)"
+                :disabled="isApproving === report.id"
+              >
+                <Check class="h-3 w-3 mr-1" />
+                {{ isApproving === report.id ? "..." : "Approve" }}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                class="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                @click.stop="rejectReport(report.id)"
+                :disabled="isRejecting === report.id"
+              >
+                <X class="h-3 w-3" />
+              </Button>
+            </template>
             <Button
+              v-else
               variant="outline"
               size="sm"
               @click.stop
@@ -475,6 +554,28 @@ const hasActiveFilters = computed(() => {
             >
               <Eye class="h-5 w-5" />
             </Button>
+            <template v-if="canApproveOrReject(report.status)">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                class="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                @click.stop="approveReport(report.id)"
+                :disabled="isApproving === report.id"
+              >
+                <Check v-if="isApproving !== report.id" class="h-5 w-5" />
+                <Clock v-else class="h-5 w-5 animate-spin" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                class="text-red-600 hover:text-red-700 hover:bg-red-50"
+                @click.stop="rejectReport(report.id)"
+                :disabled="isRejecting === report.id"
+              >
+                <X v-if="isRejecting !== report.id" class="h-5 w-5" />
+                <Clock v-else class="h-5 w-5 animate-spin" />
+              </Button>
+            </template>
           </div>
         </CardContent>
       </Card>
