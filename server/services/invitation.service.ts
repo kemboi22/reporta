@@ -1,5 +1,6 @@
 import { prisma } from "../utils/db";
 import { cacheGet, cacheSet, cacheDel } from "../utils/redis";
+import { createNotification } from "./notification.service";
 
 const CACHE_TTL = 1800;
 const CACHE_PREFIX = "invitation:";
@@ -59,6 +60,24 @@ export const createInvitation = async (data: InvitationCreateInput) => {
       inviter: true,
     },
   });
+
+  try {
+    await prisma.notification.create({
+      data: {
+        userId: data.invitedBy,
+        title: "Invitation Sent",
+        message: `You've sent an invitation to ${data.email}`,
+        type: "INFO",
+        data: {
+          invitationId: invitation.id,
+          email: data.email,
+          organizationId: data.organizationId,
+        },
+      },
+    });
+  } catch (e) {
+    console.error("Failed to create notification:", e);
+  }
 
   return invitation;
 };
@@ -164,6 +183,35 @@ export const acceptInvitation = async (
         status: "ACCEPTED",
         acceptedBy: userId,
         acceptedAt: new Date(),
+      },
+    });
+
+    await tx.notification.create({
+      data: {
+        userId: invitation.invitedBy,
+        title: "Invitation Accepted",
+        message: `${user.name} has accepted your invitation`,
+        type: "INFO",
+        data: {
+          acceptedBy: userId,
+          acceptedByName: user.name,
+          organizationId: invitation.organizationId,
+        },
+      },
+    });
+
+    await tx.notification.create({
+      data: {
+        userId,
+        title: "Welcome to the Team!",
+        message: `You've successfully joined ${invitation.organization.name}`,
+        type: "INFO",
+        isRead: false,
+        data: {
+          organizationId: invitation.organizationId,
+          organizationName: invitation.organization.name,
+          role: invitation.role,
+        },
       },
     });
   });
