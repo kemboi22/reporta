@@ -98,20 +98,20 @@ model User {
   twofactors          TwoFactor[]
   passkeys            Passkey[]
 
-  firstName           String?
-  lastName            String?
-  avatar              String?
-  isActive            Boolean   @default(true)
-  lastLoginAt         DateTime?
+  firstName            String?
+  lastName             String?
+  avatar               String?
+  isActive             Boolean   @default(true)
+  lastLoginAt          DateTime?
   twoFactorSecret      String?   @db.Text
   twoFactorBackupCodes Json?
   failedLoginAttempts  Int       @default(0)
-  lockedUntil         DateTime?
+  lockedUntil          DateTime?
   lastFailedLoginAt    DateTime?
 
   organizationUsers       OrganizationUser[]
   workspaceUsers          WorkspaceUser[]
-  userDepartments        UserDepartment[]
+  userDepartments         UserDepartment[]
   notifications           Notification[]
   taskAssignments         TaskAssignee[]
   projectMemberships      ProjectMember[]
@@ -245,11 +245,11 @@ model WorkspaceUser {
 
 // UserDepartment junction table
 model UserDepartment {
-  id             String   @id @default(uuid())
-  userId         String
-  departmentId   String
-  isPrimary      Boolean  @default(false) // Is this their primary department?
-  joinedAt       DateTime @default(now())
+  id           String   @id @default(uuid())
+  userId       String
+  departmentId String
+  isPrimary    Boolean  @default(false) // Is this their primary department?
+  joinedAt     DateTime @default(now())
 
   // Relations
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -481,7 +481,7 @@ model Report {
   staffId     String?
   title       String
   content     Json // Form data
-  status      ReportStatus @default(DRAFT)
+  status      ReportStatus @default(SUBMITTED)
   submittedBy String
   submittedAt DateTime?
   reviewedBy  String?
