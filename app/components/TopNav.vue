@@ -1,70 +1,114 @@
 <script setup lang="ts">
-import {
-  Menu,
-  Search,
-  Clock,
-  Plus,
-  Bell,
-  User,
-  Settings,
-  LogOut,
-  CheckSquare,
-  FileText,
-  Upload,
-  ArrowRightLeftIcon,
-} from "lucide-vue-next";
-import { authClient } from "~/lib/auth";
+ import {
+   Menu,
+   Search,
+   Clock,
+   Plus,
+   Bell,
+   User,
+   Settings,
+   LogOut,
+   CheckSquare,
+   FileText,
+   Upload,
+   ArrowRightLeftIcon,
+   Mail,
+   CheckCircle,
+   CheckSquare2,
+ } from "lucide-vue-next";
+ import { authClient } from "~/lib/auth";
+ import { Badge } from "@/components/ui/badge";
 
-defineEmits(["toggle-sidebar"]);
+ defineEmits(["toggle-sidebar"]);
 
-const isOnDuty = ref(false);
-const session = authClient.useSession();
+ const route = useRoute();
+ const organizationId = route.params.organizationId as string;
 
-const currentWorkspace = ref({
-  name: "Acme Corporation",
-  subdomain: "acme",
-  logo: null,
-});
+ const isOnDuty = ref(false);
+ const session = authClient.useSession();
 
-const toggleClockStatus = () => {
-  isOnDuty.value = !isOnDuty.value;
-};
-const logout = async () => {
-  await authClient.signOut({
-    fetchOptions: {
-      async onSuccess(context) {
-        await navigateTo("/auth/login");
-      },
-    },
-  });
-};
+ const currentWorkspace = ref({
+   name: "Acme Corporation",
+   subdomain: "acme",
+   logo: null,
+ });
 
-const recentNotifications = [
-  {
-    id: 1,
-    type: "task",
-    title: "New task assigned",
-    description: 'John assigned you "Prepare monthly report"',
-    time: "5m ago",
-    unread: true,
-  },
-  {
-    id: 2,
-    type: "report",
-    title: "Report due soon",
-    description: "Daily attendance report due in 2 hours",
-    time: "1h ago",
-    unread: true,
-  },
-  {
-    id: 3,
-    type: "leave",
-    title: "Leave approved",
-    description: "Your leave request has been approved",
-    time: "3h ago",
-    unread: false,
-  },
-];
+ const { data: notifications, refresh: refreshNotifications } = await useLazyFetch(
+   `/api/notifications?unreadOnly=false`,
+   {
+     transform: (data) => data?.slice(0,5) || [],
+   },
+ );
+
+ const { data: unreadCountData, refresh: refreshUnreadCount } = await useLazyFetch(
+   "/api/notifications/unread-count",
+ );
+
+ const unreadCount = computed(() => unreadCountData.value?.count || 0);
+
+ const toggleClockStatus = () => {
+   isOnDuty.value = !isOnDuty.value;
+ };
+
+ const logout = async () => {
+   await authClient.signOut({
+     fetchOptions: {
+       async onSuccess(context) {
+         await navigateTo("/auth/login");
+       },
+     },
+   });
+ };
+
+ const markAllAsRead = async () => {
+   try {
+     await $fetch("/api/notifications/read-all", { method: "POST" });
+     await refreshNotifications();
+     await refreshUnreadCount();
+   } catch (e) {
+     console.error("Failed to mark all as read:", e);
+   }
+ };
+
+ const markAsRead = async (id: string) => {
+   try {
+     await $fetch(`/api/notifications/${id}/read`, { method: "POST" });
+     await refreshNotifications();
+     await refreshUnreadCount();
+   } catch (e) {
+     console.error("Failed to mark as read:", e);
+   }
+ };
+
+ const getNotificationIcon = (type: string) => {
+   const icons: Record<string, any> = {
+     task: CheckSquare,
+     report: FileText,
+     leave: Clock,
+     invitation: Mail,
+     default: Bell,
+   };
+   return icons[type] || Bell;
+ };
+
+ const formatTime = (date: string) => {
+   const notificationDate = new Date(date);
+   const now = new Date();
+   const diffMs = now.getTime() - notificationDate.getTime();
+   const diffMins = Math.floor(diffMs / 60000);
+   const diffHours = Math.floor(diffMs / 3600000);
+   const diffDays = Math.floor(diffMs / 86400000);
+
+   if (diffMins < 1) return "Just now";
+   if (diffMins < 60) return `${diffMins}m ago`;
+   if (diffHours < 24) return `${diffHours}h ago`;
+   return `${diffDays}d ago`;
+ };
+
+ watch(() => session.data?.user?.id, () => {
+   refreshNotifications();
+   refreshUnreadCount();
+ });
 </script>
 
 <template>
@@ -130,55 +174,94 @@ const recentNotifications = [
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <!-- Notifications -->
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <Button variant="ghost" size="icon" class="relative">
-            <Bell class="h-5 w-5" />
-            <span
-              class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-background"
-            ></span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" class="w-80">
-          <div class="flex items-center justify-between p-3 border-b">
-            <h3 class="font-semibold text-sm">Notifications</h3>
-            <Button variant="ghost" size="sm" class="h-7 text-xs"
-              >Mark all read</Button
-            >
-          </div>
-          <div class="max-h-96 overflow-y-auto">
-            <div
-              v-for="notification in recentNotifications"
-              :key="notification.id"
-              :class="[
-                'p-3 border-b hover:bg-muted cursor-pointer',
-                notification.unread && 'bg-accent',
-              ]"
-            >
-              <div class="flex items-start gap-3">
-                <div
-                  class="w-2 h-2 mt-2 rounded-full"
-                  :class="
-                    notification.unread ? 'bg-primary' : 'bg-muted-foreground'
-                  "
-                ></div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-foreground">
-                    {{ notification.title }}
-                  </p>
-                  <p class="text-sm text-muted-foreground mt-1">
-                    {{ notification.description }}
-                  </p>
-                  <p class="text-xs text-muted-foreground mt-1">
-                    {{ notification.time }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+       <!-- Notifications -->
+       <DropdownMenu>
+         <DropdownMenuTrigger as-child>
+           <Button variant="ghost" size="icon" class="relative">
+             <Bell class="h-5 w-5" />
+             <Badge
+               v-if="unreadCount > 0"
+               class="absolute top-0 right-0 h-5 px-1.5 text-xs flex items-center justify-center"
+               variant="destructive"
+             >
+               {{ unreadCount > 9 ? "9+" : unreadCount }}
+             </Badge>
+           </Button>
+         </DropdownMenuTrigger>
+         <DropdownMenuContent align="end" class="w-80">
+           <div class="flex items-center justify-between p-3 border-b">
+             <h3 class="font-semibold text-sm">Notifications</h3>
+             <Button
+               variant="ghost"
+               size="sm"
+               class="h-7 text-xs"
+               @click="markAllAsRead"
+               :disabled="unreadCount === 0"
+             >
+               Mark all read
+             </Button>
+           </div>
+           <div class="max-h-96 overflow-y-auto">
+             <div
+               v-if="!notifications || notifications.length === 0"
+               class="p-8 text-center"
+             >
+               <Mail class="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-50" />
+               <p class="text-sm text-muted-foreground">No notifications</p>
+             </div>
+             <div
+               v-for="notification in notifications"
+               :key="notification.id"
+               :class="[
+                 'p-3 border-b hover:bg-muted cursor-pointer',
+                 !notification.isRead && 'bg-accent',
+               ]"
+               @click="markAsRead(notification.id)"
+             >
+               <div class="flex items-start gap-3">
+                 <div
+                   class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                   :class="!notification.isRead ? 'bg-primary/10' : 'bg-muted'"
+                 >
+                   <component
+                     :is="getNotificationIcon(notification.type)"
+                     :class="[
+                       'h-4 w-4',
+                       !notification.isRead ? 'text-primary' : 'text-muted-foreground',
+                     ]"
+                   />
+                 </div>
+                 <div class="flex-1 min-w-0">
+                   <p
+                     :class="[
+                       'text-sm font-medium',
+                       !notification.isRead ? 'text-foreground' : 'text-muted-foreground',
+                     ]"
+                   >
+                     {{ notification.title }}
+                   </p>
+                   <p class="text-sm text-muted-foreground mt-1 line-clamp-2">
+                     {{ notification.message }}
+                   </p>
+                   <p class="text-xs text-muted-foreground mt-1">
+                     {{ formatTime(notification.createdAt) }}
+                   </p>
+                 </div>
+               </div>
+             </div>
+           </div>
+           <div class="p-2 border-t">
+             <Button
+               variant="ghost"
+               size="sm"
+               class="w-full justify-center"
+               @click="navigateTo(`/${organizationId}/notifications`)"
+             >
+               View all notifications
+             </Button>
+           </div>
+         </DropdownMenuContent>
+       </DropdownMenu>
 
       <!-- User Menu -->
       <DropdownMenu>
