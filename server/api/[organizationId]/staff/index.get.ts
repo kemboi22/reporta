@@ -3,17 +3,20 @@ import { getStaffList } from "~~/server/services";
 export default defineEventHandler(async (event) => {
   const organizationId = getRouterParam(event, "organizationId");
   const { skip, take, departmentId, search } = getQuery(event);
-  
+
   if (!organizationId) {
-    throw createError({ statusCode: 400, message: "Organization ID is required" });
+    throw createError({
+      statusCode: 400,
+      message: "Organization ID is required",
+    });
   }
 
   const where: any = { organizationId };
-  
+
   if (departmentId) {
     where.departmentId = departmentId;
   }
-  
+
   if (search) {
     where.OR = [
       { firstName: { contains: search as string, mode: "insensitive" } },
@@ -28,8 +31,9 @@ export default defineEventHandler(async (event) => {
     where,
     include: {
       user: true,
+      department: true,
     },
   });
-  
+
   return staff;
 });

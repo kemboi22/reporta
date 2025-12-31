@@ -68,7 +68,7 @@ const navigationItems = [
     name: "Tasks",
     icon: CheckSquare,
     href: "/tasks",
-    badge: "12",
+    badge: null,
   },
   {
     name: "Calendar",
@@ -112,7 +112,7 @@ const navigationItems = [
     name: "Notifications",
     icon: Bell,
     href: "/notifications",
-    badge: "5",
+    badge: null,
   },
   {
     name: "Settings",
