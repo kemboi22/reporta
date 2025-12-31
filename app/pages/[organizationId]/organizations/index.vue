@@ -5,43 +5,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Users, Settings, MoreVertical, Plus } from "lucide-vue-next";
 import { definePageMeta } from "#imports";
+import { NuxtLink } from "#components";
 
 definePageMeta({
   layout: "dashboard",
 });
 
-const organizations = ref([
+const route = useRoute();
+const organizationId = route.params.organizationId as string;
+
+const { data: organizations, refresh: refreshOrganizations } = await useLazyFetch(
+  "/api/organizations",
   {
-    id: "1",
-    name: "Acme Corporation",
-    slug: "acme-corp",
-    description: "Leading technology solutions provider",
-    logo: "/placeholder-logo.png",
-    website: "https://acme.com",
-    industry: "Technology",
-    size: "medium",
-    workspaces: [
-      { id: "1", name: "Engineering", members: 12 },
-      { id: "2", name: "Marketing", members: 8 },
-      { id: "3", name: "Sales", members: 15 },
-    ],
-    createdAt: new Date("2023-01-15"),
+    key: "organizations",
+    transform: (data) => data || [],
   },
-  {
-    id: "2",
-    name: "TechStart Inc",
-    slug: "techstart",
-    description: "Startup focused on AI solutions",
-    logo: "/placeholder-logo.png",
-    website: "https://techstart.io",
-    industry: "Artificial Intelligence",
-    size: "small",
-    workspaces: [
-      { id: "4", name: "Development", members: 6 },
-    ],
-    createdAt: new Date("2024-06-20"),
-  },
-]);
+);
 
 const sizeLabels: Record<string, string> = {
   small: "1-50 employees",
@@ -56,7 +35,7 @@ const sizeLabels: Record<string, string> = {
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-3xl font-bold text-foreground">Organizations</h1>
-        <p class="text-muted-foreground mt-1">Manage your organizations and workspaces</p>
+        <p class="text-muted-foreground mt-1">Manage your organizations and teams</p>
       </div>
       <Button>
         <Plus class="h-4 w-4 mr-2" />
@@ -79,7 +58,7 @@ const sizeLabels: Record<string, string> = {
               <div>
                 <CardTitle class="text-lg">{{ org.name }}</CardTitle>
                 <Badge variant="outline" class="mt-1">
-                  {{ sizeLabels[org.size] || org.size }}
+                  {{ org.slug || 'organization' }}
                 </Badge>
               </div>
             </div>
@@ -89,35 +68,22 @@ const sizeLabels: Record<string, string> = {
           </div>
         </CardHeader>
         <CardContent>
-          <p class="text-sm text-muted-foreground mb-4">{{ org.description }}</p>
+          <p class="text-sm text-muted-foreground mb-4">{{ org.description || "No description" }}</p>
           <div class="space-y-2">
             <div class="flex items-center justify-between text-sm">
-              <span class="text-muted-foreground">Industry</span>
-              <span class="font-medium">{{ org.industry }}</span>
+              <span class="text-muted-foreground">Your Role</span>
+              <Badge variant="secondary">{{ org.users?.[0]?.role || 'MEMBER' }}</Badge>
             </div>
             <div class="flex items-center justify-between text-sm">
               <span class="text-muted-foreground">Workspaces</span>
-              <span class="font-medium">{{ org.workspaces.length }}</span>
+              <span class="font-medium">{{ org.workspaces?.length || 0 }}</span>
             </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-muted-foreground">Total Members</span>
-              <span class="font-medium">
-                {{ org.workspaces.reduce((sum, ws) => sum + ws.members, 0) }}
-              </span>
+            <div class="flex items-center justify-between text-sm" v-if="org.size">
+              <span class="text-muted-foreground">Size</span>
+              <span class="font-medium">{{ sizeLabels[org.size] || org.size }}</span>
             </div>
           </div>
-          <div class="mt-4 pt-4 border-t border-border">
-            <div class="flex items-center gap-2">
-              <Users class="h-4 w-4 text-muted-foreground" />
-              <span class="text-sm text-muted-foreground">Workspaces</span>
-            </div>
-            <div class="flex flex-wrap gap-2 mt-2">
-              <Badge v-for="ws in org.workspaces" :key="ws.id" variant="secondary">
-                {{ ws.name }} ({{ ws.members }})
-              </Badge>
-            </div>
-          </div>
-          <Button variant="outline" class="w-full mt-4" size="sm">
+          <Button variant="outline" class="w-full mt-4" size="sm" :as="NuxtLink" :to="`/${org.slug}`">
             <Settings class="h-4 w-4 mr-2" />
             Manage
           </Button>
