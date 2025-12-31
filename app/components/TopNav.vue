@@ -297,16 +297,16 @@ watch(
                 </p>
               </div>
             </div>
-          <!--   <Button -->
-          <!--     variant="outline" -->
-          <!--     size="sm" -->
-          <!--     class="w-full justify-start text-xs h-8" -->
-          <!--     @click="navigateTo('/workspace/switch')" -->
-          <!--   > -->
-          <!--     <ArrowRightLeftIcon class="h-3.5 w-3.5 mr-2" /> -->
-          <!--     Switch Workspace -->
-          <!--   </Button> -->
-          <!-- </div> -->
+            <!--   <Button -->
+            <!--     variant="outline" -->
+            <!--     size="sm" -->
+            <!--     class="w-full justify-start text-xs h-8" -->
+            <!--     @click="navigateTo('/workspace/switch')" -->
+            <!--   > -->
+            <!--     <ArrowRightLeftIcon class="h-3.5 w-3.5 mr-2" /> -->
+            <!--     Switch Workspace -->
+            <!--   </Button> -->
+          </div>
 
           <DropdownMenuItem @click="navigateTo('/staff/profile')">
             <User class="h-4 w-4 mr-2" />
