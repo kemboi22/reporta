@@ -1,42 +1,60 @@
 <script setup lang="ts">
-import { toast } from "vue-sonner";
-import { authClient } from "~/lib/auth";
-definePageMeta({
-  middleware: ["guest"],
-});
-const form = ref({
-  email: "",
-  password: "",
-  rememberMe: false,
-});
+ import { toast } from "vue-sonner";
+ import { authClient } from "~/lib/auth";
+ definePageMeta({
+   middleware: ["guest"],
+ });
+ const route = useRoute();
+ const inviteToken = (route.query.invite as string) || "";
 
-const isLoading = ref(false);
+ const form = ref({
+   email: "",
+   password: "",
+   rememberMe: false,
+ });
 
-const handleLogin = async () => {
-  isLoading.value = true;
-  try {
-    const { data, error } = await authClient.signIn.email({
-      ...form.value,
-    });
-    if (error && error.message) {
-      toast.error(error.message);
-      return;
-    }
-    if (data?.user) {
-      const session = await authClient.getSession();
-      let organizations = session.data?.user?.organizations;
-      if (organizations && organizations?.length > 0) {
-        await navigateTo(`/${organizations[0]?.id}/dashboard`);
-      } else {
-        await navigateTo(`/onboarding/step-1`);
-      }
-      toast.success("Successfully signed in");
-    }
-  } catch (e) {
-  } finally {
-    isLoading.value = false;
-  }
-};
+ const isLoading = ref(false);
+
+ const handleLogin = async () => {
+   isLoading.value = true;
+   try {
+     const { data, error } = await authClient.signIn.email({
+       ...form.value,
+     });
+     if (error && error.message) {
+       toast.error(error.message);
+       return;
+     }
+     if (data?.user) {
+       if (inviteToken) {
+         try {
+           await $fetch(`/api/invitations/${inviteToken}/accept`, {
+             method: "POST",
+           });
+           const session = await authClient.getSession();
+           if (session.data?.user?.organizations && session.data.user.organizations.length > 0) {
+             await navigateTo(`/${session.data.user.organizations[0].id}/dashboard`);
+             return;
+           }
+         } catch (e: any) {
+           toast.error(e.data?.message || "Failed to accept invitation");
+         }
+       }
+
+       const session = await authClient.getSession();
+       let organizations = session.data?.user?.organizations;
+       if (organizations && organizations?.length > 0) {
+         await navigateTo(`/${organizations[0]?.id}/dashboard`);
+       } else {
+         await navigateTo(`/onboarding/step-1`);
+       }
+       toast.success("Successfully signed in");
+     }
+   } catch (e) {
+   } finally {
+     isLoading.value = false;
+   }
+ };
 </script>
 
 <template>
@@ -176,29 +194,30 @@ const handleLogin = async () => {
           <Card
             class="border border-border/50 shadow-2xl backdrop-blur-xl bg-card/95"
           >
-            <CardHeader class="space-y-3 text-center">
-              <div
-                class="mx-auto w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-2"
-              >
-                <svg
-                  class="w-6 h-6 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
-              </div>
-              <CardTitle class="text-2xl font-bold">Welcome Back</CardTitle>
-              <CardDescription class="text-base">
-                Sign in to continue to your workspace
-              </CardDescription>
-            </CardHeader>
+             <CardHeader class="space-y-3 text-center">
+               <div
+                 class="mx-auto w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-2"
+               >
+                 <svg
+                   class="w-6 h-6 text-primary"
+                   fill="none"
+                   stroke="currentColor"
+                   viewBox="0 0 24 24"
+                 >
+                   <path
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     stroke-width="2"
+                     d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                   />
+                 </svg>
+               </div>
+               <CardTitle class="text-2xl font-bold">Welcome Back</CardTitle>
+               <CardDescription class="text-base">
+                 <span v-if="inviteToken">Sign in to accept your invitation</span>
+                 <span v-else>Sign in to continue to your workspace</span>
+               </CardDescription>
+             </CardHeader>
             <CardContent class="space-y-6">
               <!-- Social Login Buttons (Top) -->
               <div class="space-y-3">

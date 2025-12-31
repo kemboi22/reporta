@@ -1,24 +1,27 @@
 <script setup lang="ts">
-import {
-  LockIcon,
-  MailOpenIcon,
-  UserIcon,
-  Settings2Icon,
-  SettingsIcon,
-  ShieldCheckIcon,
-} from "lucide-vue-next";
-import { toast } from "vue-sonner";
-import { authClient } from "~/lib/auth";
+ import {
+   LockIcon,
+   MailOpenIcon,
+   UserIcon,
+   Settings2Icon,
+   SettingsIcon,
+   ShieldCheckIcon,
+ } from "lucide-vue-next";
+ import { toast } from "vue-sonner";
+ import { authClient } from "~/lib/auth";
 
-const form = ref({
-  name: "",
-  email: "",
-  password: "",
-  confirmPassword: "",
-  agreeToTerms: false,
-});
-const isLoading = ref(false);
-const passwordStrength = ref(0);
+ const route = useRoute();
+ const inviteToken = (route.query.invite as string) || "";
+
+ const form = ref({
+   name: "",
+   email: "",
+   password: "",
+   confirmPassword: "",
+   agreeToTerms: false,
+ });
+ const isLoading = ref(false);
+ const passwordStrength = ref(0);
 
 const calculatePasswordStrength = (password: string) => {
   let strength = 0;
@@ -29,32 +32,48 @@ const calculatePasswordStrength = (password: string) => {
   return strength;
 };
 
-const handleRegister = async () => {
-  if (form.value.password !== form.value.confirmPassword) {
-    alert("Passwords do not match");
-    return;
-  }
+ const handleRegister = async () => {
+   if (form.value.password !== form.value.confirmPassword) {
+     alert("Passwords do not match");
+     return;
+   }
 
-  isLoading.value = true;
-  try {
-    const { data, error } = await authClient.signUp.email({
-      ...form.value,
-    });
-    if (error && error.message) {
-      toast.error(error.message);
-      return;
-    }
-    isLoading.value = false;
-    if (data?.user) {
-      toast.success("Registration successfull");
-      await navigateTo("/onboarding/step-1");
-    }
-  } catch (e) {
-    console.log(e);
-  } finally {
-    isLoading.value = false;
-  }
-};
+   isLoading.value = true;
+   try {
+     const { data, error } = await authClient.signUp.email({
+       ...form.value,
+     });
+     if (error && error.message) {
+       toast.error(error.message);
+       return;
+     }
+     isLoading.value = false;
+     if (data?.user) {
+       toast.success("Registration successfull");
+
+       if (inviteToken) {
+         try {
+           await $fetch(`/api/invitations/${inviteToken}/accept`, {
+             method: "POST",
+           });
+           const session = await authClient.getSession();
+           if (session.data?.user?.organizations && session.data.user.organizations.length > 0) {
+             await navigateTo(`/${session.data.user.organizations[0].id}/dashboard`);
+             return;
+           }
+         } catch (e: any) {
+           toast.error(e.data?.message || "Failed to accept invitation");
+         }
+       }
+
+       await navigateTo("/onboarding/step-1");
+     }
+   } catch (e) {
+     console.log(e);
+   } finally {
+     isLoading.value = false;
+   }
+ };
 
 const onPasswordInput = () => {
   passwordStrength.value = calculatePasswordStrength(form.value.password);
@@ -217,30 +236,42 @@ const signInWithGoogle = async () => {
           <Card
             class="border border-border/50 shadow-2xl backdrop-blur-xl bg-card/95"
           >
-            <CardHeader class="space-y-3 text-center">
-              <div
-                class="mx-auto w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-2"
-              >
-                <svg
-                  class="w-6 h-6 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                  />
-                </svg>
-              </div>
-              <CardTitle class="text-2xl font-bold">Create Account</CardTitle>
-              <CardDescription class="text-base">
-                Start your free trial today
-              </CardDescription>
-            </CardHeader>
-            <CardContent class="space-y-6">
+             <CardHeader class="space-y-3 text-center">
+               <div
+                 class="mx-auto w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-2"
+               >
+                 <svg
+                   class="w-6 h-6 text-primary"
+                   fill="none"
+                   stroke="currentColor"
+                   viewBox="0 0 24 24"
+                 >
+                   <path
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     stroke-width="2"
+                     d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                   />
+                 </svg>
+               </div>
+               <CardTitle class="text-2xl font-bold">Create Account</CardTitle>
+               <CardDescription class="text-base">
+                 <span v-if="inviteToken">Create an account to accept your invitation</span>
+                 <span v-else>Start your free trial today</span>
+               </CardDescription>
+             </CardHeader>
+             <CardContent class="space-y-6">
+               <div v-if="inviteToken" class="p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                 <div class="flex items-start gap-3">
+                   <MailOpenIcon class="h-5 w-5 text-primary mt-0.5" />
+                   <div>
+                     <p class="font-semibold text-foreground mb-1">You've been invited!</p>
+                     <p class="text-sm text-muted-foreground">
+                       Create your account to join the organization. Your invitation will be automatically accepted after registration.
+                     </p>
+                   </div>
+                 </div>
+               </div>
               <!-- Social Login Buttons (Top) -->
               <div class="space-y-3">
                 <Button

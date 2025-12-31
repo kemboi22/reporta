@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { authClient } from "~/lib/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ const isLoading = ref(true);
 const error = ref<string | null>(null);
 const invitation = ref<any>(null);
 const isAccepting = ref(false);
+const isAuthenticated = ref(false);
 
 const fetchInvitation = async () => {
   try {
@@ -24,7 +26,21 @@ const fetchInvitation = async () => {
   }
 };
 
+const checkAuth = async () => {
+  try {
+    const session = await authClient.getSession();
+    isAuthenticated.value = !!session.data?.user;
+  } catch (e) {
+    isAuthenticated.value = false;
+  }
+};
+
 const acceptInvitation = async () => {
+  if (!isAuthenticated.value) {
+    navigateTo(`/auth/login?invite=${token}`);
+    return;
+  }
+
   isAccepting.value = true;
   try {
     await $fetch(`/api/invitations/${token}/accept`, { method: "POST" });
@@ -36,8 +52,9 @@ const acceptInvitation = async () => {
   }
 };
 
-onMounted(() => {
-  fetchInvitation();
+onMounted(async () => {
+  await checkAuth();
+  await fetchInvitation();
 });
 
 const formatExpiry = (date: string) => {
@@ -135,11 +152,26 @@ const formatExpiry = (date: string) => {
             size="lg"
           >
             <span v-if="isAccepting">Accepting...</span>
-            <span v-else>Accept Invitation</span>
+            <span v-else-if="isAuthenticated">Accept Invitation</span>
+            <span v-else>Sign In & Accept</span>
           </Button>
 
-          <p class="text-xs text-center text-muted-foreground">
-            By accepting this invitation, you'll join the organization as a
+          <div v-if="!isAuthenticated" class="space-y-2">
+            <p class="text-xs text-center text-muted-foreground">
+              You need to sign in to accept this invitation.
+            </p>
+            <p class="text-xs text-center text-muted-foreground">
+              Don't have an account?
+              <NuxtLink
+                :to="`/auth/register?invite=${token}`"
+                class="text-primary hover:underline font-semibold"
+              >
+                Create one
+              </NuxtLink>
+            </p>
+          </div>
+          <p v-else class="text-xs text-center text-muted-foreground">
+            By accepting this invitation, you'll join organization as a
             {{ invitation.role.toLowerCase() }}.
           </p>
         </CardContent>
