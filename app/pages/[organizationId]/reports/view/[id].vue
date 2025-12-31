@@ -8,12 +8,14 @@ import {
   Printer,
   Trash2,
   Download,
-  Info,
   Clock,
   CheckCircle2,
   AlertCircle,
   FolderOpen,
   Sparkles,
+  MessageSquare,
+  Eye,
+  EyeOff,
 } from "lucide-vue-next";
 
 definePageMeta({
@@ -30,30 +32,28 @@ const {
   refresh,
 } = await useLazyFetch(`/api/${organizationId}/reports/${reportId}`);
 
-const notes = ref("");
+const newComment = ref("");
+const showComments = ref(true);
 
 const getStatusColor = (status: string) => {
   const colors: Record<string, string> = {
-    DRAFT: "bg-slate-100 text-slate-700 border-slate-200",
-    IN_PROGRESS: "bg-blue-50 text-blue-700 border-blue-200",
-    SUBMITTED: "bg-purple-50 text-purple-700 border-purple-200",
-    UNDER_REVIEW: "bg-amber-50 text-amber-700 border-amber-200",
-    APPROVED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    REJECTED: "bg-red-50 text-red-700 border-red-200",
+    DRAFT:
+      "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+    IN_PROGRESS:
+      "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
+    SUBMITTED:
+      "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800",
+    UNDER_REVIEW:
+      "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800",
+    APPROVED:
+      "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800",
+    REJECTED:
+      "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
   };
-  return colors[status] || "bg-gray-50 text-gray-700 border-gray-200";
-};
-
-const getStatusIcon = (status: string) => {
-  const icons: Record<string, any> = {
-    DRAFT: FileText,
-    IN_PROGRESS: Clock,
-    SUBMITTED: Sparkles,
-    UNDER_REVIEW: AlertCircle,
-    APPROVED: CheckCircle2,
-    REJECTED: AlertCircle,
-  };
-  return icons[status] || FileText;
+  return (
+    colors[status] ||
+    "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700"
+  );
 };
 
 const getStatusLabel = (status: string) => {
@@ -66,17 +66,6 @@ const getStatusLabel = (status: string) => {
     REJECTED: "Rejected",
   };
   return labels[status] || status;
-};
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 };
 
 const printReport = () => window.print();
@@ -99,21 +88,24 @@ const deleteReport = async () => {
   }
 };
 
-const saveNotes = async () => {
+const addComment = async () => {
+  if (!newComment.value.trim()) return;
+
   try {
-    await $fetch(`/api/${organizationId}/reports/${reportId}`, {
-      method: "PUT",
-      body: { notes: notes.value },
+    await $fetch(`/api/${organizationId}/reports/${reportId}/comments`, {
+      method: "POST",
+      body: { comment: newComment.value },
     });
+    newComment.value = "";
     refresh();
   } catch (error) {
-    console.error("Failed to save notes:", error);
+    console.error("Failed to add comment:", error);
   }
 };
 
 const fieldLabels = computed(() => {
   const labels: Record<string, string> = {};
-  
+
   if (report.value?.template?.fields?.sections) {
     for (const section of report.value.template.fields.sections) {
       if (section.fields && Array.isArray(section.fields)) {
@@ -125,49 +117,26 @@ const fieldLabels = computed(() => {
       }
     }
   }
-  
+
   return labels;
 });
 
 const formatFieldLabel = (key: string) => {
-  return fieldLabels.value[key] || key
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, (str) => str.toUpperCase())
-    .replace(/_/g, ' ')
-    .trim();
+  return (
+    fieldLabels.value[key] ||
+    key
+      .replace(/([A-Z])/g, " $1")
+      .replace(/^./, (str) => str.toUpperCase())
+      .replace(/_/g, " ")
+      .trim()
+  );
 };
 
-const formatFieldValue = (value: any) => {
-  if (value === null || value === undefined) return '';
-  
-  if (typeof value === 'string') {
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const trimmed = value.trim();
-    
-    if (uuidPattern.test(trimmed)) {
-      return 'Not specified';
-    }
-    
-    if (uuidPattern.test(trimmed.split('\n')[0])) {
-      const parts = trimmed.split('\n');
-      parts.shift();
-      return parts.join('\n').trim() || 'Not specified';
-    }
+const getFieldIcon = (key: string, value: any) => {
+  if (typeof value === "boolean") {
+    return value ? CheckCircle2 : AlertCircle;
   }
-  
-  if (Array.isArray(value)) {
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (value.length > 0 && uuidPattern.test(String(value[0]).trim())) {
-      return value.slice(1).join('\n') || 'Not specified';
-    }
-    return value.join('\n');
-  }
-  
-  if (typeof value === 'object') {
-    return JSON.stringify(value, null, 2);
-  }
-  
-  return String(value);
+  return null;
 };
 </script>
 
@@ -178,268 +147,176 @@ const formatFieldValue = (value: any) => {
     ></div>
   </div>
 
-  <div v-else-if="report" class="space-y-6">
-    <div
-      class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-transparent border border-primary/10"
-    >
-      <div
-        class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"
-      ></div>
-      <div
-        class="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"
-      ></div>
-
-      <div class="relative p-6 md:p-8">
-        <div class="flex flex-col md:flex-row md:items-center gap-4">
+  <div v-else-if="report" class="space-y-6 max-w-[1400px] mx-auto">
+    <!-- Header -->
+    <div class="bg-background border-b border-border pb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
             @click="navigateTo(`/${organizationId}/reports/submitted`)"
-            class="rounded-full hover:bg-primary/10 h-10 w-10"
+            class="rounded-lg hover:bg-muted"
           >
             <ArrowLeft class="h-5 w-5" />
           </Button>
-
-          <div class="flex-1 space-y-3">
-            <div class="flex items-center gap-3">
-              <div
-                class="p-2.5 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20"
-              >
-                <FileText class="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1
-                  class="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent"
-                >
-                  {{ report.title }}
-                </h1>
-                <div class="flex flex-wrap items-center gap-3 mt-2">
-                  <Badge
-                    :class="getStatusColor(report.status)"
-                    class="font-medium border shadow-sm flex items-center gap-1.5"
-                  >
-                    <component
-                      :is="getStatusIcon(report.status)"
-                      class="h-3.5 w-3.5"
-                    />
-                    {{ getStatusLabel(report.status) }}
-                  </Badge>
-                  <span
-                    class="text-sm text-muted-foreground/80 flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted/50"
-                  >
-                    <Calendar class="w-4 h-4" />
-                    {{ formatDate(report.createdAt) }}
-                  </span>
-                </div>
-              </div>
-            </div>
+          <div>
+            <h1 class="text-2xl font-semibold text-foreground">
+              {{ report.title }}
+            </h1>
+            <p class="text-sm text-muted-foreground mt-1">
+              Submitted on
+              {{ formatDate(report.submittedAt || report.createdAt) }}
+            </p>
           </div>
+        </div>
 
-          <div class="flex gap-2">
-            <Button
-              variant="outline"
-              @click="printReport"
-              class="shadow-sm hover:shadow-md transition-shadow"
-            >
-              <Printer class="h-4 w-4 mr-2" />
-              Print
-            </Button>
-            <Button
-              variant="outline"
-              @click="deleteReport"
-              class="text-destructive border-destructive/30 hover:bg-destructive/10 hover:border-destructive/50 shadow-sm transition-all"
-            >
-              <Trash2 class="h-4 w-4 mr-2" />
-              Delete
-            </Button>
-          </div>
+        <div class="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            @click="printReport"
+            class="gap-2"
+          >
+            <Printer class="h-4 w-4" />
+            Print
+          </Button>
+          <Button variant="outline" size="sm" class="gap-2">
+            <Download class="h-4 w-4" />
+            Export PDF
+          </Button>
         </div>
       </div>
     </div>
 
-    <div class="grid lg:grid-cols-4 gap-6">
-      <div class="lg:col-span-3 space-y-6">
-        <Card
-          class="border-2 border-primary/10 shadow-xl shadow-primary/5 overflow-hidden"
-        >
-          <div
-            class="bg-gradient-to-r from-primary/5 to-transparent border-b border-primary/10 px-6 py-4"
-          >
+    <div class="grid lg:grid-cols-3 gap-6">
+      <!-- Main Content -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Report Details Card -->
+        <Card class="shadow-sm">
+          <CardHeader class="border-b bg-muted/30">
             <div class="flex items-center justify-between">
-              <CardTitle class="flex items-center gap-2 text-lg">
-                <FileText class="h-5 w-5 text-primary" />
-                Report Content
-              </CardTitle>
-              <Badge
-                v-if="report.template"
-                variant="outline"
-                class="text-xs bg-primary/5 border-primary/20"
+              <CardTitle class="text-lg font-semibold"
+                >Report Details</CardTitle
               >
-                <FolderOpen class="h-3 w-3 mr-1" />
-                {{ report.template.name }}
+              <Badge
+                :class="getStatusColor(report.status)"
+                class="font-medium border"
+              >
+                {{ getStatusLabel(report.status) }}
               </Badge>
             </div>
-          </div>
-          <CardContent class="p-6">
-            <div
-              v-if="!report.content || Object.keys(report.content).length === 0"
-              class="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed rounded-xl bg-muted/30"
-            >
-              <div class="p-4 rounded-full bg-primary/5 mb-4">
-                <Info class="h-10 w-10 text-muted-foreground/50" />
-              </div>
-              <p class="text-muted-foreground font-semibold text-lg">
-                No content filled
-              </p>
-              <p class="text-sm text-muted-foreground/70 mt-1">
-                This report has no data yet
-              </p>
-            </div>
-
-            <div v-else class="space-y-4">
+            <p class="text-sm text-muted-foreground mt-1">
+              Complete submission data
+            </p>
+          </CardHeader>
+          <CardContent class="p-0">
+            <div class="divide-y divide-border">
               <div
                 v-for="(value, key) in report.content"
                 :key="key"
-                class="group relative"
+                class="grid grid-cols-3 gap-4 p-4 hover:bg-muted/30 transition-colors"
               >
+                <div class="text-sm font-medium text-muted-foreground">
+                  {{ formatFieldLabel(key) }}
+                </div>
                 <div
-                  class="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                ></div>
-                <div class="relative">
-                  <div
-                    class="text-xs font-semibold text-primary/80 uppercase tracking-widest mb-2 flex items-center gap-2"
-                  >
-                    <div
-                      class="h-px flex-1 bg-gradient-to-r from-primary/20 to-transparent"
-                    ></div>
-                    {{ formatFieldLabel(key) }}
-                    <div
-                      class="h-px flex-1 bg-gradient-to-l from-primary/20 to-transparent"
-                    ></div>
-                  </div>
-                  <div
-                    class="p-5 bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl border border-muted/200 group-hover:border-primary/30 group-hover:shadow-lg group-hover:shadow-primary/5 transition-all duration-300"
-                  >
-                    <p
-                      class="text-foreground leading-relaxed whitespace-pre-wrap"
-                    >
-                      {{ formatFieldValue(value) }}
-                    </p>
-                  </div>
+                  class="col-span-2 text-sm text-foreground flex items-start gap-2"
+                >
+                  <component
+                    v-if="getFieldIcon(key, value)"
+                    :is="getFieldIcon(key, value)"
+                    :class="[
+                      'h-4 w-4 mt-0.5 flex-shrink-0',
+                      typeof value === 'boolean' && value
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-muted-foreground',
+                    ]"
+                  />
+                  <span class="whitespace-pre-wrap break-words">
+                    {{ value }}
+                  </span>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card class="border-2 border-muted/20 shadow-lg">
-          <CardHeader
-            class="bg-gradient-to-r from-muted/30 to-transparent border-b border-muted/20"
-          >
-            <CardTitle class="flex items-center gap-2">
-              <Sparkles class="h-5 w-5 text-primary" />
-              Notes & Comments
-            </CardTitle>
-          </CardHeader>
-          <CardContent class="p-6">
-            <Textarea
-              v-model="notes"
-              placeholder="Add notes or comments about this report..."
-              rows="5"
-              class="resize-none bg-muted/30 border-muted/200 focus:ring-2 focus:ring-primary/20"
-            />
-            <div class="flex justify-end mt-4">
+        <!-- Comments Section -->
+        <Card class="shadow-sm">
+          <CardHeader class="border-b bg-muted/30">
+            <div class="flex items-center justify-between">
+              <CardTitle class="text-lg font-semibold flex items-center gap-2">
+                <MessageSquare class="h-5 w-5" />
+                Comments & Notes
+              </CardTitle>
               <Button
-                @click="saveNotes"
-                class="shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all"
+                variant="ghost"
+                size="sm"
+                @click="showComments = !showComments"
               >
-                Save Notes
+                <component :is="showComments ? EyeOff : Eye" class="h-4 w-4" />
               </Button>
+            </div>
+          </CardHeader>
+          <CardContent v-if="showComments" class="p-6">
+            <div class="space-y-4">
+              <div class="space-y-2">
+                <label class="text-sm font-medium">Add Comment</label>
+                <Textarea
+                  v-model="newComment"
+                  placeholder="Add a comment or note..."
+                  rows="3"
+                  class="resize-none"
+                />
+                <div class="flex justify-end">
+                  <Button
+                    @click="addComment"
+                    size="sm"
+                    :disabled="!newComment.trim()"
+                  >
+                    Add Comment
+                  </Button>
+                </div>
+              </div>
+
+              <div class="pt-4">
+                <div
+                  class="flex flex-col items-center justify-center py-12 text-center"
+                >
+                  <div class="p-4 rounded-full bg-muted mb-4">
+                    <MessageSquare class="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <p class="text-sm font-medium text-foreground">
+                    No comments yet
+                  </p>
+                  <p class="text-xs text-muted-foreground mt-1">
+                    Be the first to add a comment
+                  </p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div class="space-y-4">
-        <Card class="border-2 border-primary/10 shadow-lg shadow-primary/5">
-          <CardHeader
-            class="bg-gradient-to-r from-primary/5 to-transparent border-b border-primary/10 px-5 py-4"
-          >
-            <CardTitle class="text-base font-semibold"
-              >Report Details</CardTitle
-            >
-          </CardHeader>
-          <CardContent class="p-5 space-y-5">
-            <div class="flex items-center justify-between">
-              <div class="text-xs text-muted-foreground font-medium">
-                Status
-              </div>
-              <Badge
-                :class="getStatusColor(report.status)"
-                class="font-medium border shadow-sm"
-              >
-                {{ getStatusLabel(report.status) }}
-              </Badge>
-            </div>
-
-            <Separator
-              class="bg-gradient-to-r from-transparent via-muted to-transparent"
-            />
-
-            <div class="space-y-1">
-              <div
-                class="text-xs text-muted-foreground font-medium flex items-center gap-1.5"
-              >
-                <Calendar class="w-3.5 h-3.5" />
-                Created
-              </div>
-              <div class="text-sm font-semibold">
-                {{ formatDate(report.createdAt) }}
-              </div>
-            </div>
-
-            <div v-if="report.updatedAt" class="space-y-1">
-              <div
-                class="text-xs text-muted-foreground font-medium flex items-center gap-1.5"
-              >
-                <Clock class="w-3.5 h-3.5" />
-                Last Updated
-              </div>
-              <div class="text-sm font-semibold">
-                {{ formatDate(report.updatedAt) }}
-              </div>
-            </div>
-
-            <div v-if="report.submittedAt" class="space-y-1">
-              <div
-                class="text-xs text-muted-foreground font-medium flex items-center gap-1.5"
-              >
-                <CheckCircle2 class="w-3.5 h-3.5" />
-                Submitted
-              </div>
-              <div class="text-sm font-semibold">
-                {{ formatDate(report.submittedAt) }}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card class="border-2 border-muted/20 shadow-md">
-          <CardHeader
-            class="bg-gradient-to-r from-muted/20 to-transparent border-b border-muted/20 px-5 py-4"
-          >
+      <!-- Sidebar -->
+      <div class="space-y-6">
+        <!-- Submitted By -->
+        <Card class="shadow-sm">
+          <CardHeader class="border-b bg-muted/30 pb-3">
             <CardTitle class="text-base font-semibold">Submitted By</CardTitle>
           </CardHeader>
-          <CardContent class="p-5">
-            <div class="flex items-center gap-4">
+          <CardContent class="p-4">
+            <div class="flex items-center gap-3">
               <div
-                class="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20"
+                class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold"
               >
-                <User class="h-6 w-6 text-white" />
+                {{ (report.submittedBy || "U")[0].toUpperCase() }}
               </div>
               <div class="flex-1 min-w-0">
-                <p class="font-semibold text-sm truncate">
-                  {{ report.submittedBy || "Unknown" }}
+                <p class="font-medium text-sm truncate">
+                  {{ report.submittedBy || "Unknown User" }}
                 </p>
                 <p class="text-xs text-muted-foreground">Team Member</p>
               </div>
@@ -447,16 +324,105 @@ const formatFieldValue = (value: any) => {
           </CardContent>
         </Card>
 
-        <Card class="border-2 border-muted/20 shadow-md">
-          <CardHeader
-            class="bg-gradient-to-r from-muted/20 to-transparent border-b border-muted/20 px-5 py-4"
-          >
-            <CardTitle class="text-base font-semibold">Quick Actions</CardTitle>
+        <!-- Approval Details -->
+        <Card
+          v-if="report.status === 'APPROVED' || report.status === 'REJECTED'"
+          class="shadow-sm"
+        >
+          <CardHeader class="border-b bg-muted/30 pb-3">
+            <CardTitle class="text-base font-semibold"
+              >Approval Details</CardTitle
+            >
           </CardHeader>
+          <CardContent class="p-4 space-y-3">
+            <div class="flex items-start gap-2">
+              <CheckCircle2
+                class="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5"
+              />
+              <div class="flex-1">
+                <p class="text-sm font-medium">
+                  {{ report.status === "APPROVED" ? "Approved" : "Rejected" }}
+                </p>
+              </div>
+            </div>
+            <div class="text-xs text-muted-foreground space-y-1">
+              <p>By: Dr. Michael Chen</p>
+              <p>On: {{ formatDate(report.updatedAt) }}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- Template Info -->
+        <Card v-if="report.template" class="shadow-sm">
+          <CardHeader class="border-b bg-muted/30 pb-3">
+            <CardTitle class="text-base font-semibold">Template Info</CardTitle>
+          </CardHeader>
+          <CardContent class="p-4 space-y-3">
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-muted-foreground">Template:</span>
+                <span class="font-medium">{{ report.template.name }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-muted-foreground">Department:</span>
+                <Badge variant="secondary" class="text-xs">
+                  {{ report.template.department || "General" }}
+                </Badge>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-muted-foreground">Total Fields:</span>
+                <span class="font-medium">
+                  {{ Object.keys(report.content || {}).length }}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- Timestamps -->
+        <Card class="shadow-sm">
+          <CardHeader class="border-b bg-muted/30 pb-3">
+            <CardTitle class="text-base font-semibold">Timeline</CardTitle>
+          </CardHeader>
+          <CardContent class="p-4 space-y-3">
+            <div class="flex items-start gap-3">
+              <Clock class="h-4 w-4 text-muted-foreground mt-0.5" />
+              <div class="flex-1 text-sm">
+                <p class="font-medium">Created</p>
+                <p class="text-muted-foreground text-xs">
+                  {{ formatDate(report.createdAt) }}
+                </p>
+              </div>
+            </div>
+            <div v-if="report.updatedAt" class="flex items-start gap-3">
+              <Clock class="h-4 w-4 text-muted-foreground mt-0.5" />
+              <div class="flex-1 text-sm">
+                <p class="font-medium">Last Updated</p>
+                <p class="text-muted-foreground text-xs">
+                  {{ formatDate(report.updatedAt) }}
+                </p>
+              </div>
+            </div>
+            <div v-if="report.submittedAt" class="flex items-start gap-3">
+              <CheckCircle2
+                class="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5"
+              />
+              <div class="flex-1 text-sm">
+                <p class="font-medium">Submitted</p>
+                <p class="text-muted-foreground text-xs">
+                  {{ formatDate(report.submittedAt) }}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- Actions -->
+        <Card class="shadow-sm">
           <CardContent class="p-3 space-y-2">
             <Button
               variant="outline"
-              class="w-full justify-start hover:bg-primary/5 hover:border-primary/20"
+              class="w-full justify-start"
               @click="printReport"
             >
               <Download class="h-4 w-4 mr-2" />
@@ -464,11 +430,11 @@ const formatFieldValue = (value: any) => {
             </Button>
             <Button
               variant="outline"
-              class="w-full justify-start hover:bg-primary/5 hover:border-primary/20"
-              @click="navigateTo(`/${organizationId}/reports/submitted`)"
+              class="w-full justify-start text-destructive hover:text-destructive"
+              @click="deleteReport"
             >
-              <ArrowLeft class="h-4 w-4 mr-2" />
-              Back to Reports
+              <Trash2 class="h-4 w-4 mr-2" />
+              Delete Report
             </Button>
           </CardContent>
         </Card>

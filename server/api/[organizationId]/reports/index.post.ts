@@ -10,7 +10,10 @@ export default defineEventHandler(async (event) => {
   });
 
   if (!organizationId) {
-    throw createError({ statusCode: 400, message: "Organization ID is required" });
+    throw createError({
+      statusCode: 400,
+      message: "Organization ID is required",
+    });
   }
 
   if (!session?.user?.id) {
@@ -29,7 +32,7 @@ export default defineEventHandler(async (event) => {
     title: body.title,
     content: body.content || {},
     workspace: { connect: { id: workspace.id } },
-    submittedBy: session.user.id,
+    submittedBy: session.user.name,
     status: "DRAFT",
   };
 
