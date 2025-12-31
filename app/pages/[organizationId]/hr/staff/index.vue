@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Search,
   Plus,
@@ -9,8 +13,12 @@ import {
   Phone,
   MapPin,
   AlertCircle,
+  Send,
+  Copy,
+  Check,
 } from "lucide-vue-next";
 import { definePageMeta } from "#imports";
+import { toast } from "vue-sonner";
 
 definePageMeta({
   layout: "dashboard",
@@ -24,8 +32,12 @@ const searchQuery = ref("");
 const selectedDepartment = ref("");
 const selectedStatus = ref("all");
 const showAddStaffDialog = ref(false);
+const showInviteDialog = ref(false);
+const showInvitationsDialog = ref(false);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
+const inviteLink = ref("");
+const copiedToClipboard = ref("");
 
 const { data: departments, refresh: refreshDepartments } = await useFetch(
   `/api/${organizationId}/departments`,
@@ -38,6 +50,66 @@ const newDepartmentForm = ref({
   description: "",
   headId: "",
 });
+
+const inviteForm = ref({
+  email: "",
+  role: "MEMBER" as "OWNER" | "ADMIN" | "MEMBER" | "VIEWER",
+  departmentId: "",
+});
+
+const sendInvitation = async () => {
+  isLoading.value = true;
+  error.value = null;
+  inviteLink.value = "";
+
+  try {
+    const invitation = await $fetch(`/api/${organizationId}/invitations`, {
+      method: "POST",
+      body: {
+        email: inviteForm.value.email,
+        role: inviteForm.value.role,
+        departmentId: inviteForm.value.departmentId || undefined,
+      },
+    });
+
+    inviteLink.value = `${window.location.origin}/invite/${invitation.token}`;
+    inviteForm.value = {
+      email: "",
+      role: "MEMBER",
+      departmentId: "",
+    };
+  } catch (e: any) {
+    error.value = e.data?.message || "Failed to send invitation";
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const copyInviteLink = async (token: string, id: string) => {
+  let link = window.location.origin + "/invite/" + token;
+  try {
+    await navigator.clipboard.writeText(link);
+    copiedToClipboard.value = id;
+    setTimeout(() => {
+      copiedToClipboard.value = "";
+    }, 2000);
+    toast.success("Invitation link copied successful");
+  } catch (e) {
+    console.error("Failed to copy:", e);
+  }
+};
+
+const { data: pendingInvitations, refresh: refreshInvitations } =
+  await useLazyFetch(`/api/${organizationId}/invitations`);
+
+const formatExpiry = (date: string) => {
+  const expiry = new Date(date);
+  const now = new Date();
+  const diff = expiry.getTime() - now.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days <= 0) return "Expired";
+  return `${days} day${days > 1 ? "s" : ""}`;
+};
 
 const addDepartment = async () => {
   try {
@@ -188,6 +260,246 @@ watch([searchQuery, selectedDepartment], () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        <Dialog v-model:open="showInviteDialog">
+          <DialogTrigger as-child>
+            <Button variant="outline">
+              <Send class="h-4 w-4 mr-2" />
+              Invite Staff
+            </Button>
+          </DialogTrigger>
+          <DialogContent class="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Invite Staff Member</DialogTitle>
+              <DialogDescription
+                >Send an invitation link to join your
+                organization</DialogDescription
+              >
+            </DialogHeader>
+            <div class="space-y-4 py-4">
+              <div
+                v-if="error"
+                class="p-3 bg-destructive/10 text-destructive rounded-md text-sm"
+              >
+                {{ error }}
+              </div>
+
+              <div v-if="inviteLink" class="space-y-3">
+                <div
+                  class="p-4 bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 rounded-md"
+                >
+                  <div class="flex items-center gap-2 mb-2">
+                    <Check
+                      class="h-5 w-5 text-emerald-600 dark:text-emerald-400"
+                    />
+                    <p
+                      class="font-semibold text-emerald-900 dark:text-emerald-100"
+                    >
+                      Invitation Created!
+                    </p>
+                  </div>
+                  <p
+                    class="text-sm text-emerald-700 dark:text-emerald-300 mb-3"
+                  >
+                    Share this link with staff member to join your organization
+                  </p>
+                  <div class="flex gap-2">
+                    <Input :value="inviteLink" readonly class="flex-1" />
+                    <Button
+                      @click="copyInviteLink(inviteLink, 'new')"
+                      :variant="
+                        copiedToClipboard === 'new' ? 'default' : 'outline'
+                      "
+                      class="shrink-0"
+                    >
+                      <Copy
+                        v-if="copiedToClipboard !== 'new'"
+                        class="h-4 w-4"
+                      />
+                      <Check v-else class="h-4 w-4" />
+                      {{ copiedToClipboard === "new" ? "Copied!" : "Copy" }}
+                    </Button>
+                  </div>
+                </div>
+                <div class="flex justify-end">
+                  <Button variant="outline" @click="showInviteDialog = false">
+                    Close
+                  </Button>
+                </div>
+              </div>
+
+              <div v-else class="space-y-4">
+                <div class="space-y-2">
+                  <Label for="inviteEmail">Email Address</Label>
+                  <Input
+                    id="inviteEmail"
+                    v-model="inviteForm.email"
+                    type="email"
+                    placeholder="staff@example.com"
+                  />
+                </div>
+
+                <div class="space-y-2">
+                  <Label for="inviteRole">Role</Label>
+                  <Select v-model="inviteForm.role">
+                    <SelectTrigger id="inviteRole">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MEMBER">Member</SelectItem>
+                      <SelectItem value="ADMIN">Admin</SelectItem>
+                      <SelectItem value="VIEWER">Viewer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div class="space-y-2">
+                  <Label for="inviteDepartment">Department (Optional)</Label>
+                  <Select v-model="inviteForm.departmentId">
+                    <SelectTrigger id="inviteDepartment">
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem :value="null">No Department</SelectItem>
+                      <SelectItem
+                        v-for="dept in departments"
+                        :key="dept.id"
+                        :value="dept.id"
+                      >
+                        {{ dept.name }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div class="flex justify-end gap-3">
+                  <Button variant="outline" @click="showInviteDialog = false"
+                    >Cancel</Button
+                  >
+                  <Button
+                    @click="sendInvitation"
+                    :disabled="isLoading || !inviteForm.email"
+                  >
+                    <Send v-if="!isLoading" class="h-4 w-4 mr-2" />
+                    <span v-if="isLoading">Sending...</span>
+                    <span v-else>Send Invitation</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          v-model:open="showInvitationsDialog"
+          @open-change="(open) => open && refreshInvitations()"
+        >
+          <DialogTrigger as-child>
+            <Button variant="outline">
+              <Mail class="h-4 w-4 mr-2" />
+              View Invitations
+              <Badge
+                v-if="pendingInvitations && pendingInvitations.length > 0"
+                class="ml-2"
+              >
+                {{ pendingInvitations.length }}
+              </Badge>
+            </Button>
+          </DialogTrigger>
+          <DialogContent class="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Pending Invitations</DialogTitle>
+              <DialogDescription
+                >View and manage your organization's pending
+                invitations</DialogDescription
+              >
+            </DialogHeader>
+            <div class="space-y-4 py-4">
+              <div
+                v-if="!pendingInvitations || pendingInvitations.length === 0"
+                class="text-center py-8 text-muted-foreground"
+              >
+                <Mail class="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>No pending invitations</p>
+              </div>
+
+              <div v-else class="space-y-3">
+                <div
+                  v-for="invitation in pendingInvitations"
+                  :key="invitation.id"
+                  class="border border-border rounded-lg p-4 space-y-3"
+                >
+                  <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1 space-y-2">
+                      <div class="flex items-center gap-3">
+                        <Mail class="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p class="font-medium">{{ invitation.email }}</p>
+                          <p class="text-sm text-muted-foreground">
+                            Invited by {{ invitation.inviter.name }}
+                          </p>
+                        </div>
+                      </div>
+                      <div class="flex flex-wrap gap-2 ml-8">
+                        <Badge variant="secondary">{{ invitation.role }}</Badge>
+                        <Badge v-if="invitation.department" variant="outline">{{
+                          invitation.department.name
+                        }}</Badge>
+                        <Badge
+                          :variant="
+                            formatExpiry(invitation.expiresAt) === 'Expired'
+                              ? 'destructive'
+                              : 'default'
+                          "
+                        >
+                          {{ formatExpiry(invitation.expiresAt) }}
+                        </Badge>
+                      </div>
+                      <div class="ml-8">
+                        <p class="text-xs text-muted-foreground">
+                          Created
+                          {{
+                            new Date(invitation.createdAt).toLocaleDateString()
+                          }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-center gap-2 pt-2 border-t border-border"
+                  >
+                    <Input
+                      :value="`/invite/${invitation.token}`"
+                      readonly
+                      class="flex-1 text-sm"
+                    />
+                    <Button
+                      @click="
+                        copyInviteLink(`${invitation.token}`, invitation.id)
+                      "
+                      :variant="
+                        copiedToClipboard === invitation.id
+                          ? 'default'
+                          : 'outline'
+                      "
+                      size="sm"
+                    >
+                      <Copy
+                        v-if="copiedToClipboard !== invitation.id"
+                        class="h-4 w-4"
+                      />
+                      <Check v-else class="h-4 w-4" />
+                      {{
+                        copiedToClipboard === invitation.id ? "Copied!" : "Copy"
+                      }}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <Dialog v-model:open="showAddStaffDialog">
           <DialogTrigger as-child>
             <Button>

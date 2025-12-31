@@ -12,3 +12,4 @@ export * from "./report.service";
 export * from "./document.service";
 export * from "./onboarding.service";
 export * from "./dashboard.service";
+export * from "./invitation.service";
