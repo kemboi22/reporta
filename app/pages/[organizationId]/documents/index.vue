@@ -15,15 +15,66 @@ definePageMeta({
   layout: "dashboard",
 });
 
+const route = useRoute();
+const organizationId = route.params.organizationId as string;
+
 const viewMode = ref<"grid" | "list">("grid");
 const selectedCategory = ref("all");
 const showUploadDialog = ref(false);
 const showAssignDialog = ref(false);
 const selectedDocument = ref<any>(null);
+const searchQuery = ref("");
 
 const selectedFile = ref<File | null>(null);
 const uploadCategory = ref("");
-const assignedStaff = ref<string[]>([]);
+const uploadDescription = ref("");
+const uploadWorkspaceId = ref("");
+const uploadProjectId = ref<string | null>(null);
+const uploadTags = ref("");
+const uploadVisibility = ref("WORKSPACE");
+const uploadIsPinned = ref(false);
+
+const { data: documents, refresh: refreshDocuments } = await useLazyFetch(
+  `/api/${organizationId}/documents`,
+  {
+    key: `documents-${organizationId}`,
+    transform: (data) => data || [],
+  },
+);
+
+const { data: staffMembers } = await useLazyFetch(
+  `/api/${organizationId}/staff`,
+  {
+    key: `staff-${organizationId}`,
+    transform: (data) => data || [],
+  },
+);
+
+const { data: workspaces } = await useLazyFetch(
+  `/api/${organizationId}/workspaces`,
+  {
+    key: `workspaces-${organizationId}`,
+    transform: (data) => data || [],
+  },
+);
+
+const { data: projects } = await useLazyFetch(
+  `/api/${organizationId}/projects`,
+  {
+    key: `projects-${organizationId}`,
+    transform: (data) => data || [],
+  },
+);
+
+watchEffect(() => {
+  if (
+    workspaces.value &&
+    workspaces.value.length > 0 &&
+    !uploadWorkspaceId.value
+  ) {
+    uploadWorkspaceId.value = workspaces.value[0].id;
+  }
+});
 
 const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement;
@@ -32,10 +83,45 @@ const handleFileSelect = (event: Event) => {
   }
 };
 
-const handleUpload = () => {
-  console.log("[v0] Uploading file:", selectedFile.value?.name);
-  showUploadDialog.value = false;
-  selectedFile.value = null;
+const handleUpload = async () => {
+  if (!selectedFile.value || !uploadWorkspaceId.value) return;
+
+  try {
+    const formData = new FormData();
+    formData.append("file", selectedFile.value);
+    formData.append("workspaceId", uploadWorkspaceId.value);
+    if (uploadProjectId.value)
+      formData.append("projectId", uploadProjectId.value);
+    formData.append("name", selectedFile.value.name);
+    if (uploadDescription.value)
+      formData.append("description", uploadDescription.value);
+    if (uploadCategory.value) formData.append("category", uploadCategory.value);
+    if (uploadTags.value) formData.append("tags", uploadTags.value);
+    formData.append("visibility", uploadVisibility.value);
+    formData.append("isPinned", uploadIsPinned.value.toString());
+
+    await $fetch(`/api/${organizationId}/documents`, {
+      method: "POST",
+      body: formData,
+    });
+
+    showUploadDialog.value = false;
+    selectedFile.value = null;
+    uploadCategory.value = "";
+    uploadDescription.value = "";
+    uploadWorkspaceId.value =
+      workspaces.value && workspaces.value.length > 0
+        ? workspaces.value[0].id
+        : "";
+    uploadProjectId.value = null;
+    uploadTags.value = "";
+    uploadVisibility.value = "WORKSPACE";
+    uploadIsPinned.value = false;
+    await refreshDocuments();
+  } catch (error: any) {
+    console.error("Failed to upload document:", error);
+    throw error;
+  }
 };
 
 const openAssignDialog = (doc: any) => {
@@ -43,65 +129,50 @@ const openAssignDialog = (doc: any) => {
   showAssignDialog.value = true;
 };
 
-const handleAssign = () => {
-  console.log("[v0] Assigning document to:", assignedStaff.value);
-  showAssignDialog.value = false;
-  assignedStaff.value = [];
+const downloadDocument = async (doc: any) => {
+  try {
+    const response = await $fetch(
+      `/api/${organizationId}/documents/${doc.id}/download`,
+      {
+        responseType: "blob",
+      },
+    );
+    const blob = new Blob([response], { type: doc.mimeType });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = doc.name;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Failed to download document:", error);
+  }
 };
-
-const documents = [
-  {
-    id: 1,
-    name: "Safety Protocol 2024",
-    type: "PDF",
-    category: "Policy",
-    size: "2.4 MB",
-    uploadedBy: "Admin",
-    uploadedDate: "Dec 20, 2024",
-    downloads: 45,
-    assignedTo: ["Sarah Johnson", "Mike Chen"],
-  },
-  {
-    id: 2,
-    name: "Staff Handbook",
-    type: "PDF",
-    category: "HR",
-    size: "5.1 MB",
-    uploadedBy: "Robert Taylor",
-    uploadedDate: "Dec 15, 2024",
-    downloads: 120,
-  },
-  {
-    id: 3,
-    name: "Emergency Procedures",
-    type: "PDF",
-    category: "Compliance",
-    size: "1.8 MB",
-    uploadedBy: "Sarah Johnson",
-    uploadedDate: "Dec 10, 2024",
-    downloads: 89,
-  },
-  {
-    id: 4,
-    name: "Equipment Manual",
-    type: "PDF",
-    category: "Training",
-    size: "3.2 MB",
-    uploadedBy: "Mike Chen",
-    uploadedDate: "Dec 5, 2024",
-    downloads: 34,
-  },
-];
 
 const getCategoryColor = (category: string) => {
   const colors: Record<string, string> = {
-    Policy: "bg-blue-100 text-blue-700 hover:bg-blue-100",
-    HR: "bg-purple-100 text-purple-700 hover:bg-purple-100",
-    Compliance: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100",
-    Training: "bg-amber-100 text-amber-700 hover:bg-amber-100",
+    policy: "bg-blue-100 text-blue-700 hover:bg-blue-100",
+    hr: "bg-purple-100 text-purple-700 hover:bg-purple-100",
+    compliance: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100",
+    training: "bg-amber-100 text-amber-700 hover:bg-amber-100",
+    technical: "bg-cyan-100 text-cyan-700 hover:bg-cyan-100",
   };
-  return colors[category] || "bg-muted text-foreground";
+  return colors[category?.toLowerCase()] || "bg-muted text-foreground";
 };
+
+const getFilteredDocuments = computed(() => {
+  if (!documents.value) return [];
+
+  return documents.value.filter((doc: any) => {
+    const matchesSearch =
+      doc.name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      doc.description?.toLowerCase().includes(searchQuery.value.toLowerCase());
+    const matchesCategory =
+      selectedCategory.value === "all" ||
+      doc.category?.toLowerCase() === selectedCategory.value;
+    return matchesSearch && matchesCategory;
+  });
+});
 </script>
 
 <template>
@@ -114,7 +185,6 @@ const getCategoryColor = (category: string) => {
         </p>
       </div>
 
-      <!-- Added upload dialog -->
       <Dialog v-model:open="showUploadDialog">
         <DialogTrigger as-child>
           <Button>
@@ -131,7 +201,7 @@ const getCategoryColor = (category: string) => {
           </DialogHeader>
           <div class="space-y-4 py-4">
             <div class="space-y-2">
-              <Label htmlFor="file">Select File</Label>
+              <Label for="file">Select File</Label>
               <div class="flex items-center gap-2">
                 <Input id="file" type="file" @change="handleFileSelect" />
                 <Button size="icon" variant="outline">
@@ -139,12 +209,52 @@ const getCategoryColor = (category: string) => {
                 </Button>
               </div>
               <p v-if="selectedFile" class="text-sm text-muted-foreground">
-                Selected: {{ selectedFile.name }}
+                Selected: {{ selectedFile.name }} ({{
+                  (selectedFile.size / 1024 / 1024).toFixed(2)
+                }}
+                MB)
               </p>
             </div>
 
             <div class="space-y-2">
-              <Label htmlFor="category">Category</Label>
+              <Label for="workspace">Workspace</Label>
+              <Select v-model="uploadWorkspaceId">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select workspace" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="ws in workspaces"
+                    :key="ws.id"
+                    :value="ws.id"
+                  >
+                    {{ ws.name }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div class="space-y-2">
+              <Label for="project">Project (Optional)</Label>
+              <Select v-model="uploadProjectId">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="null">None</SelectItem>
+                  <SelectItem
+                    v-for="proj in projects"
+                    :key="proj.id"
+                    :value="proj.id"
+                  >
+                    {{ proj.name }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div class="space-y-2">
+              <Label for="category">Category</Label>
               <Select v-model="uploadCategory">
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
@@ -154,24 +264,75 @@ const getCategoryColor = (category: string) => {
                   <SelectItem value="hr">HR</SelectItem>
                   <SelectItem value="compliance">Compliance</SelectItem>
                   <SelectItem value="training">Training</SelectItem>
+                  <SelectItem value="technical">Technical</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div class="space-y-2">
+              <Label for="visibility">Visibility</Label>
+              <Select v-model="uploadVisibility">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select visibility" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PRIVATE">Private - Only you</SelectItem>
+                  <SelectItem value="WORKSPACE"
+                    >Workspace - All members</SelectItem
+                  >
+                  <SelectItem value="PROJECT"
+                    >Project - Project members</SelectItem
+                  >
+                  <SelectItem value="ORGANIZATION"
+                    >Organization - All org members</SelectItem
+                  >
+                  <SelectItem value="PUBLIC"
+                    >Public - Anyone with link</SelectItem
+                  >
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div class="space-y-2">
+              <Label for="tags">Tags (comma-separated)</Label>
+              <Input
+                id="tags"
+                v-model="uploadTags"
+                placeholder="e.g., important, urgent, q4-2024"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <Label for="description">Description</Label>
+              <Textarea
+                id="description"
+                v-model="uploadDescription"
+                placeholder="Document description..."
+                rows="3"
+              />
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <Checkbox id="pinned" v-model:checked="uploadIsPinned" />
+              <Label for="pinned" class="cursor-pointer">Pin document</Label>
             </div>
 
             <div class="flex justify-end gap-2">
               <Button variant="outline" @click="showUploadDialog = false"
                 >Cancel</Button
               >
-              <Button @click="handleUpload" :disabled="!selectedFile"
-                >Upload</Button
+              <Button
+                @click="handleUpload"
+                :disabled="!selectedFile || !uploadWorkspaceId"
               >
+                Upload
+              </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
     </div>
 
-    <!-- Filters -->
     <Card class="border-border">
       <CardContent class="p-6">
         <div class="flex flex-col md:flex-row gap-4">
@@ -179,7 +340,11 @@ const getCategoryColor = (category: string) => {
             <Search
               class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
             />
-            <Input placeholder="Search documents..." class="pl-10" />
+            <Input
+              v-model="searchQuery"
+              placeholder="Search documents..."
+              class="pl-10"
+            />
           </div>
 
           <Select v-model="selectedCategory">
@@ -192,6 +357,7 @@ const getCategoryColor = (category: string) => {
               <SelectItem value="hr">HR</SelectItem>
               <SelectItem value="compliance">Compliance</SelectItem>
               <SelectItem value="training">Training</SelectItem>
+              <SelectItem value="technical">Technical</SelectItem>
             </SelectContent>
           </Select>
 
@@ -217,13 +383,12 @@ const getCategoryColor = (category: string) => {
       </CardContent>
     </Card>
 
-    <!-- Documents Grid -->
     <div
       v-if="viewMode === 'grid'"
       class="grid md:grid-cols-2 lg:grid-cols-4 gap-6"
     >
       <Card
-        v-for="doc in documents"
+        v-for="doc in getFilteredDocuments"
         :key="doc.id"
         class="border-border hover:shadow-lg transition-all cursor-pointer"
       >
@@ -244,49 +409,36 @@ const getCategoryColor = (category: string) => {
           <div class="space-y-2 text-sm text-muted-foreground">
             <div class="flex justify-between">
               <span>Size</span>
-              <span class="font-medium text-foreground">{{ doc.size }}</span>
+              <span class="font-medium text-foreground">{{
+                (doc.fileSize / 1024 / 1024).toFixed(2) + " MB"
+              }}</span>
             </div>
             <div class="flex justify-between">
               <span>Downloads</span>
               <span class="font-medium text-foreground">{{
-                doc.downloads
+                doc.downloadedBy?.length || 0
               }}</span>
             </div>
           </div>
 
-          <!-- Added assign button -->
           <div class="grid grid-cols-2 gap-2 mt-4">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" @click="downloadDocument(doc)">
               <Download class="h-4 w-4 mr-2" />
               Download
             </Button>
-            <Button variant="outline" size="sm" @click="openAssignDialog(doc)">
+            <Button
+              variant="outline"
+              size="sm"
+              @click="navigateTo(`/${organizationId}/documents/${doc.id}`)"
+            >
               <UserPlus class="h-4 w-4 mr-2" />
-              Assign
+              View
             </Button>
-          </div>
-
-          <div
-            v-if="doc.assignedTo && doc.assignedTo.length > 0"
-            class="mt-3 pt-3 border-t border-border"
-          >
-            <p class="text-xs text-muted-foreground mb-2">Assigned to:</p>
-            <div class="flex flex-wrap gap-1">
-              <Badge
-                v-for="staff in doc.assignedTo"
-                :key="staff"
-                variant="secondary"
-                class="text-xs"
-              >
-                {{ staff }}
-              </Badge>
-            </div>
           </div>
         </CardContent>
       </Card>
     </div>
 
-    <!-- Documents List -->
     <Card v-else class="border-border">
       <CardContent class="p-0">
         <table class="w-full">
@@ -326,7 +478,7 @@ const getCategoryColor = (category: string) => {
           </thead>
           <tbody class="divide-y divide-border">
             <tr
-              v-for="doc in documents"
+              v-for="doc in getFilteredDocuments"
               :key="doc.id"
               class="hover:bg-muted transition-colors"
             >
@@ -344,24 +496,28 @@ const getCategoryColor = (category: string) => {
                 }}</Badge>
               </td>
               <td class="px-6 py-4 text-sm text-muted-foreground">
-                {{ doc.size }}
+                {{ (doc.fileSize / 1024 / 1024).toFixed(2) + " MB" }}
               </td>
               <td class="px-6 py-4 text-sm text-muted-foreground">
-                {{ doc.uploadedBy }}
+                {{ doc.uploadedBy?.name || "Unknown" }}
               </td>
               <td class="px-6 py-4 text-sm text-muted-foreground">
-                {{ doc.uploadedDate }}
+                {{ new Date(doc.createdAt).toLocaleDateString() }}
               </td>
               <td class="px-6 py-4 text-right">
-                <Button variant="ghost" size="sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  @click="downloadDocument(doc)"
+                >
                   <Download class="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  @click="openAssignDialog(doc)"
+                  @click="navigateTo(`/${organizationId}/documents/${doc.id}`)"
                 >
-                  <UserPlus class="h-4 w-4" />
+                  <Eye class="h-4 w-4" />
                 </Button>
               </td>
             </tr>
@@ -370,70 +526,57 @@ const getCategoryColor = (category: string) => {
       </CardContent>
     </Card>
 
-    <!-- Stats -->
     <div class="grid md:grid-cols-4 gap-6">
       <Card class="border-border">
         <CardContent class="p-6">
           <p class="text-sm text-muted-foreground mb-1">Total Documents</p>
-          <p class="text-3xl font-bold text-foreground">248</p>
+          <p class="text-3xl font-bold text-foreground">
+            {{ documents?.length || 0 }}
+          </p>
         </CardContent>
       </Card>
 
       <Card class="border-border">
         <CardContent class="p-6">
           <p class="text-sm text-muted-foreground mb-1">Storage Used</p>
-          <p class="text-3xl font-bold text-blue-600">12.4 GB</p>
-        </CardContent>
-      </Card>
-
-      <Card class="border-border">
-        <CardContent class="p-6">
-          <p class="text-sm text-muted-foreground mb-1">Categories</p>
-          <p class="text-3xl font-bold text-purple-600">8</p>
+          <p class="text-3xl font-bold text-blue-600">
+            {{
+              (
+                (documents?.reduce(
+                  (acc, doc) => acc + (doc.fileSize || 0),
+                  0,
+                ) || 0) /
+                1024 /
+                1024 /
+                1024
+              ).toFixed(2) + " GB"
+            }}
+          </p>
         </CardContent>
       </Card>
 
       <Card class="border-border">
         <CardContent class="p-6">
           <p class="text-sm text-muted-foreground mb-1">Downloads</p>
-          <p class="text-3xl font-bold text-emerald-600">1,234</p>
+          <p class="text-3xl font-bold text-emerald-600">
+            {{
+              documents?.reduce(
+                (acc, doc) => acc + (doc.downloadedBy?.length || 0),
+                0,
+              ) || 0
+            }}
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card class="border-border">
+        <CardContent class="p-6">
+          <p class="text-sm text-muted-foreground mb-1">Staff Members</p>
+          <p class="text-3xl font-bold text-purple-600">
+            {{ staffMembers?.length || 0 }}
+          </p>
         </CardContent>
       </Card>
     </div>
-
-    <!-- Added assign dialog -->
-    <Dialog v-model:open="showAssignDialog">
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Assign Document</DialogTitle>
-          <DialogDescription
-            >Select staff members to assign this document to</DialogDescription
-          >
-        </DialogHeader>
-        <div class="space-y-4 py-4">
-          <div class="space-y-2">
-            <Label>Staff Members</Label>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Select staff members" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sarah">Sarah Johnson</SelectItem>
-                <SelectItem value="mike">Mike Chen</SelectItem>
-                <SelectItem value="emma">Emma Davis</SelectItem>
-                <SelectItem value="robert">Robert Taylor</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div class="flex justify-end gap-2">
-            <Button variant="outline" @click="showAssignDialog = false"
-              >Cancel</Button
-            >
-            <Button @click="handleAssign">Assign</Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   </div>
 </template>
