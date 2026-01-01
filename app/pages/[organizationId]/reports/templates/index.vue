@@ -25,6 +25,7 @@ import {
   Activity,
   Calendar,
   Copy,
+  Table as TableIcon,
 } from "lucide-vue-next";
 import { NuxtLink } from "#components";
 import { definePageMeta } from "#imports";
@@ -230,7 +231,7 @@ const deleteTemplate = async (templateId: string) => {
             </div>
           </div>
 
-          <div class="pt-3 border-t">
+            <div class="pt-3 border-t">
             <div class="flex items-center justify-between text-xs text-muted-foreground mb-3">
               <span class="flex items-center gap-1">
                 <FileText class="h-3 w-3" />
@@ -250,6 +251,15 @@ const deleteTemplate = async (templateId: string) => {
               >
                 <Play class="h-3 w-3 mr-1" />
                 Use
+              </Button>
+              <Button
+                v-if="getTemplateStats(template.id).total > 0"
+                variant="outline"
+                size="sm"
+                class="px-3"
+                @click.stop="navigateTo(`/${organizationId}/reports/templates/${template.id}`)"
+              >
+                <TableIcon class="h-3 w-3" />
               </Button>
               <Button
                 variant="outline"
@@ -318,6 +328,15 @@ const deleteTemplate = async (templateId: string) => {
               >
                 <Play class="h-4 w-4 mr-2" />
                 Use Template
+              </Button>
+              <Button
+                v-if="getTemplateStats(template.id).total > 0"
+                variant="outline"
+                size="sm"
+                @click.stop="navigateTo(`/${organizationId}/reports/templates/${template.id}`)"
+              >
+                <TableIcon class="h-4 w-4 mr-2" />
+                View Data
               </Button>
               <Button
                 variant="outline"
