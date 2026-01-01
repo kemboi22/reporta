@@ -18,6 +18,7 @@ import {
   EyeOff,
   XCircle,
   Check,
+  MoreVertical,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import {
@@ -32,6 +33,10 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { authClient } from "~/lib/auth";
 
 definePageMeta({
@@ -61,6 +66,8 @@ const canApproveOrReject = computed(() => {
     report.value && ["SUBMITTED", "UNDER_REVIEW"].includes(report.value.status)
   );
 });
+
+const comments = computed(() => report.value?.comments || []);
 
 const getStatusColor = (status: string) => {
   const colors: Record<string, string> = {
@@ -95,6 +102,40 @@ const getStatusLabel = (status: string) => {
   return labels[status] || status;
 };
 
+const formatDate = (dateString: string | Date | undefined) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const formatDateTime = (dateString: string | Date | undefined) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const getInitials = (name: string) => {
+  if (!name) return "?";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+};
+
 const printReport = () => window.print();
 
 const deleteReport = async () => {
@@ -121,17 +162,18 @@ const addComment = async () => {
   try {
     await $fetch(`/api/${organizationId}/reports/${reportId}/comments`, {
       method: "POST",
-      body: { comment: newComment.value },
+      body: { content: newComment.value },
     });
     newComment.value = "";
     refresh();
   } catch (error) {
     console.error("Failed to add comment:", error);
+    toast.error("Failed to add comment");
   }
 };
 
 const approveReport = async () => {
-  if (!session.value.data?.user) {
+  if (!session.value?.user?.id) {
     toast.error("You must be logged in to approve reports");
     return;
   }
@@ -140,7 +182,7 @@ const approveReport = async () => {
   try {
     await $fetch(`/api/${organizationId}/reports/${reportId}/approve`, {
       method: "POST",
-      body: { reviewedBy: session.value.data.user.id },
+      body: { reviewedBy: session.value.user.id },
     });
     toast.success("Report approved successfully");
     refresh();
@@ -153,7 +195,7 @@ const approveReport = async () => {
 };
 
 const rejectReport = async () => {
-  if (!session.value.data?.user) {
+  if (!session.value?.user?.id) {
     toast.error("You must be logged in to reject reports");
     return;
   }
@@ -163,7 +205,7 @@ const rejectReport = async () => {
     await $fetch(`/api/${organizationId}/reports/${reportId}/reject`, {
       method: "POST",
       body: {
-        reviewedBy: session.value.data.user.id,
+        reviewedBy: session.value.user.id,
         reason: rejectReason.value,
       },
     });
@@ -389,7 +431,7 @@ const getFieldIcon = (key: string, value: any) => {
             <div class="flex items-center justify-between">
               <CardTitle class="text-lg font-semibold flex items-center gap-2">
                 <MessageSquare class="h-5 w-5" />
-                Comments & Notes
+                Comments & Notes ({{ comments.length }})
               </CardTitle>
               <Button
                 variant="ghost"
@@ -423,6 +465,7 @@ const getFieldIcon = (key: string, value: any) => {
 
               <div class="pt-4">
                 <div
+                  v-if="comments.length === 0"
                   class="flex flex-col items-center justify-center py-12 text-center"
                 >
                   <div class="p-4 rounded-full bg-muted mb-4">
@@ -434,6 +477,37 @@ const getFieldIcon = (key: string, value: any) => {
                   <p class="text-xs text-muted-foreground mt-1">
                     Be the first to add a comment
                   </p>
+                </div>
+                <div v-else class="space-y-4">
+                  <Card
+                    v-for="comment in comments"
+                    :key="comment.id"
+                    class="border-border"
+                  >
+                    <CardContent class="p-6">
+                      <div class="flex items-start gap-4">
+                        <Avatar class="h-10 w-10">
+                          <AvatarImage :src="comment.user?.image" />
+                          <AvatarFallback>{{
+                            getInitials(comment.user?.name || "")
+                          }}</AvatarFallback>
+                        </Avatar>
+                        <div class="flex-1">
+                          <div class="flex items-center gap-2 mb-2">
+                            <h4 class="font-semibold">
+                              {{ comment.user?.name || "Unknown User" }}
+                            </h4>
+                            <span class="text-sm text-muted-foreground">
+                              {{ formatDateTime(comment.createdAt) }}
+                            </span>
+                          </div>
+                          <p class="text-sm text-foreground">
+                            {{ comment.content }}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
             </div>

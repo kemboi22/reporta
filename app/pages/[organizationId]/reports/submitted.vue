@@ -28,10 +28,19 @@ import {
   Building,
   Check,
   X,
+  Table as TableIcon,
 } from "lucide-vue-next";
 import { definePageMeta } from "#imports";
 import { toast } from "vue-sonner";
 import { authClient } from "~/lib/auth";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 definePageMeta({
   layout: "dashboard",
@@ -46,7 +55,7 @@ const selectedStatus = ref("all");
 const selectedDateRange = ref("all");
 const selectedDepartment = ref("all");
 const sortBy = ref("newest");
-const viewMode = ref<"grid" | "list">("grid");
+const viewMode = ref<"grid" | "list" | "table">("grid");
 
 const { data: session } = await authClient.useSession();
 
@@ -242,6 +251,14 @@ const rejectReport = async (reportId: string) => {
             @click="viewMode = 'list'"
           >
             <List class="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            :class="viewMode === 'table' ? 'bg-background shadow-sm' : ''"
+            @click="viewMode = 'table'"
+          >
+            <TableIcon class="h-4 w-4" />
           </Button>
         </div>
         <Button variant="outline" v-if="hasActiveFilters" @click="clearFilters">
@@ -503,82 +520,94 @@ const rejectReport = async (reportId: string) => {
       </Card>
     </div>
 
-    <div v-else class="space-y-3">
-      <Card
-        v-for="report in filteredReports"
-        :key="report.id"
-        class="hover:shadow-md transition-all border-border hover:border-primary/50 cursor-pointer"
-        @click="navigateTo(`/${organizationId}/reports/view/${report.id}`)"
-      >
-        <CardContent class="p-5">
-          <div class="flex items-start gap-4">
-            <div class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <FileText class="h-6 w-6 text-primary" />
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-start justify-between gap-4 mb-2">
-                <div class="flex-1 min-w-0">
-                  <h4 class="font-semibold text-foreground truncate">{{ report.title }}</h4>
-                  <div class="flex items-center gap-2 mt-1">
-                    <Badge :class="getStatusInfo(report.status).color" class="text-xs">
-                      <component :is="getStatusInfo(report.status).icon" class="w-3 h-3 mr-1" />
-                      {{ getStatusInfo(report.status).label }}
-                    </Badge>
-                    <span class="text-xs text-muted-foreground">
-                      {{ report.template?.name || "Report" }}
-                    </span>
-                  </div>
-                </div>
-                <span class="text-xs text-muted-foreground whitespace-nowrap flex items-center gap-1">
-                  <Calendar class="w-3 h-3" />
-                  {{ formatDate(report.createdAt) }}
-                </span>
-              </div>
-
-              <div class="flex items-center gap-6 text-sm">
-                <div class="flex items-center gap-2 text-muted-foreground">
-                  <User class="w-4 h-4" />
-                  <span class="truncate max-w-[150px]">{{ report.submittedBy?.name || "Unknown" }}</span>
-                </div>
-                <div v-if="report.department" class="flex items-center gap-2 text-muted-foreground">
-                  <Building class="w-4 h-4" />
-                  <span class="truncate max-w-[150px]">{{ report.department.name }}</span>
-                </div>
-              </div>
-            </div>
-
-            <Button 
-              variant="ghost" 
-              size="icon"
-              @click.stop="navigateTo(`/${organizationId}/reports/view/${report.id}`)"
+    <!-- Table View -->
+    <Card v-else-if="viewMode === 'table'" class="shadow-sm">
+      <CardContent class="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Report</TableHead>
+              <TableHead>Template</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Submitted By</TableHead>
+              <TableHead>Department</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead class="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow
+              v-for="report in filteredReports"
+              :key="report.id"
+              class="cursor-pointer"
+              @click="navigateTo(`/${organizationId}/reports/view/${report.id}`)"
             >
-              <Eye class="h-5 w-5" />
-            </Button>
-            <template v-if="canApproveOrReject(report.status)">
-              <Button 
-                variant="ghost" 
-                size="icon"
-                class="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                @click.stop="approveReport(report.id)"
-                :disabled="isApproving === report.id"
-              >
-                <Check v-if="isApproving !== report.id" class="h-5 w-5" />
-                <Clock v-else class="h-5 w-5 animate-spin" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                class="text-red-600 hover:text-red-700 hover:bg-red-50"
-                @click.stop="rejectReport(report.id)"
-                :disabled="isRejecting === report.id"
-              >
-                <X v-if="isRejecting !== report.id" class="h-5 w-5" />
-                <Clock v-else class="h-5 w-5 animate-spin" />
-              </Button>
-            </template>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+              <TableCell>
+                <div class="flex items-center gap-3">
+                  <div class="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <FileText class="h-5 w-5 text-primary" />
+                  </div>
+                  <span class="font-medium">{{ report.title }}</span>
+                </div>
+              </TableCell>
+              <TableCell>{{ report.template?.name || "Report" }}</TableCell>
+              <TableCell>
+                <Badge :class="getStatusInfo(report.status).color" class="text-xs">
+                  <component :is="getStatusInfo(report.status).icon" class="w-3 h-3 mr-1" />
+                  {{ getStatusInfo(report.status).label }}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <div class="flex items-center gap-2">
+                  <User class="h-4 w-4 text-muted-foreground" />
+                  <span>{{ report.submittedBy?.name || "Unknown" }}</span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div v-if="report.department" class="flex items-center gap-2">
+                  <Building class="h-4 w-4 text-muted-foreground" />
+                  <span>{{ report.department.name }}</span>
+                </div>
+                <span v-else class="text-muted-foreground">-</span>
+              </TableCell>
+              <TableCell>{{ formatDate(report.createdAt) }}</TableCell>
+              <TableCell class="text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    @click.stop="navigateTo(`/${organizationId}/reports/view/${report.id}`)"
+                  >
+                    <Eye class="h-4 w-4" />
+                  </Button>
+                  <template v-if="canApproveOrReject(report.status)">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      class="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                      @click.stop="approveReport(report.id)"
+                      :disabled="isApproving === report.id"
+                    >
+                      <Check v-if="isApproving !== report.id" class="h-4 w-4" />
+                      <Clock v-else class="h-4 w-4 animate-spin" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      class="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      @click.stop="rejectReport(report.id)"
+                      :disabled="isRejecting === report.id"
+                    >
+                      <X v-if="isRejecting !== report.id" class="h-4 w-4" />
+                      <Clock v-else class="h-4 w-4 animate-spin" />
+                    </Button>
+                  </template>
+                </div>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   </div>
 </template>
