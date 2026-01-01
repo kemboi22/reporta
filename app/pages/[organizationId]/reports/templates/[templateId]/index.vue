@@ -2,7 +2,13 @@
 import { ref, computed } from "vue";
 import { definePageMeta, navigateTo } from "#imports";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -66,13 +72,13 @@ const templateFields = computed(() => {
 
 const tableColumns = computed(() => {
   if (!templateFields.value || templateFields.value.length === 0) return [];
-  
+
   const columns: any[] = [];
   templateFields.value.forEach((section: any) => {
     if (section.fields) {
       section.fields.forEach((field: any) => {
         columns.push({
-          key: field.name,
+          key: field.id,
           label: field.label || field.name,
           type: field.type,
           section: section.title,
@@ -80,7 +86,7 @@ const tableColumns = computed(() => {
       });
     }
   });
-  
+
   return columns;
 });
 
@@ -90,8 +96,9 @@ const filteredReports = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     filtered = filtered.filter((r: any) =>
-      r.title?.toLowerCase().includes(query) ||
-      r.content ? JSON.stringify(r.content).toLowerCase().includes(query) : false
+      r.title?.toLowerCase().includes(query) || r.content
+        ? JSON.stringify(r.content).toLowerCase().includes(query)
+        : false,
     );
   }
 
@@ -100,9 +107,15 @@ const filteredReports = computed(() => {
   }
 
   if (sortBy.value === "newest") {
-    filtered.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    filtered.sort(
+      (a: any, b: any) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
   } else if (sortBy.value === "oldest") {
-    filtered.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    filtered.sort(
+      (a: any, b: any) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
   }
 
   return filtered;
@@ -113,7 +126,9 @@ const stats = computed(() => {
   return {
     total: allReports.length,
     approved: allReports.filter((r: any) => r.status === "APPROVED").length,
-    pending: allReports.filter((r: any) => ["SUBMITTED", "UNDER_REVIEW"].includes(r.status)).length,
+    pending: allReports.filter((r: any) =>
+      ["SUBMITTED", "UNDER_REVIEW"].includes(r.status),
+    ).length,
     rejected: allReports.filter((r: any) => r.status === "REJECTED").length,
   };
 });
@@ -135,7 +150,9 @@ const getStatusInfo = (status: string) => {
     APPROVED: { color: "bg-emerald-100 text-emerald-700", label: "Approved" },
     REJECTED: { color: "bg-red-100 text-red-700", label: "Rejected" },
   };
-  return info[status] || { color: "bg-slate-100 text-slate-700", label: status };
+  return (
+    info[status] || { color: "bg-slate-100 text-slate-700", label: status }
+  );
 };
 
 const formatDate = (dateString: string) => {
@@ -162,7 +179,13 @@ const exportToCSV = () => {
     return;
   }
 
-  const headers = ["Title", "Status", "Submitted By", "Submitted At", ...tableColumns.value.map((c: any) => c.label)];
+  const headers = [
+    "Title",
+    "Status",
+    "Submitted By",
+    "Submitted At",
+    ...tableColumns.value.map((c: any) => c.label),
+  ];
   const rows = filteredReports.value.map((r: any) => [
     r.title,
     getStatusInfo(r.status).label,
@@ -171,8 +194,10 @@ const exportToCSV = () => {
     ...tableColumns.value.map((c: any) => getFieldValue(r, c.key)),
   ]);
 
-  const csv = [headers, ...rows].map((row) => row.map((cell: any) => `"${cell}"`).join(",")).join("\n");
-  
+  const csv = [headers, ...rows]
+    .map((row) => row.map((cell: any) => `"${cell}"`).join(","))
+    .join("\n");
+
   const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -180,7 +205,7 @@ const exportToCSV = () => {
   a.download = `${template.value?.name || "template"}-data-${new Date().toISOString().split("T")[0]}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-  
+
   toast.success("Data exported successfully");
 };
 </script>
@@ -188,12 +213,20 @@ const exportToCSV = () => {
 <template>
   <div class="space-y-6">
     <div class="flex items-center gap-4">
-      <Button variant="ghost" size="icon" @click="navigateTo(`/${organizationId}/reports/templates`)">
+      <Button
+        variant="ghost"
+        size="icon"
+        @click="navigateTo(`/${organizationId}/reports/templates`)"
+      >
         <ArrowLeft class="h-5 w-5" />
       </Button>
       <div class="flex-1">
-        <h1 class="text-3xl font-bold text-foreground">{{ template?.name || "Template Data" }}</h1>
-        <p class="text-muted-foreground mt-1">View all submitted data for this template</p>
+        <h1 class="text-3xl font-bold text-foreground">
+          {{ template?.name || "Template Data" }}
+        </h1>
+        <p class="text-muted-foreground mt-1">
+          View all submitted data for this template
+        </p>
       </div>
       <div class="flex items-center gap-3">
         <Button variant="outline" @click="refreshReports">
@@ -212,10 +245,14 @@ const exportToCSV = () => {
         <CardContent class="p-5">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-muted-foreground mb-1">Total Submissions</p>
+              <p class="text-sm text-muted-foreground mb-1">
+                Total Submissions
+              </p>
               <p class="text-2xl font-bold">{{ stats.total }}</p>
             </div>
-            <div class="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center">
+            <div
+              class="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center"
+            >
               <FileText class="h-5 w-5 text-slate-600" />
             </div>
           </div>
@@ -226,9 +263,13 @@ const exportToCSV = () => {
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-muted-foreground mb-1">Approved</p>
-              <p class="text-2xl font-bold text-emerald-600">{{ stats.approved }}</p>
+              <p class="text-2xl font-bold text-emerald-600">
+                {{ stats.approved }}
+              </p>
             </div>
-            <div class="h-10 w-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+            <div
+              class="h-10 w-10 rounded-lg bg-emerald-100 flex items-center justify-center"
+            >
               <FileText class="h-5 w-5 text-emerald-600" />
             </div>
           </div>
@@ -239,9 +280,13 @@ const exportToCSV = () => {
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-muted-foreground mb-1">Pending Review</p>
-              <p class="text-2xl font-bold text-blue-600">{{ stats.pending }}</p>
+              <p class="text-2xl font-bold text-blue-600">
+                {{ stats.pending }}
+              </p>
             </div>
-            <div class="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+            <div
+              class="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center"
+            >
               <FileText class="h-5 w-5 text-blue-600" />
             </div>
           </div>
@@ -252,9 +297,13 @@ const exportToCSV = () => {
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-muted-foreground mb-1">Rejected</p>
-              <p class="text-2xl font-bold text-red-600">{{ stats.rejected }}</p>
+              <p class="text-2xl font-bold text-red-600">
+                {{ stats.rejected }}
+              </p>
             </div>
-            <div class="h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center">
+            <div
+              class="h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center"
+            >
               <FileText class="h-5 w-5 text-red-600" />
             </div>
           </div>
@@ -266,7 +315,9 @@ const exportToCSV = () => {
       <CardContent class="p-6">
         <div class="flex flex-col lg:flex-row gap-4 mb-6">
           <div class="relative flex-1">
-            <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search
+              class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+            />
             <Input
               v-model="searchQuery"
               placeholder="Search submissions..."
@@ -308,9 +359,15 @@ const exportToCSV = () => {
           <FileText class="h-12 w-12 text-muted-foreground mx-auto mb-3" />
           <h3 class="text-lg font-semibold mb-2">No submissions found</h3>
           <p class="text-muted-foreground mb-4">
-            {{ searchQuery ? "Try adjusting your search or filters." : "No reports have been submitted for this template yet." }}
+            {{
+              searchQuery
+                ? "Try adjusting your search or filters."
+                : "No reports have been submitted for this template yet."
+            }}
           </p>
-          <Button @click="navigateTo(`/${organizationId}/reports/fill/${templateId}`)">
+          <Button
+            @click="navigateTo(`/${organizationId}/reports/fill/${templateId}`)"
+          >
             Submit New Report
           </Button>
         </div>
@@ -341,7 +398,10 @@ const exportToCSV = () => {
                         class="h-8 w-8"
                         @click="toggleRow(report.id)"
                       >
-                        <ChevronDown v-if="expandedRows.has(report.id)" class="h-4 w-4" />
+                        <ChevronDown
+                          v-if="expandedRows.has(report.id)"
+                          class="h-4 w-4"
+                        />
                         <ChevronUp v-else class="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -349,7 +409,10 @@ const exportToCSV = () => {
                       <div class="font-medium">{{ report.title }}</div>
                     </TableCell>
                     <TableCell v-for="column in tableColumns" :key="column.key">
-                      <div class="max-w-[200px] truncate" :title="getFieldValue(report, column.key)">
+                      <div
+                        class="max-w-[200px] truncate"
+                        :title="getFieldValue(report, column.key)"
+                      >
                         {{ getFieldValue(report, column.key) }}
                       </div>
                     </TableCell>
@@ -361,7 +424,7 @@ const exportToCSV = () => {
                     <TableCell>
                       <div class="flex items-center gap-2">
                         <User class="h-4 w-4 text-muted-foreground" />
-                        <span>{{ report.submittedBy?.name || "Unknown" }}</span>
+                        <span>{{ report.submittedBy || "Unknown" }}</span>
                       </div>
                     </TableCell>
                     <TableCell>{{ formatDate(report.createdAt) }}</TableCell>
@@ -369,21 +432,37 @@ const exportToCSV = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        @click="navigateTo(`/${organizationId}/reports/view/${report.id}`)"
+                        @click="
+                          navigateTo(
+                            `/${organizationId}/reports/view/${report.id}`,
+                          )
+                        "
                       >
                         <Eye class="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
-                  
+
                   <TableRow v-if="expandedRows.has(report.id)">
-                    <TableCell :colspan="tableColumns.length + 6" class="bg-muted/30">
+                    <TableCell
+                      :colspan="tableColumns.length + 6"
+                      class="bg-muted/30"
+                    >
                       <div class="p-4">
                         <h4 class="font-medium mb-3">Detailed View</h4>
                         <div class="grid gap-4">
-                          <div v-for="column in tableColumns" :key="column.key" class="grid grid-cols-3 gap-4">
-                            <span class="text-sm font-medium text-muted-foreground">{{ column.label }}:</span>
-                            <span class="col-span-2">{{ getFieldValue(report, column.key) }}</span>
+                          <div
+                            v-for="column in tableColumns"
+                            :key="column.key"
+                            class="grid grid-cols-3 gap-4"
+                          >
+                            <span
+                              class="text-sm font-medium text-muted-foreground"
+                              >{{ column.label }}:</span
+                            >
+                            <span class="col-span-2">{{
+                              getFieldValue(report, column.key)
+                            }}</span>
                           </div>
                         </div>
                       </div>
