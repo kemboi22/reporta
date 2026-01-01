@@ -1010,6 +1010,9 @@ CREATE UNIQUE INDEX "staff_employeeId_key" ON "staff"("employeeId");
 CREATE UNIQUE INDEX "staff_organizationId_email_key" ON "staff"("organizationId", "email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "staff_organizationId_userId_key" ON "staff"("organizationId", "userId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "devices_deviceId_key" ON "devices"("deviceId");
 
 -- CreateIndex

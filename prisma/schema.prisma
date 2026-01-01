@@ -123,6 +123,7 @@ model User {
   roleAssignments         UserRoleAssignment[]
   sentInvitations         UserInvitation[]        @relation("InvitationSender")
   acceptedInvitations     UserInvitation[]        @relation("InvitationAccepter")
+  reportComments          ReportComment[]
 
   @@unique([email])
   @@unique([username])
@@ -490,10 +491,27 @@ model Report {
   updatedAt   DateTime     @updatedAt
 
   // Relations
-  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  template  ReportTemplate @relation(fields: [templateId], references: [id])
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  template  ReportTemplate  @relation(fields: [templateId], references: [id])
+  comments  ReportComment[]
 
   @@map("reports")
+}
+
+// Report comment model
+model ReportComment {
+  id        String   @id @default(uuid())
+  reportId  String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("report_comments")
 }
 
 // Project model
