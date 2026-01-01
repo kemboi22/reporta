@@ -13,6 +13,12 @@ export default defineEventHandler(async (event) => {
     include: {
       template: true,
       workspace: true,
+      comments: {
+        include: {
+          user: true,
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
