@@ -6,19 +6,9 @@ import {
   FileText,
   Filter,
   RefreshCw,
+  Users,
 } from "lucide-vue-next";
-import { definePageMeta } from "#imports";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
+
 import { toast } from "vue-sonner";
 
 definePageMeta({
@@ -36,10 +26,13 @@ const selectedStatus = ref("all");
 const isLoading = ref(false);
 const attendanceRecords = ref<any[]>([]);
 
-const { data: departments } = await useLazyFetch(`/api/${organizationId}/departments`, {
-  key: `departments-${organizationId}`,
-  transform: (data) => data || [],
-});
+const { data: departments } = await useLazyFetch(
+  `/api/${organizationId}/departments`,
+  {
+    key: `departments-${organizationId}`,
+    transform: (data) => data || [],
+  },
+);
 
 const { data: staffList } = await useLazyFetch(`/api/${organizationId}/staff`, {
   key: `staff-${organizationId}`,
@@ -50,9 +43,9 @@ const loadAttendanceData = async () => {
   isLoading.value = true;
   try {
     const params: any = { take: 100 };
-    
+
     if (selectedPeriod.value === "today") {
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split("T")[0];
       params.startDate = `${today}T00:00:00.000Z`;
       params.endDate = `${today}T23:59:59.999Z`;
     } else if (selectedPeriod.value === "week") {
@@ -79,16 +72,24 @@ const loadAttendanceData = async () => {
   }
 };
 
-watch([selectedPeriod, selectedDepartment], async () => {
-  await loadAttendanceData();
-}, { immediate: true });
+watch(
+  [selectedPeriod, selectedDepartment],
+  async () => {
+    await loadAttendanceData();
+  },
+  { immediate: true },
+);
 
 const getStaffAttendanceStats = (staffId: string) => {
-  const staffRecords = attendanceRecords.value.filter((a: any) => a.staffId === staffId);
+  const staffRecords = attendanceRecords.value.filter(
+    (a: any) => a.staffId === staffId,
+  );
   const totalDays = staffRecords.length;
-  const presentDays = staffRecords.filter((a: any) => a.status === "PRESENT" || a.status === "LATE").length;
+  const presentDays = staffRecords.filter(
+    (a: any) => a.status === "PRESENT" || a.status === "LATE",
+  ).length;
   const lateDays = staffRecords.filter((a: any) => a.status === "LATE").length;
-  
+
   return {
     total: totalDays,
     present: presentDays,
@@ -99,7 +100,7 @@ const getStaffAttendanceStats = (staffId: string) => {
 
 const attendanceData = computed(() => {
   const staffMap = new Map<string, any>();
-  
+
   attendanceRecords.value.forEach((record: any) => {
     if (!staffMap.has(record.staffId)) {
       staffMap.set(record.staffId, {
@@ -115,7 +116,7 @@ const attendanceData = computed(() => {
         percentage: 0,
       });
     }
-    
+
     const staff = staffMap.get(record.staffId);
     staff.totalDays++;
     if (record.status === "PRESENT" || record.status === "LATE") {
@@ -128,17 +129,30 @@ const attendanceData = computed(() => {
 
   return Array.from(staffMap.values()).map((staff: any) => ({
     ...staff,
-    percentage: staff.totalDays > 0 ? Math.round((staff.daysPresent / staff.totalDays) * 100) : 0,
+    percentage:
+      staff.totalDays > 0
+        ? Math.round((staff.daysPresent / staff.totalDays) * 100)
+        : 0,
   }));
 });
 
 const stats = computed(() => {
   const total = attendanceData.value.length;
-  const totalPresent = attendanceData.value.reduce((sum, s) => sum + s.daysPresent, 0);
-  const totalLate = attendanceData.value.reduce((sum, s) => sum + s.lateArrivals, 0);
-  const totalPercentage = total > 0 
-    ? Math.round(attendanceData.value.reduce((sum, s) => sum + s.percentage, 0) / total)
-    : 0;
+  const totalPresent = attendanceData.value.reduce(
+    (sum, s) => sum + s.daysPresent,
+    0,
+  );
+  const totalLate = attendanceData.value.reduce(
+    (sum, s) => sum + s.lateArrivals,
+    0,
+  );
+  const totalPercentage =
+    total > 0
+      ? Math.round(
+          attendanceData.value.reduce((sum, s) => sum + s.percentage, 0) /
+            total,
+        )
+      : 0;
 
   return {
     averageAttendance: totalPercentage,
@@ -165,7 +179,15 @@ const getInitials = (name: string) => {
 
 const exportData = () => {
   const csv = [
-    ["Name", "Employee ID", "Department", "Days Present", "Total Days", "Late Arrivals", "Attendance %"],
+    [
+      "Name",
+      "Employee ID",
+      "Department",
+      "Days Present",
+      "Total Days",
+      "Late Arrivals",
+      "Attendance %",
+    ],
     ...attendanceData.value.map((s: any) => [
       s.name,
       s.employeeId,
@@ -175,7 +197,9 @@ const exportData = () => {
       s.lateArrivals,
       `${s.percentage}%`,
     ]),
-  ].map((row) => row.join(",")).join("\n");
+  ]
+    .map((row) => row.join(","))
+    .join("\n");
 
   const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
@@ -193,19 +217,31 @@ const exportData = () => {
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-3xl font-bold text-foreground">Attendance Reports</h1>
-        <p class="text-muted-foreground mt-1">View and analyze attendance data</p>
+        <p class="text-muted-foreground mt-1">
+          View and analyze attendance data
+        </p>
       </div>
 
       <div class="flex gap-3">
-        <Button variant="outline" @click="loadAttendanceData" :disabled="isLoading">
-          <RefreshCw class="h-4 w-4 mr-2" :class="{ 'animate-spin': isLoading }" />
+        <Button
+          variant="outline"
+          @click="loadAttendanceData"
+          :disabled="isLoading"
+        >
+          <RefreshCw
+            class="h-4 w-4 mr-2"
+            :class="{ 'animate-spin': isLoading }"
+          />
           Refresh
         </Button>
         <Button variant="outline">
           <FileText class="h-4 w-4 mr-2" />
           Generate Report
         </Button>
-        <Button class="bg-blue-500 hover:bg-blue-600 text-white" @click="exportData">
+        <Button
+          class="bg-blue-500 hover:bg-blue-600 text-white"
+          @click="exportData"
+        >
           <Download class="h-4 w-4 mr-2" />
           Export
         </Button>
@@ -284,7 +320,9 @@ const exportData = () => {
         <Card class="border-border">
           <CardContent class="p-6">
             <p class="text-sm text-muted-foreground mb-1">Average Attendance</p>
-            <p class="text-3xl font-bold text-emerald-500">{{ stats.averageAttendance }}%</p>
+            <p class="text-3xl font-bold text-emerald-500">
+              {{ stats.averageAttendance }}%
+            </p>
             <p class="text-sm text-muted-foreground mt-2">This period</p>
           </CardContent>
         </Card>
@@ -292,7 +330,9 @@ const exportData = () => {
         <Card class="border-border">
           <CardContent class="p-6">
             <p class="text-sm text-muted-foreground mb-1">Total Present</p>
-            <p class="text-3xl font-bold text-blue-500">{{ stats.totalPresent }}</p>
+            <p class="text-3xl font-bold text-blue-500">
+              {{ stats.totalPresent }}
+            </p>
             <p class="text-sm text-muted-foreground mt-2">Attendance records</p>
           </CardContent>
         </Card>
@@ -300,7 +340,9 @@ const exportData = () => {
         <Card class="border-border">
           <CardContent class="p-6">
             <p class="text-sm text-muted-foreground mb-1">Late Arrivals</p>
-            <p class="text-3xl font-bold text-amber-500">{{ stats.totalLate }}</p>
+            <p class="text-3xl font-bold text-amber-500">
+              {{ stats.totalLate }}
+            </p>
             <p class="text-sm text-muted-foreground mt-2">This period</p>
           </CardContent>
         </Card>
@@ -308,7 +350,9 @@ const exportData = () => {
         <Card class="border-border">
           <CardContent class="p-6">
             <p class="text-sm text-muted-foreground mb-1">Overtime Hours</p>
-            <p class="text-3xl font-bold text-purple-500">{{ stats.overtimeHours }}</p>
+            <p class="text-3xl font-bold text-purple-500">
+              {{ stats.overtimeHours }}
+            </p>
             <p class="text-sm text-muted-foreground mt-2">Total hours</p>
           </CardContent>
         </Card>
@@ -325,13 +369,41 @@ const exportData = () => {
             <table class="w-full">
               <thead class="bg-muted border-b border-border">
                 <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Staff</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Employee ID</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Department</th>
-                  <th class="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase">Days Present</th>
-                  <th class="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase">Late Arrivals</th>
-                  <th class="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase">Overtime (hrs)</th>
-                  <th class="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase">Attendance %</th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
+                  >
+                    Staff
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
+                  >
+                    Employee ID
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase"
+                  >
+                    Department
+                  </th>
+                  <th
+                    class="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase"
+                  >
+                    Days Present
+                  </th>
+                  <th
+                    class="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase"
+                  >
+                    Late Arrivals
+                  </th>
+                  <th
+                    class="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase"
+                  >
+                    Overtime (hrs)
+                  </th>
+                  <th
+                    class="px-6 py-3 text-center text-xs font-medium text-muted-foreground uppercase"
+                  >
+                    Attendance %
+                  </th>
                 </tr>
               </thead>
               <tbody class="bg-background divide-y divide-border">
@@ -348,31 +420,48 @@ const exportData = () => {
                           {{ getInitials(record.name) }}
                         </AvatarFallback>
                       </Avatar>
-                      <span class="text-sm font-medium text-foreground">{{ record.name }}</span>
+                      <span class="text-sm font-medium text-foreground">{{
+                        record.name
+                      }}</span>
                     </div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                  <td
+                    class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground"
+                  >
                     {{ record.employeeId }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <Badge class="bg-blue-50 text-blue-600 hover:bg-blue-100">{{ record.department }}</Badge>
+                    <Badge class="bg-blue-50 text-blue-600 hover:bg-blue-100">{{
+                      record.department
+                    }}</Badge>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-foreground">
+                  <td
+                    class="px-6 py-4 whitespace-nowrap text-center text-sm text-foreground"
+                  >
                     {{ record.daysPresent }} / {{ record.totalDays }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-center">
                     <Badge
-                      :class="record.lateArrivals > 0 ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'"
+                      :class="
+                        record.lateArrivals > 0
+                          ? 'bg-amber-50 text-amber-600'
+                          : 'bg-emerald-50 text-emerald-600'
+                      "
                     >
                       {{ record.lateArrivals }}
                     </Badge>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-foreground">
+                  <td
+                    class="px-6 py-4 whitespace-nowrap text-center text-sm text-foreground"
+                  >
                     {{ record.overtime }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-center">
                     <span
-                      :class="['text-sm font-semibold', getPercentageColor(record.percentage)]"
+                      :class="[
+                        'text-sm font-semibold',
+                        getPercentageColor(record.percentage),
+                      ]"
                     >
                       {{ record.percentage }}%
                     </span>
@@ -387,11 +476,25 @@ const exportData = () => {
       <div class="grid lg:grid-cols-2 gap-6">
         <Card class="border-border">
           <CardContent class="p-6">
-            <h3 class="text-lg font-semibold text-foreground mb-4">Daily Attendance Trend</h3>
-            <div class="h-64 flex items-center justify-center bg-muted rounded-lg border border-border">
+            <h3 class="text-lg font-semibold text-foreground mb-4">
+              Daily Attendance Trend
+            </h3>
+            <div
+              class="h-64 flex items-center justify-center bg-muted rounded-lg border border-border"
+            >
               <div class="text-center text-muted-foreground">
-                <svg class="h-12 w-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                <svg
+                  class="h-12 w-12 mx-auto mb-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
+                  />
                 </svg>
                 <p class="text-sm">Attendance trend chart</p>
               </div>
@@ -401,11 +504,25 @@ const exportData = () => {
 
         <Card class="border-border">
           <CardContent class="p-6">
-            <h3 class="text-lg font-semibold text-foreground mb-4">Department Comparison</h3>
-            <div class="h-64 flex items-center justify-center bg-muted rounded-lg border border-border">
+            <h3 class="text-lg font-semibold text-foreground mb-4">
+              Department Comparison
+            </h3>
+            <div
+              class="h-64 flex items-center justify-center bg-muted rounded-lg border border-border"
+            >
               <div class="text-center text-muted-foreground">
-                <svg class="h-12 w-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                <svg
+                  class="h-12 w-12 mx-auto mb-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
                 </svg>
                 <p class="text-sm">Department comparison chart</p>
               </div>

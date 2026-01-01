@@ -11,21 +11,26 @@ import {
   CheckSquare,
   FileText,
   Upload,
-  ArrowRightLeftIcon,
   Mail,
-  CheckCircle,
-  CheckSquare2,
+  LogIn,
 } from "lucide-vue-next";
 import { authClient } from "~/lib/auth";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "vue-sonner";
 
 defineEmits(["toggle-sidebar"]);
 
 const route = useRoute();
-const organizationId = route.params.organizationId as string;
+const organizationId = computed(() => {
+  const params = route.params as Record<string, string>;
+  return params.organizationId;
+});
 
-const isOnDuty = ref(false);
 const session = authClient.useSession();
+const isOnDuty = ref(false);
+const isCheckingIn = ref(false);
+const isCheckingOut = ref(false);
+const currentAttendance = ref<any>(null);
 
 const { data: notifications, refresh: refreshNotifications } =
   await useLazyFetch(`/api/notifications?unreadOnly=false`, {
@@ -37,8 +42,120 @@ const { data: unreadCountData, refresh: refreshUnreadCount } =
 
 const unreadCount = computed(() => unreadCountData.value?.count || 0);
 
-const toggleClockStatus = () => {
-  isOnDuty.value = !isOnDuty.value;
+const { data: staffMembers, refresh: refreshStaff } = await useLazyFetch(
+  () =>
+    `/api/${organizationId.value}/staff?userId=${session.value.data?.user.id}`,
+  { key: `staff-for-clock-${organizationId.value}` },
+);
+
+const currentStaff = computed(() => {
+  if (staffMembers.value && staffMembers.value.length > 0) {
+    return staffMembers.value[0];
+  }
+  return null;
+});
+const checkTodayAttendance = async () => {
+  if (!currentStaff.value) return;
+
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const response = (await $fetch(
+      `/api/${organizationId.value}/attendance?staffId=${currentStaff.value.id}&startDate=${today}T00:00:00.000Z`,
+    )) as any[];
+
+    if (response && response.length > 0) {
+      const todayRecord = response.find((a: any) => {
+        const checkInDate = new Date(a.checkIn).toISOString().split("T")[0];
+        return checkInDate === today;
+      });
+
+      if (todayRecord) {
+        currentAttendance.value = todayRecord;
+        isOnDuty.value = !todayRecord.checkOut;
+      } else {
+        currentAttendance.value = null;
+        isOnDuty.value = false;
+      }
+    } else {
+      currentAttendance.value = null;
+      isOnDuty.value = false;
+    }
+  } catch (error) {
+    console.error("Failed to check today's attendance:", error);
+  }
+};
+
+onMounted(async () => {
+  await checkTodayAttendance();
+});
+
+watch(
+  () => session.value.data?.user,
+  async () => {
+    await checkTodayAttendance();
+  },
+  { immediate: true },
+);
+
+const handleClockInOut = async () => {
+  if (!currentStaff.value) {
+    toast.error("Staff record not found. Please contact your administrator.");
+    return;
+  }
+
+  if (isOnDuty.value && currentAttendance.value) {
+    await handleCheckOut();
+  } else {
+    await handleCheckIn();
+  }
+};
+
+const handleCheckIn = async () => {
+  if (!currentStaff.value) return;
+
+  isCheckingIn.value = true;
+  try {
+    await $fetch(`/api/${organizationId.value}/attendance`, {
+      method: "POST",
+      body: {
+        staffId: currentStaff.value.id,
+        location: "Main Office",
+      },
+    });
+
+    toast.success("Successfully checked in!");
+    isOnDuty.value = true;
+    await checkTodayAttendance();
+  } catch (error) {
+    console.error("Failed to check in:", error);
+    toast.error("Failed to check in. Please try again.");
+  } finally {
+    isCheckingIn.value = false;
+  }
+};
+
+const handleCheckOut = async () => {
+  if (!currentAttendance.value?.id) return;
+
+  isCheckingOut.value = true;
+  try {
+    await $fetch(
+      `/api/${organizationId.value}/attendance/${currentAttendance.value.id}/checkout`,
+      {
+        method: "POST",
+        body: { notes: "" },
+      },
+    );
+
+    toast.success("Successfully checked out!");
+    isOnDuty.value = false;
+    await checkTodayAttendance();
+  } catch (error) {
+    console.error("Failed to check out:", error);
+    toast.error("Failed to check out. Please try again.");
+  } finally {
+    isCheckingOut.value = false;
+  }
 };
 
 const logout = async () => {
@@ -97,10 +214,11 @@ const formatTime = (date: string) => {
 };
 
 watch(
-  () => session.data?.user?.id,
+  () => session.value.data?.user,
   () => {
     refreshNotifications();
     refreshUnreadCount();
+    refreshStaff();
   },
 );
 </script>
@@ -109,7 +227,6 @@ watch(
   <header
     class="h-16 bg-background border-b border-border flex items-center justify-between px-6"
   >
-    <!-- Left Section -->
     <div class="flex items-center gap-4">
       <Button
         variant="ghost"
@@ -128,24 +245,39 @@ watch(
       </div>
     </div>
 
-    <!-- Right Section -->
     <div class="flex items-center gap-3">
       <ThemeToggle />
-      <!-- Clock In/Out Button -->
       <Button
+        v-if="currentStaff"
         :class="[
           'hidden md:flex items-center gap-2',
           isOnDuty
             ? 'bg-red-600 hover:bg-red-700 text-white'
             : 'bg-emerald-600 hover:bg-emerald-700 text-white',
         ]"
-        @click="toggleClockStatus"
+        :disabled="isCheckingIn || isCheckingOut"
+        @click="handleClockInOut"
+      >
+        <LogIn v-if="!isOnDuty" class="h-4 w-4" />
+        <LogOut v-else class="h-4 w-4" />
+        {{
+          isCheckingIn || isCheckingOut
+            ? "Processing..."
+            : isOnDuty
+              ? "Clock Out"
+              : "Clock In"
+        }}
+      </Button>
+      <Button
+        v-else
+        variant="outline"
+        class="hidden md:flex items-center gap-2"
+        disabled
       >
         <Clock class="h-4 w-4" />
-        {{ isOnDuty ? "Clock Out" : "Clock In" }}
+        No Staff Record
       </Button>
 
-      <!-- Quick Actions -->
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button variant="ghost" size="icon">
@@ -168,7 +300,6 @@ watch(
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <!-- Notifications -->
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button variant="ghost" size="icon" class="relative">
@@ -263,7 +394,6 @@ watch(
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <!-- User Menu -->
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button variant="ghost" class="relative h-10 w-10 rounded-full p-0">
@@ -278,14 +408,13 @@ watch(
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="w-72">
-          <!-- Added workspace info section -->
           <div class="p-3 border-b">
             <div class="flex items-center gap-3 mb-2">
               <div
                 class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"
               >
                 <span class="text-sm font-bold text-primary">
-                  {{ session.data?.user.name.substring(0, 2).toUpperCase() }}
+                  {{ session.data?.user.name?.substring(0, 2).toUpperCase() }}
                 </span>
               </div>
               <div class="flex-1 min-w-0">
@@ -297,15 +426,6 @@ watch(
                 </p>
               </div>
             </div>
-            <!--   <Button -->
-            <!--     variant="outline" -->
-            <!--     size="sm" -->
-            <!--     class="w-full justify-start text-xs h-8" -->
-            <!--     @click="navigateTo('/workspace/switch')" -->
-            <!--   > -->
-            <!--     <ArrowRightLeftIcon class="h-3.5 w-3.5 mr-2" /> -->
-            <!--     Switch Workspace -->
-            <!--   </Button> -->
           </div>
 
           <DropdownMenuItem @click="navigateTo('/staff/profile')">

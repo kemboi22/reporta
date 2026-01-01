@@ -89,6 +89,7 @@ const navigationItems = [
     name: "Attendance",
     icon: Clock,
     children: [
+      { name: "Attendance", href: "/attendance" },
       { name: "Live Attendance", href: "/attendance/live" },
       { name: "Reports", href: "/attendance/reports" },
       { name: "Biometric Devices", href: "/attendance/devices" },
