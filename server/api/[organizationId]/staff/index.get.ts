@@ -2,7 +2,7 @@ import { getStaffList } from "~~/server/services";
 
 export default defineEventHandler(async (event) => {
   const organizationId = getRouterParam(event, "organizationId");
-  const { skip, take, departmentId, search } = getQuery(event);
+  const { skip, take, departmentId, search, userId } = getQuery(event);
 
   if (!organizationId) {
     throw createError({
@@ -15,6 +15,9 @@ export default defineEventHandler(async (event) => {
 
   if (departmentId) {
     where.departmentId = departmentId;
+  }
+  if (userId) {
+    where.userId = userId;
   }
 
   if (search) {
