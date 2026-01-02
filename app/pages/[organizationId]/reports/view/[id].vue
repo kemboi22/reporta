@@ -138,6 +138,50 @@ const getInitials = (name: string) => {
 
 const printReport = () => window.print();
 
+const exportToCSV = () => {
+  if (!report.value) return;
+
+  const rows: string[][] = [];
+  rows.push(["Field", "Value"]);
+  rows.push(["Title", report.value.title || ""]);
+  rows.push(["Status", getStatusLabel(report.value.status) || ""]);
+  rows.push(["Submitted By", report.value.submittedBy || ""]);
+  rows.push(["Created At", formatDate(report.value.createdAt) || ""]);
+  rows.push(["Updated At", formatDate(report.value.updatedAt) || ""]);
+  rows.push(["Submitted At", formatDate(report.value.submittedAt) || ""]);
+
+  if (report.value.content) {
+    for (const [key, value] of Object.entries(report.value.content)) {
+      const label = formatFieldLabel(key);
+      const val = typeof value === "object" ? JSON.stringify(value) : String(value || "");
+      rows.push([label, val]);
+    }
+  }
+
+  if (report.value.template) {
+    rows.push(["Template", report.value.template.name || ""]);
+    rows.push(["Department", report.value.template.department || ""]);
+  }
+
+  const csvContent = rows.map(row => row.map(cell => {
+    const escaped = String(cell).replace(/"/g, '""');
+    return `"${escaped}"`;
+  }).join(",")).join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `${report.value.title || "report"}_${new Date().toISOString().split("T")[0]}.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+
+  toast.success("Report exported to CSV");
+};
+
+const exportToPDF = () => {
+  window.print();
+};
+
 const deleteReport = async () => {
   if (
     !confirm(
@@ -355,18 +399,17 @@ const getFieldIcon = (key: string, value: any) => {
             <ArrowLeft class="h-4 w-4" />
             Back
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            @click="printReport"
-            class="gap-2"
-          >
-            <Printer class="h-4 w-4" />
-            Print
+          <Button variant="outline" size="sm" class="gap-2" @click="exportToCSV">
+            <Download class="h-4 w-4" />
+            Export CSV
           </Button>
-          <Button variant="outline" size="sm" class="gap-2">
+          <Button variant="outline" size="sm" class="gap-2" @click="exportToPDF">
             <Download class="h-4 w-4" />
             Export PDF
+          </Button>
+          <Button variant="outline" size="sm" class="gap-2" @click="printReport">
+            <Printer class="h-4 w-4" />
+            Print
           </Button>
         </div>
       </div>
@@ -644,10 +687,18 @@ const getFieldIcon = (key: string, value: any) => {
             <Button
               variant="outline"
               class="w-full justify-start"
-              @click="printReport"
+              @click="exportToPDF"
             >
               <Download class="h-4 w-4 mr-2" />
               Download PDF
+            </Button>
+            <Button
+              variant="outline"
+              class="w-full justify-start"
+              @click="exportToCSV"
+            >
+              <Download class="h-4 w-4 mr-2" />
+              Download CSV
             </Button>
             <Button
               variant="outline"
