@@ -72,7 +72,7 @@ const sendInvitation = async () => {
       },
     });
 
-    inviteLink.value = `${window.location.origin}/invite/${invitation.token}`;
+    inviteLink.value = `${invitation.token}`;
     inviteForm.value = {
       email: "",
       role: "MEMBER",
