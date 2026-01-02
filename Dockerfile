@@ -15,7 +15,7 @@ COPY . .
 ENV NODE_OPTIONS="--max-old-space-size=6144"
 ENV NITRO_PRESET=bun
 
-RUN bun run build
+RUN bunx prisma generate && bun run build
 
 # -------- Production --------
 FROM base AS production
@@ -32,4 +32,4 @@ COPY prisma.config.ts ./
 EXPOSE 3000
 
 # Prisma generate at runtime (safe)
-CMD bunx prisma generate && bun .output/server/index.mjs
+CMD  bun .output/server/index.mjs
