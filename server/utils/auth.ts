@@ -16,13 +16,15 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: ({ user, url }) => {
+      console.log(`[${user.email}]: ${url}`);
+    },
   },
   plugins: [
     twoFactor(),
     username(),
     phoneNumber(),
     admin(),
-
     passkey(),
     customSession(async ({ session, user }) => {
       const usr = await prisma.user.findFirst({
