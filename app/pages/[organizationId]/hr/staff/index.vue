@@ -795,9 +795,6 @@ watch([searchQuery, selectedDepartment], () => {
               >
                 View Profile
               </Button>
-              <Button variant="outline" size="sm" class="flex-1">
-                Assign Task
-              </Button>
             </div>
           </div>
         </CardContent>
