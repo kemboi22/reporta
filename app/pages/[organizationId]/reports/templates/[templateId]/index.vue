@@ -26,10 +26,14 @@ import {
   Calendar,
   FileText,
   User,
-  Filter,
   RefreshCw,
   ChevronDown,
   ChevronUp,
+  CheckSquare,
+  Square,
+  CheckCircle,
+  XCircle,
+  Trash2,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import {
@@ -40,6 +44,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 
 definePageMeta({
   layout: "dashboard",
@@ -54,6 +59,11 @@ const selectedStatus = ref("all");
 const sortBy = ref("newest");
 const isLoading = ref(false);
 const expandedRows = ref<Set<string>>(new Set());
+const selectedReports = ref<Set<string>>(new Set());
+const isApproving = ref(false);
+
+const dateFrom = ref("");
+const dateTo = ref("");
 
 const { data: template, refresh: refreshTemplate } = await useLazyFetch(
   `/api/${organizationId}/templates/${templateId}`,
@@ -106,6 +116,17 @@ const filteredReports = computed(() => {
     filtered = filtered.filter((r: any) => r.status === selectedStatus.value);
   }
 
+  if (dateFrom.value) {
+    const fromDate = new Date(dateFrom.value);
+    filtered = filtered.filter((r: any) => new Date(r.createdAt) >= fromDate);
+  }
+
+  if (dateTo.value) {
+    const toDate = new Date(dateTo.value);
+    toDate.setHours(23, 59, 59, 999);
+    filtered = filtered.filter((r: any) => new Date(r.createdAt) <= toDate);
+  }
+
   if (sortBy.value === "newest") {
     filtered.sort(
       (a: any, b: any) =>
@@ -121,6 +142,12 @@ const filteredReports = computed(() => {
   return filtered;
 });
 
+const selectableReports = computed(() => {
+  return filteredReports.value.filter((r: any) =>
+    ["SUBMITTED", "UNDER_REVIEW"].includes(r.status)
+  );
+});
+
 const stats = computed(() => {
   const allReports = reports.value || [];
   return {
@@ -131,6 +158,16 @@ const stats = computed(() => {
     ).length,
     rejected: allReports.filter((r: any) => r.status === "REJECTED").length,
   };
+});
+
+const allSelected = computed(() => {
+  return selectableReports.value.length > 0 &&
+    selectableReports.value.every((r: any) => selectedReports.value.has(r.id));
+});
+
+const someSelected = computed(() => {
+  return selectableReports.value.some((r: any) => selectedReports.value.has(r.id)) &&
+    !allSelected.value;
 });
 
 const getFieldValue = (report: any, fieldKey: string) => {
@@ -170,6 +207,72 @@ const toggleRow = (reportId: string) => {
     expandedRows.value.delete(reportId);
   } else {
     expandedRows.value.add(reportId);
+  }
+};
+
+const toggleSelectAll = () => {
+  if (allSelected.value) {
+    selectableReports.value.forEach((r: any) => selectedReports.value.delete(r.id));
+  } else {
+    selectableReports.value.forEach((r: any) => selectedReports.value.add(r.id));
+  }
+};
+
+const toggleSelect = (reportId: string) => {
+  if (selectedReports.value.has(reportId)) {
+    selectedReports.value.delete(reportId);
+  } else {
+    selectedReports.value.add(reportId);
+  }
+};
+
+const clearSelection = () => {
+  selectedReports.value.clear();
+};
+
+const bulkApprove = async () => {
+  if (selectedReports.value.size === 0) {
+    toast.error("No records selected");
+    return;
+  }
+
+  isApproving.value = true;
+  try {
+    const result = await $fetch(`/api/${organizationId}/reports/bulk-approve`, {
+      method: "POST",
+      body: { reportIds: Array.from(selectedReports.value) },
+    });
+    toast.success(result.message);
+    selectedReports.value.clear();
+    await refreshReports();
+  } catch (error: any) {
+    console.error("Failed to approve records:", error);
+    toast.error(error.data?.message || "Failed to approve records");
+  } finally {
+    isApproving.value = false;
+  }
+};
+
+const bulkReject = async () => {
+  if (selectedReports.value.size === 0) {
+    toast.error("No records selected");
+    return;
+  }
+
+  isApproving.value = true;
+  try {
+    const result = await $fetch(`/api/${organizationId}/reports/bulk-reject`, {
+      method: "POST",
+      body: { reportIds: Array.from(selectedReports.value) },
+    });
+    toast.success(result.message);
+    selectedReports.value.clear();
+    await refreshReports();
+  } catch (error: any) {
+    console.error("Failed to reject records:", error);
+    toast.error(error.data?.message || "Failed to reject records");
+  } finally {
+    isApproving.value = false;
   }
 };
 
@@ -270,7 +373,7 @@ const exportToCSV = () => {
             <div
               class="h-10 w-10 rounded-lg bg-emerald-100 flex items-center justify-center"
             >
-              <FileText class="h-5 w-5 text-emerald-600" />
+              <CheckCircle class="h-5 w-5 text-emerald-600" />
             </div>
           </div>
         </CardContent>
@@ -304,7 +407,7 @@ const exportToCSV = () => {
             <div
               class="h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center"
             >
-              <FileText class="h-5 w-5 text-red-600" />
+              <XCircle class="h-5 w-5 text-red-600" />
             </div>
           </div>
         </CardContent>
@@ -325,7 +428,26 @@ const exportToCSV = () => {
             />
           </div>
 
-          <div class="flex gap-3">
+          <div class="flex gap-3 flex-wrap">
+            <div class="flex items-center gap-2">
+              <Calendar class="h-4 w-4 text-muted-foreground" />
+              <Input
+                v-model="dateFrom"
+                type="date"
+                class="w-[140px]"
+                placeholder="From date"
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-muted-foreground">to</span>
+              <Input
+                v-model="dateTo"
+                type="date"
+                class="w-[140px]"
+                placeholder="To date"
+              />
+            </div>
+
             <Select v-model="selectedStatus">
               <SelectTrigger class="w-[150px]">
                 <SelectValue placeholder="Status" />
@@ -351,6 +473,46 @@ const exportToCSV = () => {
           </div>
         </div>
 
+        <div
+          v-if="selectedReports.size > 0"
+          class="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-lg p-3 mb-4"
+        >
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium">
+              {{ selectedReports.size }} record(s) selected
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              @click="clearSelection"
+            >
+              Clear
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              class="text-emerald-600 hover:text-emerald-700"
+              @click="bulkApprove"
+              :disabled="isApproving"
+            >
+              <CheckCircle class="h-4 w-4 mr-1" />
+              Approve All
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              class="text-red-600 hover:text-red-700"
+              @click="bulkReject"
+              :disabled="isApproving"
+            >
+              <XCircle class="h-4 w-4 mr-1" />
+              Reject All
+            </Button>
+          </div>
+        </div>
+
         <div v-if="isLoading" class="flex items-center justify-center py-12">
           <RefreshCw class="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -360,7 +522,7 @@ const exportToCSV = () => {
           <h3 class="text-lg font-semibold mb-2">No submissions found</h3>
           <p class="text-muted-foreground mb-4">
             {{
-              searchQuery
+              searchQuery || dateFrom || dateTo
                 ? "Try adjusting your search or filters."
                 : "No reports have been submitted for this template yet."
             }}
@@ -377,6 +539,13 @@ const exportToCSV = () => {
             <Table>
               <TableHeader>
                 <TableRow class="bg-muted/50">
+                  <TableHead class="w-10">
+                    <Checkbox
+                      :checked="allSelected"
+                      :indeterminate="someSelected"
+                      @update:model-value="toggleSelectAll"
+                    />
+                  </TableHead>
                   <TableHead class="w-10"></TableHead>
                   <TableHead>Title</TableHead>
                   <TableHead v-for="column in tableColumns" :key="column.key">
@@ -390,7 +559,18 @@ const exportToCSV = () => {
               </TableHeader>
               <TableBody>
                 <template v-for="report in filteredReports" :key="report.id">
-                  <TableRow>
+                  <TableRow
+                    :class="{
+                      'bg-primary/5': selectedReports.has(report.id)
+                    }"
+                  >
+                    <TableCell v-if="['SUBMITTED', 'UNDER_REVIEW'].includes(report.status)">
+                      <Checkbox
+                        :checked="selectedReports.has(report.id)"
+                        @update:model-value="toggleSelect(report.id)"
+                      />
+                    </TableCell>
+                    <TableCell v-else></TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -445,7 +625,7 @@ const exportToCSV = () => {
 
                   <TableRow v-if="expandedRows.has(report.id)">
                     <TableCell
-                      :colspan="tableColumns.length + 6"
+                      :colspan="tableColumns.length + 7"
                       class="bg-muted/30"
                     >
                       <div class="p-4">
