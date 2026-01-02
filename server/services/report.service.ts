@@ -33,7 +33,7 @@ export const getReportById = async (id: string): Promise<Report | null> => {
   }
 
   return report;
-}
+};
 
 export const getReports = async (params?: {
   skip?: number;
@@ -50,16 +50,18 @@ export const getReports = async (params?: {
     include,
     orderBy: { createdAt: "desc" },
   });
-}
+};
 
-export const createReport = async (data: ReportCreateInput): Promise<Report> => {
+export const createReport = async (
+  data: ReportCreateInput,
+): Promise<Report> => {
   const report = await prisma.report.create({ data });
 
   const cacheKey = `${CACHE_PREFIX}${report.id}`;
   await cacheSet(cacheKey, report, REPORT_CACHE_TTL);
 
   return report;
-}
+};
 
 export const submitReport = async (id: string): Promise<Report> => {
   const report = await prisma.report.update({
@@ -73,9 +75,12 @@ export const submitReport = async (id: string): Promise<Report> => {
   await invalidateReportCache(id, report.workspaceId);
 
   return report;
-}
+};
 
-export const updateReport = async (id: string, data: ReportUpdateInput): Promise<Report> => {
+export const updateReport = async (
+  id: string,
+  data: ReportUpdateInput,
+): Promise<Report> => {
   const report = await prisma.report.update({
     where: { id },
     data,
@@ -84,7 +89,7 @@ export const updateReport = async (id: string, data: ReportUpdateInput): Promise
   await invalidateReportCache(id, report.workspaceId);
 
   return report;
-}
+};
 
 export const deleteReport = async (id: string): Promise<Report> => {
   const report = await prisma.report.delete({
@@ -94,9 +99,12 @@ export const deleteReport = async (id: string): Promise<Report> => {
   await invalidateReportCache(id, report.workspaceId);
 
   return report;
-}
+};
 
-export const approveReport = async (id: string, reviewedBy: string): Promise<Report> => {
+export const approveReport = async (
+  id: string,
+  reviewedBy: string,
+): Promise<Report> => {
   const report = await prisma.report.update({
     where: { id },
     data: {
@@ -109,9 +117,12 @@ export const approveReport = async (id: string, reviewedBy: string): Promise<Rep
   await invalidateReportCache(id, report.workspaceId);
 
   return report;
-}
+};
 
-export const rejectReport = async (id: string, reviewedBy: string): Promise<Report> => {
+export const rejectReport = async (
+  id: string,
+  reviewedBy: string,
+): Promise<Report> => {
   const report = await prisma.report.update({
     where: { id },
     data: {
@@ -124,9 +135,11 @@ export const rejectReport = async (id: string, reviewedBy: string): Promise<Repo
   await invalidateReportCache(id, report.workspaceId);
 
   return report;
-}
+};
 
-export const getTemplateById = async (id: string): Promise<ReportTemplate | null> => {
+export const getTemplateById = async (
+  id: string,
+): Promise<ReportTemplate | null> => {
   const cacheKey = `${TEMPLATE_PREFIX}${id}`;
   const cached = await cacheGet<ReportTemplate>(cacheKey);
   if (cached) return cached;
@@ -140,7 +153,7 @@ export const getTemplateById = async (id: string): Promise<ReportTemplate | null
   }
 
   return template;
-}
+};
 
 export const getTemplates = async (params?: {
   skip?: number;
@@ -155,10 +168,10 @@ export const getTemplates = async (params?: {
     where,
     orderBy: { createdAt: "desc" },
   });
-}
+};
 
 export const createTemplate = async (
-  data: TemplateCreateInput
+  data: TemplateCreateInput,
 ): Promise<ReportTemplate> => {
   const template = await prisma.reportTemplate.create({ data });
 
@@ -166,11 +179,11 @@ export const createTemplate = async (
   await cacheSet(cacheKey, template, TEMPLATE_CACHE_TTL);
 
   return template;
-}
+};
 
 export const updateTemplate = async (
   id: string,
-  data: TemplateUpdateInput
+  data: TemplateUpdateInput,
 ): Promise<ReportTemplate> => {
   const template = await prisma.reportTemplate.update({
     where: { id },
@@ -180,7 +193,7 @@ export const updateTemplate = async (
   await invalidateTemplateCache(id, template.workspaceId);
 
   return template;
-}
+};
 
 export const deleteTemplate = async (id: string): Promise<ReportTemplate> => {
   const template = await prisma.reportTemplate.delete({
@@ -190,12 +203,18 @@ export const deleteTemplate = async (id: string): Promise<ReportTemplate> => {
   await invalidateTemplateCache(id, template.workspaceId);
 
   return template;
-}
+};
 
-const invalidateReportCache = async (id: string, workspaceId: string): Promise<void> => {
+const invalidateReportCache = async (
+  id: string,
+  workspaceId: string,
+): Promise<void> => {
   await cacheDel(`${CACHE_PREFIX}${id}`);
-}
+};
 
-const invalidateTemplateCache = async (id: string, workspaceId: string): Promise<void> => {
+const invalidateTemplateCache = async (
+  id: string,
+  workspaceId: string,
+): Promise<void> => {
   await cacheDel(`${TEMPLATE_PREFIX}${id}`);
-}
+};
