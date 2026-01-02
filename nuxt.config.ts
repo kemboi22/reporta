@@ -15,7 +15,10 @@ export default defineNuxtConfig({
   ],
   nitro: {
     preset: "bun",
+    compressPublicAssets: false,
+    minify: true,
   },
+
   css: ["~/assets/css/tailwind.css"],
   vite: {
     plugins: [tailwindcss()],
