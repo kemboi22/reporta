@@ -421,7 +421,7 @@ CREATE TABLE "reports" (
     "staffId" TEXT,
     "title" TEXT NOT NULL,
     "content" JSONB NOT NULL,
-    "status" "ReportStatus" NOT NULL DEFAULT 'DRAFT',
+    "status" "ReportStatus" NOT NULL DEFAULT 'SUBMITTED',
     "submittedBy" TEXT NOT NULL,
     "submittedAt" TIMESTAMP(3),
     "reviewedBy" TEXT,
@@ -430,6 +430,18 @@ CREATE TABLE "reports" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "reports_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "report_comments" (
+    "id" TEXT NOT NULL,
+    "reportId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "report_comments_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -1001,9 +1013,6 @@ CREATE UNIQUE INDEX "workspace_users_userId_workspaceId_key" ON "workspace_users
 CREATE UNIQUE INDEX "user_departments_userId_departmentId_key" ON "user_departments"("userId", "departmentId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "staff_userId_key" ON "staff"("userId");
-
--- CreateIndex
 CREATE UNIQUE INDEX "staff_employeeId_key" ON "staff"("employeeId");
 
 -- CreateIndex
@@ -1197,6 +1206,12 @@ ALTER TABLE "reports" ADD CONSTRAINT "reports_workspaceId_fkey" FOREIGN KEY ("wo
 
 -- AddForeignKey
 ALTER TABLE "reports" ADD CONSTRAINT "reports_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "report_templates"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "report_comments" ADD CONSTRAINT "report_comments_reportId_fkey" FOREIGN KEY ("reportId") REFERENCES "reports"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "report_comments" ADD CONSTRAINT "report_comments_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "projects" ADD CONSTRAINT "projects_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "workspaces"("id") ON DELETE CASCADE ON UPDATE CASCADE;
