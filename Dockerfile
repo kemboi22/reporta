@@ -1,39 +1,35 @@
-# syntax=docker/dockerfile:1.4
-
-FROM oven/bun:1 AS base
+# -------- Base --------
+FROM oven/bun:1.1.30 AS base
 WORKDIR /app
 
-FROM base AS install
+# -------- Dependencies --------
+FROM base AS deps
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
-FROM base AS prisma-generate
-COPY --from=install /app/node_modules ./node_modules
-COPY prisma ./prisma
-COPY prisma.config.ts ./
-ENV DATABASE_URL=${DATABASE_URL}
-RUN bunx prisma generate || (bun install && bunx prisma generate)
-
+# -------- Builder --------
 FROM base AS builder
-COPY --from=install /app/node_modules ./node_modules
-COPY prisma ./prisma
-COPY prisma.config.ts ./
+COPY --from=deps /app /app
 COPY . .
-ENV DATABASE_URL=${DATABASE_URL}
-ENV NODE_OPTIONS="--max-old-space-size=2048"
-RUN bunx prisma generate
-RUN bun --bun run build
 
+ENV NODE_OPTIONS="--max-old-space-size=6144"
+ENV NITRO_PRESET=bun
+
+RUN bun run build
+
+# -------- Production --------
 FROM base AS production
+WORKDIR /app
+
 ENV NODE_ENV=production
 ENV PORT=3000
-COPY --from=install /app/node_modules ./node_modules
+
+COPY --from=deps /app /app
+COPY --from=builder /app/.output ./.output
 COPY prisma ./prisma
 COPY prisma.config.ts ./
-ENV DATABASE_URL=${DATABASE_URL}
-RUN bunx prisma generate
-COPY --from=builder /app/.output ./.output
 
 EXPOSE 3000
 
-CMD ["bun", "run", ".output/server/index.mjs"]
+# Prisma generate at runtime (safe)
+CMD bunx prisma generate && bun .output/server/index.mjs
