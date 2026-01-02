@@ -17,6 +17,7 @@ import {
 import { authClient } from "~/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "vue-sonner";
+import { NuxtLink } from "#components";
 
 defineEmits(["toggle-sidebar"]);
 
@@ -285,15 +286,18 @@ watch(
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="w-56">
-          <DropdownMenuItem>
+          <DropdownMenuItem :as="NuxtLink" :to="`/${organizationId}/tasks`">
             <CheckSquare class="h-4 w-4 mr-2" />
             New Task
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          <DropdownMenuItem
+            :as="NuxtLink"
+            :to="`/${organizationId}/reports/templates`"
+          >
             <FileText class="h-4 w-4 mr-2" />
             Fill Report
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          <DropdownMenuItem :as="NuxtLink" :to="`/${organizationId}/documents`">
             <Upload class="h-4 w-4 mr-2" />
             Upload Document
           </DropdownMenuItem>

@@ -99,10 +99,10 @@ const dueTasks = computed(() => dashboardData.value?.dueTasks || []);
 const quickActions = computed(() => {
   const actions = [
     {
-      label: "Clock In/Out",
+      label: "Projects",
       icon: "Clock",
       color: "blue",
-      action: "/check-in",
+      action: "/projects",
     },
     {
       label: "Create Task",
