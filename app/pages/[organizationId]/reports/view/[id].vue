@@ -153,7 +153,8 @@ const exportToCSV = () => {
   if (report.value.content) {
     for (const [key, value] of Object.entries(report.value.content)) {
       const label = formatFieldLabel(key);
-      const val = typeof value === "object" ? JSON.stringify(value) : String(value || "");
+      const val =
+        typeof value === "object" ? JSON.stringify(value) : String(value || "");
       rows.push([label, val]);
     }
   }
@@ -163,10 +164,16 @@ const exportToCSV = () => {
     rows.push(["Department", report.value.template.department || ""]);
   }
 
-  const csvContent = rows.map(row => row.map(cell => {
-    const escaped = String(cell).replace(/"/g, '""');
-    return `"${escaped}"`;
-  }).join(",")).join("\n");
+  const csvContent = rows
+    .map((row) =>
+      row
+        .map((cell) => {
+          const escaped = String(cell).replace(/"/g, '""');
+          return `"${escaped}"`;
+        })
+        .join(","),
+    )
+    .join("\n");
 
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
@@ -217,16 +224,11 @@ const addComment = async () => {
 };
 
 const approveReport = async () => {
-  if (!session.value?.user?.id) {
-    toast.error("You must be logged in to approve reports");
-    return;
-  }
-
   isApproving.value = true;
   try {
     await $fetch(`/api/${organizationId}/reports/${reportId}/approve`, {
       method: "POST",
-      body: { reviewedBy: session.value.user.id },
+      body: { reviewedBy: session.value.data?.user.id },
     });
     toast.success("Report approved successfully");
     refresh();
@@ -249,7 +251,7 @@ const rejectReport = async () => {
     await $fetch(`/api/${organizationId}/reports/${reportId}/reject`, {
       method: "POST",
       body: {
-        reviewedBy: session.value.user.id,
+        reviewedBy: session.value.data?.user.id,
         reason: rejectReason.value,
       },
     });
@@ -399,15 +401,30 @@ const getFieldIcon = (key: string, value: any) => {
             <ArrowLeft class="h-4 w-4" />
             Back
           </Button>
-          <Button variant="outline" size="sm" class="gap-2" @click="exportToCSV">
+          <Button
+            variant="outline"
+            size="sm"
+            class="gap-2"
+            @click="exportToCSV"
+          >
             <Download class="h-4 w-4" />
             Export CSV
           </Button>
-          <Button variant="outline" size="sm" class="gap-2" @click="exportToPDF">
+          <Button
+            variant="outline"
+            size="sm"
+            class="gap-2"
+            @click="exportToPDF"
+          >
             <Download class="h-4 w-4" />
             Export PDF
           </Button>
-          <Button variant="outline" size="sm" class="gap-2" @click="printReport">
+          <Button
+            variant="outline"
+            size="sm"
+            class="gap-2"
+            @click="printReport"
+          >
             <Printer class="h-4 w-4" />
             Print
           </Button>
@@ -439,28 +456,18 @@ const getFieldIcon = (key: string, value: any) => {
           <CardContent class="p-0">
             <div class="divide-y divide-border">
               <div
-                v-for="(value, key) in report.content"
+                v-for="(value, key) in fieldLabels"
                 :key="key"
                 class="grid grid-cols-3 gap-4 p-4 hover:bg-muted/30 transition-colors"
               >
                 <div class="text-sm font-medium text-muted-foreground">
-                  {{ formatFieldLabel(key) }}
+                  {{ value }}
                 </div>
                 <div
                   class="col-span-2 text-sm text-foreground flex items-start gap-2"
                 >
-                  <component
-                    v-if="getFieldIcon(key, value)"
-                    :is="getFieldIcon(key, value)"
-                    :class="[
-                      'h-4 w-4 mt-0.5 flex-shrink-0',
-                      typeof value === 'boolean' && value
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-muted-foreground',
-                    ]"
-                  />
-                  <span class="whitespace-pre-wrap break-words">
-                    {{ value }}
+                  <span class="whitespace-pre-wrap wrap-break-word">
+                    {{ report.content[key] }}
                   </span>
                 </div>
               </div>
