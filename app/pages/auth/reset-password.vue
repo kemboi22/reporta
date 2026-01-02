@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "vue-sonner";
+import { authClient } from "~/lib/auth";
 
 const password = ref("");
 const confirmPassword = ref("");
@@ -11,6 +8,8 @@ const isLoading = ref(false);
 const passwordReset = ref(false);
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
+const route = useRoute();
+const token = route.query.token;
 
 const passwordStrength = computed(() => {
   let strength = 0;
@@ -49,14 +48,18 @@ const handleResetPassword = async () => {
     alert("Passwords do not match");
     return;
   }
-
-  isLoading.value = true;
-
-  // Simulate API call
-  setTimeout(() => {
-    isLoading.value = false;
-    passwordReset.value = true;
-  }, 1500);
+  const { data, error } = await authClient.resetPassword({
+    newPassword: password.value,
+    token: token as string,
+  });
+  if (error && error.message) {
+    toast.error(error.message);
+    return;
+  }
+  if (data?.status) {
+    toast.success("Reset Password");
+    await navigateTo("/auth/login");
+  }
 };
 </script>
 
