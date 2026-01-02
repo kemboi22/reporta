@@ -2,7 +2,7 @@ import { getReports } from "~~/server/services";
 
 export default defineEventHandler(async (event) => {
   const organizationId = getRouterParam(event, "organizationId");
-  const { skip, take, status, workspaceId, templateId } = getQuery(event);
+  const { skip, take, status, workspaceId, templateId, orderBy } = getQuery(event);
   
   if (!organizationId) {
     throw createError({ statusCode: 400, message: "Organization ID is required" });
@@ -22,6 +22,8 @@ export default defineEventHandler(async (event) => {
     where.status = status;
   }
 
+  const sortOrder = orderBy === "asc" ? "asc" : "desc";
+
   const reports = await getReports({
     skip: skip ? Number(skip) : undefined,
     take: take ? Number(take) : undefined,
@@ -31,6 +33,10 @@ export default defineEventHandler(async (event) => {
       template: true,
     },
   });
-  
-  return reports;
+
+  return reports.sort((a: any, b: any) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+  });
 });

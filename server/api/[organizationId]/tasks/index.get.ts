@@ -1,9 +1,13 @@
 import { getTasks } from "~~/server/services";
 import { prisma } from "~~/server/utils/db";
+import { auth } from "~~/server/utils/auth";
 
 export default defineEventHandler(async (event) => {
   const organizationId = getRouterParam(event, "organizationId");
   const { skip, take, status, projectId, assigneeId, workspaceId } = getQuery(event);
+  const session = await auth.api.getSession({
+    headers: event.headers,
+  });
   
   if (!organizationId) {
     throw createError({ statusCode: 400, message: "Organization ID is required" });
@@ -24,10 +28,14 @@ export default defineEventHandler(async (event) => {
   if (status) {
     where.status = status;
   }
-  
+
   if (assigneeId) {
     where.assignees = {
       some: { userId: assigneeId },
+    };
+  } else if (session?.user?.id) {
+    where.assignees = {
+      some: { userId: session.user.id },
     };
   }
 
@@ -38,6 +46,7 @@ export default defineEventHandler(async (event) => {
     include: {
       assignees: { include: { user: true } },
       comments: true,
+      project: true,
     },
     orderBy: { createdAt: "desc" },
   });

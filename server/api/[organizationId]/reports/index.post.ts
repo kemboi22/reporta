@@ -1,4 +1,4 @@
-import { createReport } from "~~/server/services";
+import { createReport, createReports } from "~~/server/services";
 import { auth } from "~~/server/utils/auth";
 import { prisma } from "~~/server/utils/db";
 
@@ -26,6 +26,22 @@ export default defineEventHandler(async (event) => {
 
   if (!workspace) {
     throw createError({ statusCode: 404, message: "Workspace not found" });
+  }
+
+  if (body.records && Array.isArray(body.records) && body.records.length > 0) {
+    const reports = await createReports(
+      body.records.map((record: any) => ({
+        title: record.title,
+        content: record.content || {},
+        workspaceId: workspace.id,
+        templateId: body.templateId || record.templateId,
+        submittedBy: session.user.name,
+        status: "SUBMITTED",
+      })),
+    );
+
+    setResponseStatus(event, 201);
+    return reports;
   }
 
   const createData: any = {

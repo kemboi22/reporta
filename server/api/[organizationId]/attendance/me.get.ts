@@ -1,21 +1,15 @@
-import { checkOut } from "~~/server/services";
+import { getTodayAttendance } from "~~/server/services";
 import { auth } from "~~/server/utils/auth";
 import { prisma } from "~~/server/utils/db";
 
 export default defineEventHandler(async (event) => {
   const organizationId = getRouterParam(event, "organizationId");
-  const attendanceId = getRouterParam(event, "id");
-  const body = await readBody(event);
   const session = await auth.api.getSession({
     headers: event.headers,
   });
 
   if (!organizationId) {
     throw createError({ statusCode: 400, message: "Organization ID is required" });
-  }
-
-  if (!attendanceId) {
-    throw createError({ statusCode: 400, message: "Attendance ID is required" });
   }
 
   if (!session?.user?.id) {
@@ -33,18 +27,26 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: "Staff record not found for this user" });
   }
 
-  const attendance = await prisma.attendance.findFirst({
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const attendance = await prisma.attendance.findMany({
     where: {
-      id: attendanceId,
+      organizationId,
       staffId: staff.id,
+      checkIn: {
+        gte: today,
+        lt: tomorrow,
+      },
     },
+    include: {
+      staff: true,
+      device: true,
+    },
+    orderBy: { checkIn: "desc" },
   });
 
-  if (!attendance) {
-    throw createError({ statusCode: 404, message: "Attendance record not found or not authorized" });
-  }
-
-  const updatedAttendance = await checkOut(attendanceId, body?.notes);
-
-  return updatedAttendance;
+  return attendance;
 });

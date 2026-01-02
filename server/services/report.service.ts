@@ -40,15 +40,17 @@ export const getReports = async (params?: {
   take?: number;
   where?: Prisma.ReportWhereInput;
   include?: Prisma.ReportInclude;
+  orderBy?: Prisma.ReportOrderByWithRelationInput;
+  order?: "asc" | "desc";
 }): Promise<Report[]> => {
-  const { skip = 0, take = 50, where, include } = params || {};
+  const { skip = 0, take = 50, where, include, order = "desc" } = params || {};
 
   return prisma.report.findMany({
     skip,
     take,
     where,
     include,
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: order },
   });
 };
 
@@ -61,6 +63,34 @@ export const createReport = async (
   await cacheSet(cacheKey, report, REPORT_CACHE_TTL);
 
   return report;
+};
+
+export const createReports = async (
+  data: Array<{
+    title: string;
+    content: any;
+    workspaceId: string;
+    templateId: string;
+    submittedBy: string;
+    status: "DRAFT" | "SUBMITTED";
+  }>,
+): Promise<Report[]> => {
+  const createdReports = await Promise.all(
+    data.map((report) =>
+      prisma.report.create({
+        data: {
+          title: report.title,
+          content: report.content,
+          workspaceId: report.workspaceId,
+          templateId: report.templateId,
+          submittedBy: report.submittedBy,
+          status: report.status,
+        },
+      }),
+    ),
+  );
+
+  return createdReports;
 };
 
 export const submitReport = async (id: string): Promise<Report> => {
