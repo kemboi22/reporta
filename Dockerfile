@@ -20,8 +20,9 @@ COPY prisma ./prisma
 COPY prisma.config.ts ./
 COPY . .
 ENV DATABASE_URL=${DATABASE_URL}
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 RUN bunx prisma generate
-RUN bun run build
+RUN bun --bun run build
 
 FROM base AS production
 ENV NODE_ENV=production
