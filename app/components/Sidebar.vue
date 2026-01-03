@@ -99,8 +99,8 @@ const navigationItems = [
     name: "Reports",
     icon: FileText,
     children: [
+      { name: "Reports", href: "/reports" },
       { name: "Templates", href: "/reports/templates" },
-      { name: "Submitted Reports", href: "/reports/submitted" },
       { name: "Analytics", href: "/reports/analytics" },
     ],
   },
