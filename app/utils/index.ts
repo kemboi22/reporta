@@ -1,3 +1,5 @@
+import { authClient } from "~/lib/auth";
+
 export const getInitials = (name: string) => {
   return name
     .split(" ")
@@ -159,4 +161,13 @@ export const searchCurrencies = (
       currency.name.toLowerCase().includes(lowerQuery) ||
       currency.symbol.toLowerCase().includes(lowerQuery),
   );
+};
+
+export const isRole = (role: OrganizationRole) => {
+  const session = authClient.useSession();
+  const route = useRoute();
+  let org = session.value.data?.user.organizations?.find((org) => {
+    return org.id == (route.params.organizationId as string);
+  });
+  return org?.role == role;
 };
