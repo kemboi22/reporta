@@ -18,6 +18,7 @@ import {
   FolderKanban,
 } from "lucide-vue-next";
 import { authClient } from "~/lib/auth";
+import { isAdmin, canManageHR, canManageUsers, canManageBilling, canManageIntegrations, canManageSecurity } from "~/utils";
 defineProps<{
   collapsed: boolean;
 }>();
@@ -30,97 +31,122 @@ const toggleSection = (name: string) => {
   expandedSections.value[name] = !expandedSections.value[name];
 };
 const currentOrganization = computed(() => {
-  let organizations = session.value.data?.user.organizations;
-  if (organizations && organizations.length > 0) {
-    return organizations.find((org) => org.id == route.params.organizationId);
+  const organizations = session.value.data?.user.organizations;
+  const orgId = route.params.organizationId as string;
+  if (organizations && organizations.length > 0 && orgId) {
+    return organizations.find((org) => org.id === orgId);
   }
 });
 
 const otherOrganizations = computed(() => {
-  let organizations = session.value.data?.user.organizations;
-  if (organizations && organizations.length > 0) {
-    return organizations.filter((org) => org.id != route.params.organizationId);
+  const organizations = session.value.data?.user.organizations;
+  const orgId = route.params.organizationId as string;
+  if (organizations && organizations.length > 0 && orgId) {
+    return organizations.filter((org) => org.id !== orgId);
   }
   return [];
 });
 
-const navigationItems = [
-  {
-    name: "Dashboard",
-    icon: LayoutDashboard,
-    href: "/dashboard",
-    badge: null,
-  },
-  {
-    name: "Organizations",
-    icon: Building2,
-    children: [
-      { name: "All Organizations", href: "/organizations" },
-      { name: "Switch Workspace", href: "/workspace/switch" },
-    ],
-  },
-  {
-    name: "Projects",
-    icon: FolderKanban,
-    href: "/projects",
-  },
-  {
-    name: "Tasks",
-    icon: CheckSquare,
-    href: "/tasks",
-    badge: null,
-  },
-  {
-    name: "Calendar",
-    icon: CalendarIcon,
-    href: "/calendar",
-  },
-  {
-    name: "HR Management",
-    icon: Users,
-    children: [
-      { name: "Staff Directory", href: "/hr/staff" },
-      { name: "Shifts & Schedules", href: "/hr/shifts" },
-      { name: "Leave Management", href: "/hr/leave" },
-      { name: "Appraisals", href: "/hr/appraisals" },
-    ],
-  },
-  {
-    name: "Attendance",
-    icon: Clock,
-    children: [
-      { name: "Attendance", href: "/attendance" },
-      { name: "Live Attendance", href: "/attendance/live" },
-      { name: "Reports", href: "/attendance/reports" },
-      { name: "Biometric Devices", href: "/attendance/devices" },
-    ],
-  },
-  {
-    name: "Reports",
-    icon: FileText,
-    children: [
-      { name: "Reports", href: "/reports" },
-      { name: "Templates", href: "/reports/templates" },
-      { name: "Analytics", href: "/reports/analytics" },
-    ],
-  },
-  {
-    name: "Documents",
-    icon: FolderOpen,
-    href: "/documents",
-  },
-  {
-    name: "Notifications",
-    icon: Bell,
-    href: "/notifications",
-    badge: null,
-  },
-  {
-    name: "Settings",
-    icon: Settings,
-    href: "/settings",
-  },
-];
+const navigationItems = computed(() => {
+  const items = [
+    {
+      name: "Dashboard",
+      icon: LayoutDashboard,
+      href: "/dashboard",
+      badge: null,
+    },
+    {
+      name: "Organizations",
+      icon: Building2,
+      roles: ["ADMIN", "OWNER"],
+      children: [
+        { name: "All Organizations", href: "/organizations", roles: ["ADMIN", "OWNER"] },
+        { name: "Switch Workspace", href: "/workspace/switch" },
+      ],
+    },
+    {
+      name: "Projects",
+      icon: FolderKanban,
+      href: "/projects",
+      roles: ["ADMIN", "OWNER"],
+    },
+    {
+      name: "Tasks",
+      icon: CheckSquare,
+      href: "/tasks",
+      badge: null,
+    },
+    {
+      name: "Calendar",
+      icon: CalendarIcon,
+      href: "/calendar",
+    },
+    {
+      name: "HR Management",
+      icon: Users,
+      roles: ["ADMIN", "OWNER"],
+      children: [
+        { name: "Staff Directory", href: "/hr/staff", roles: ["ADMIN", "OWNER"] },
+        { name: "Shifts & Schedules", href: "/hr/shifts", roles: ["ADMIN", "OWNER"] },
+        { name: "Leave Management", href: "/hr/leave", roles: ["ADMIN", "OWNER"] },
+        { name: "Appraisals", href: "/hr/appraisals", roles: ["ADMIN", "OWNER"] },
+      ],
+    },
+    {
+      name: "Attendance",
+      icon: Clock,
+      children: [
+        { name: "Attendance", href: "/attendance" },
+        { name: "Live Attendance", href: "/attendance/live" },
+        { name: "Reports", href: "/attendance/reports", roles: ["ADMIN", "OWNER"] },
+        { name: "Biometric Devices", href: "/attendance/devices", roles: ["ADMIN", "OWNER"] },
+      ],
+    },
+    {
+      name: "Reports",
+      icon: FileText,
+      roles: ["ADMIN", "OWNER"],
+      children: [
+        { name: "Reports", href: "/reports" },
+        { name: "Templates", href: "/reports/templates", roles: ["ADMIN", "OWNER"] },
+        { name: "Analytics", href: "/reports/analytics", roles: ["ADMIN", "OWNER"] },
+      ],
+    },
+    {
+      name: "Documents",
+      icon: FolderOpen,
+      href: "/documents",
+    },
+    {
+      name: "Notifications",
+      icon: Bell,
+      href: "/notifications",
+      badge: null,
+    },
+    {
+      name: "Settings",
+      icon: Settings,
+      href: "/settings",
+      roles: ["ADMIN", "OWNER"],
+    },
+  ];
+
+  const admin = isAdmin();
+
+  return items.filter((item) => {
+    if (item.roles && !admin) return false;
+
+    if (item.children) {
+      item.children = item.children.filter((child) => {
+        if (child.roles && !admin) return false;
+        return true;
+      });
+      return item.children.length > 0;
+    }
+
+    return true;
+  });
+});
 </script>
 
 <template>
