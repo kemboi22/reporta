@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { definePageMeta, navigateTo } from "#imports";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,11 +22,17 @@ import {
   CheckCircle2,
   BarChart3,
 } from "lucide-vue-next";
-import { definePageMeta } from "#imports";
+import { isAdmin } from "~/utils";
 
 definePageMeta({
   layout: "dashboard",
 });
+
+if (!isAdmin()) {
+  const route = useRoute();
+  const orgId = route.params.organizationId as string;
+  navigateTo(`/${orgId}/dashboard`);
+}
 
 const selectedDepartment = ref("all");
 const selectedPeriod = ref("30days");

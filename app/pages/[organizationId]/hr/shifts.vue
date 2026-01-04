@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { definePageMeta } from "#imports";
+import { definePageMeta, navigateTo } from "#imports";
 import {
   ChevronLeft,
   ChevronRight,
@@ -24,10 +24,17 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { canManageHR } from "~/utils";
 
 definePageMeta({
   layout: "dashboard",
 });
+
+if (!canManageHR()) {
+  const route = useRoute();
+  const orgId = route.params.organizationId as string;
+  navigateTo(`/${orgId}/dashboard`);
+}
 
 const currentDate = ref(new Date());
 const viewMode = ref<"week" | "month">("week");

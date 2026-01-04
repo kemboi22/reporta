@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { definePageMeta } from "#imports";
+import { definePageMeta, navigateTo } from "#imports";
 import {
   Users,
   UserPlus,
@@ -24,10 +24,17 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { isAdmin } from "~/utils";
 
 definePageMeta({
   layout: "dashboard",
 });
+
+if (!isAdmin()) {
+  const route = useRoute();
+  const orgId = route.params.organizationId as string;
+  navigateTo(`/${orgId}/dashboard`);
+}
 
 const searchQuery = ref("");
 const showAddUserSheet = ref(false);

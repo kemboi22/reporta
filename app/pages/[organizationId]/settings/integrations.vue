@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { definePageMeta } from "#imports";
+import { definePageMeta, navigateTo } from "#imports";
 import {
   Plug,
   ExternalLink,
@@ -20,10 +20,17 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { canManageIntegrations } from "~/utils";
 
 definePageMeta({
   layout: "dashboard",
 });
+
+if (!canManageIntegrations()) {
+  const route = useRoute();
+  const orgId = route.params.organizationId as string;
+  navigateTo(`/${orgId}/dashboard`);
+}
 
 const showConnectDialog = ref(false);
 const selectedIntegration = ref<any>(null);

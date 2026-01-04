@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { definePageMeta, navigateTo } from "#imports";
 import {
   FolderKanban,
   Plus,
@@ -13,10 +14,15 @@ import {
   X,
 } from "lucide-vue-next";
 import { authClient } from "@/lib/auth";
+import { isAdmin } from "~/utils";
 
 definePageMeta({
   layout: "dashboard",
 });
+
+if (!isAdmin()) {
+  navigateTo(`/${organizationId}/dashboard`);
+}
 
 const route = useRoute();
 const organizationId = route.params.organizationId as string;

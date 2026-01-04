@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { definePageMeta } from "#imports";
+import { definePageMeta, navigateTo } from "#imports";
 import {
   CreditCard,
   Download,
@@ -17,10 +17,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { canManageBilling } from "~/utils";
 
 definePageMeta({
   layout: "dashboard",
 });
+
+if (!canManageBilling()) {
+  const route = useRoute();
+  const orgId = route.params.organizationId as string;
+  navigateTo(`/${orgId}/dashboard`);
+}
 
 const currentPlan = ref({
   name: "Enterprise",

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { definePageMeta, navigateTo } from "#imports";
 import {
   Building2,
   Users,
@@ -6,12 +7,16 @@ import {
   MoreVertical,
   Plus,
 } from "lucide-vue-next";
-import { definePageMeta } from "#imports";
 import { NuxtLink } from "#components";
+import { isAdmin } from "~/utils";
 
 definePageMeta({
   layout: "dashboard",
 });
+
+if (!isAdmin()) {
+  navigateTo(`/${organizationId}/dashboard`);
+}
 
 const route = useRoute();
 const organizationId = route.params.organizationId as string;

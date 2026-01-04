@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { definePageMeta, navigateTo } from "#imports";
 import {
   Plus,
   Trash2,
@@ -9,10 +10,16 @@ import {
   ArrowDown,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
+import { isAdmin } from "~/utils";
+
 definePageMeta({
   layout: "dashboard",
   middleware: ["auth"],
 });
+
+if (!isAdmin()) {
+  navigateTo(`/${organizationId}/dashboard`);
+}
 
 const route = useRoute();
 const organizationId = route.params.organizationId as string;

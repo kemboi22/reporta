@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { definePageMeta, navigateTo } from "#imports";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,10 +32,17 @@ import {
   FileText,
   Users,
 } from "lucide-vue-next";
+import { canManageHR } from "~/utils";
 
 definePageMeta({
   layout: "dashboard",
 });
+
+if (!canManageHR()) {
+  const route = useRoute();
+  const orgId = route.params.organizationId as string;
+  navigateTo(`/${orgId}/dashboard`);
+}
 
 const viewMode = ref("grid");
 const searchQuery = ref("");

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { definePageMeta, navigateTo } from "#imports";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,11 +18,17 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Search, Check, X, Clock } from "lucide-vue-next";
-import { definePageMeta } from "#imports";
+import { canManageHR } from "~/utils";
 
 definePageMeta({
   layout: "dashboard",
 });
+
+if (!canManageHR()) {
+  const route = useRoute();
+  const orgId = route.params.organizationId as string;
+  navigateTo(`/${orgId}/dashboard`);
+}
 
 const route = useRoute();
 const organizationId = route.params.organizationId as string;

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { definePageMeta, navigateTo } from "#imports";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,11 +29,15 @@ import {
   Table as TableIcon,
 } from "lucide-vue-next";
 import { NuxtLink } from "#components";
-import { definePageMeta } from "#imports";
+import { isAdmin } from "~/utils";
 
 definePageMeta({
   layout: "dashboard",
 });
+
+if (!isAdmin()) {
+  navigateTo(`/${organizationId}/dashboard`);
+}
 
 const route = useRoute();
 const organizationId = route.params.organizationId as string;

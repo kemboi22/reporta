@@ -20,10 +20,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { isAdmin } from "~/utils";
+import { navigateTo } from "#imports";
 
 definePageMeta({
   layout: "dashboard",
 });
+
+if (!isAdmin()) {
+  navigateTo(`/${organizationId}/dashboard`);
+}
 
 const activeTab = ref("general");
 const hasChanges = ref(false);

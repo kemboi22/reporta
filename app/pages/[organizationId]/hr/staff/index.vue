@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { definePageMeta, navigateTo } from "#imports";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,13 +17,24 @@ import {
   Send,
   Copy,
   Check,
+  UserCog,
 } from "lucide-vue-next";
-import { definePageMeta } from "#imports";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "vue-sonner";
+import { canManageUsers } from "~/utils";
 
 definePageMeta({
   layout: "dashboard",
 });
+
+if (!canManageUsers()) {
+  navigateTo(`/${organizationId}/dashboard`);
+}
 
 const route = useRoute();
 const organizationId = route.params.organizationId as string;
@@ -200,6 +212,37 @@ const addStaffMember = async () => {
 watch([searchQuery, selectedDepartment], () => {
   refreshStaff();
 });
+
+const showRoleDialog = ref(false);
+const selectedStaffForRole = ref<any>(null);
+const selectedRole = ref("MEMBER");
+
+const openRoleDialog = (staff: any) => {
+  selectedStaffForRole.value = staff;
+  selectedRole.value = staff.user?.organizationUsers?.[0]?.role || "MEMBER";
+  showRoleDialog.value = true;
+};
+
+const updateUserRole = async () => {
+  if (!selectedStaffForRole.value?.user?.id) return;
+
+  try {
+    await $fetch(
+      `/api/${organizationId}/users/${selectedStaffForRole.value.user.id}`,
+      {
+        method: "PUT",
+        body: {
+          role: selectedRole.value,
+        },
+      },
+    );
+    showRoleDialog.value = false;
+    await refreshStaff();
+    toast.success("Role updated successfully");
+  } catch (e: any) {
+    error.value = e.data?.message || "Failed to update role";
+  }
+};
 </script>
 
 <template>
@@ -216,7 +259,7 @@ watch([searchQuery, selectedDepartment], () => {
       <div class="flex items-center gap-3">
         <Dialog v-model:open="showAddDepartmentDialog">
           <DialogTrigger as-child>
-            <Button variant="outline">
+            <Button v-if="canManageUsers()" variant="outline">
               <Plus class="h-4 w-4 mr-2" />
               Add Department
             </Button>
@@ -263,7 +306,7 @@ watch([searchQuery, selectedDepartment], () => {
 
         <Dialog v-model:open="showInviteDialog">
           <DialogTrigger as-child>
-            <Button variant="outline">
+            <Button v-if="canManageUsers()" variant="outline">
               <Send class="h-4 w-4 mr-2" />
               Invite Staff
             </Button>
@@ -395,7 +438,7 @@ watch([searchQuery, selectedDepartment], () => {
           @open-change="(open) => open && refreshInvitations()"
         >
           <DialogTrigger as-child>
-            <Button variant="outline">
+            <Button v-if="canManageUsers()" variant="outline">
               <Mail class="h-4 w-4 mr-2" />
               View Invitations
               <Badge
@@ -502,7 +545,7 @@ watch([searchQuery, selectedDepartment], () => {
 
         <Dialog v-model:open="showAddStaffDialog">
           <DialogTrigger as-child>
-            <Button>
+            <Button v-if="canManageUsers()">
               <Plus class="h-4 w-4 mr-2" />
               Add Staff Member
             </Button>
@@ -739,9 +782,26 @@ watch([searchQuery, selectedDepartment], () => {
                 }}
               </AvatarFallback>
             </Avatar>
-            <Button variant="ghost" size="icon" class="h-8 w-8">
-              <MoreVertical class="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger as-child>
+                <Button variant="ghost" size="icon" class="h-8 w-8">
+                  <MoreVertical class="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  @click="navigateTo(`/${organizationId}/hr/staff/${staff.id}`)"
+                >
+                  View Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  v-if="canManageUsers() && staff.user"
+                  @click="openRoleDialog(staff)"
+                >
+                  Change Role
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div class="space-y-3">
@@ -921,15 +981,28 @@ watch([searchQuery, selectedDepartment], () => {
                 <td
                   class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
                 >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    @click="
-                      navigateTo(`/${organizationId}/hr/staff/${staff.id}`)
-                    "
-                  >
-                    View
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                      <Button variant="ghost" size="sm">
+                        <MoreVertical class="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        @click="
+                          navigateTo(`/${organizationId}/hr/staff/${staff.id}`)
+                        "
+                      >
+                        View Profile
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        v-if="canManageUsers() && staff.user"
+                        @click="openRoleDialog(staff)"
+                      >
+                        Change Role
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </td>
               </tr>
             </tbody>
@@ -938,4 +1011,47 @@ watch([searchQuery, selectedDepartment], () => {
       </CardContent>
     </Card>
   </div>
+
+  <Dialog v-model:open="showRoleDialog">
+    <DialogContent class="max-w-md">
+      <DialogHeader>
+        <DialogTitle>Change User Role</DialogTitle>
+        <DialogDescription>
+          Update the role for {{ selectedStaffForRole?.firstName }}
+          {{ selectedStaffForRole?.lastName }}
+        </DialogDescription>
+      </DialogHeader>
+      <div class="space-y-4 py-4">
+        <div
+          v-if="error"
+          class="p-3 bg-destructive/10 text-destructive rounded-md text-sm"
+        >
+          {{ error }}
+        </div>
+        <div class="space-y-2">
+          <Label for="userRole">Role</Label>
+          <Select v-model="selectedRole">
+            <SelectTrigger id="userRole">
+              <SelectValue placeholder="Select role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="OWNER">Owner</SelectItem>
+              <SelectItem value="ADMIN">Admin</SelectItem>
+              <SelectItem value="MEMBER">Member</SelectItem>
+              <SelectItem value="VIEWER">Viewer</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div class="flex justify-end gap-3">
+          <Button variant="outline" @click="showRoleDialog = false">
+            Cancel
+          </Button>
+          <Button @click="updateUserRole">
+            <UserCog class="h-4 w-4 mr-2" />
+            Update Role
+          </Button>
+        </div>
+      </div>
+    </DialogContent>
+  </Dialog>
 </template>

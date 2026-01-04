@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { definePageMeta, navigateTo } from "#imports";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,12 +10,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Mail, Phone, MapPin, Calendar, Building2, Briefcase, DollarSign, Clock, FileText, Settings, Edit, MoreVertical, ArrowLeft, UserPlus, Link, Link2 } from "lucide-vue-next";
-import { definePageMeta } from "#imports";
+import { User, Mail, Phone, MapPin, Calendar, Building2, Briefcase, DollarSign, Clock, FileText, Settings, Edit, MoreVertical, ArrowLeft, UserPlus, Link, Link2, UserCog } from "lucide-vue-next";
+import { toast } from "vue-sonner";
+import { canManageUsers } from "~/utils";
 
 definePageMeta({
   layout: "dashboard",
 });
+
+if (!canManageUsers()) {
+  navigateTo(`/${organizationId}/dashboard`);
+}
 
 const route = useRoute();
 const organizationId = route.params.organizationId as string;
@@ -128,6 +134,35 @@ const approvedLeave = ref(0);
 const pendingLeave = ref(0);
 
 const averageRating = ref(0);
+
+const showRoleDialog = ref(false);
+const selectedRole = ref("MEMBER");
+
+const openRoleDialog = () => {
+  if (staff.value?.user) {
+    selectedRole.value = staff.value.user.organizationUsers?.[0]?.role || "MEMBER";
+    showRoleDialog.value = true;
+  }
+};
+
+const updateUserRole = async () => {
+  if (!staff.value?.user?.id) return;
+  
+  try {
+    await $fetch(`/api/${organizationId}/users/${staff.value.user.id}`, {
+      method: "PUT",
+      body: {
+        role: selectedRole.value,
+      },
+    });
+    showRoleDialog.value = false;
+    await refreshNuxtData();
+    await refreshStaff();
+    toast.success("Role updated successfully");
+  } catch (e: any) {
+    console.error("Failed to update role:", e);
+  }
+};
 </script>
 
 <template>
@@ -547,4 +582,40 @@ const averageRating = ref(0);
     </Tabs>
     </div>
   </div>
+
+  <Dialog v-model:open="showRoleDialog">
+    <DialogContent class="max-w-md">
+      <DialogHeader>
+        <DialogTitle>Change User Role</DialogTitle>
+        <DialogDescription>
+          Update the role for {{ staff?.firstName }} {{ staff?.lastName }}
+        </DialogDescription>
+      </DialogHeader>
+      <div class="space-y-4 py-4">
+        <div class="space-y-2">
+          <Label for="staffUserRole">Role</Label>
+          <Select v-model="selectedRole">
+            <SelectTrigger id="staffUserRole">
+              <SelectValue placeholder="Select role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="OWNER">Owner</SelectItem>
+              <SelectItem value="ADMIN">Admin</SelectItem>
+              <SelectItem value="MEMBER">Member</SelectItem>
+              <SelectItem value="VIEWER">Viewer</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div class="flex justify-end gap-3">
+          <Button variant="outline" @click="showRoleDialog = false">
+            Cancel
+          </Button>
+          <Button @click="updateUserRole">
+            <UserCog class="h-4 w-4 mr-2" />
+            Update Role
+          </Button>
+        </div>
+      </div>
+    </DialogContent>
+  </Dialog>
 </template>

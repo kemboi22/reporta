@@ -1,4 +1,5 @@
 import { authClient } from "~/lib/auth";
+import type { OrganizationRole } from "#shared/types";
 
 export const getInitials = (name: string) => {
   return name
@@ -163,11 +164,53 @@ export const searchCurrencies = (
   );
 };
 
-export const isRole = (role: OrganizationRole) => {
+export const isRole = (role: OrganizationRole): boolean => {
   const session = authClient.useSession();
   const route = useRoute();
-  let org = session.value.data?.user.organizations?.find((org) => {
-    return org.id == (route.params.organizationId as string);
-  });
-  return org?.role == role;
+  const params = route.params as Record<string, string | undefined>;
+  const organizationId = params.organizationId;
+
+  if (!organizationId) return false;
+
+  const org = session.value?.data?.user.organizations?.find(
+    (org) => org.id === organizationId,
+  );
+
+  return org?.role === role;
+};
+
+export const isAdmin = (): boolean => {
+  return isRole("ADMIN") || isRole("OWNER");
+};
+
+export const isOwner = (): boolean => {
+  return isRole("OWNER");
+};
+
+export const canManageUsers = (): boolean => {
+  return isAdmin();
+};
+
+export const canManageOrganization = (): boolean => {
+  return isAdmin();
+};
+
+export const canManageBilling = (): boolean => {
+  return isOwner();
+};
+
+export const canManageIntegrations = (): boolean => {
+  return isAdmin();
+};
+
+export const canManageSecurity = (): boolean => {
+  return isAdmin();
+};
+
+export const canViewAllStaff = (): boolean => {
+  return isAdmin();
+};
+
+export const canManageHR = (): boolean => {
+  return isAdmin();
 };
