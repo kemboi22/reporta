@@ -16,7 +16,7 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    sendResetPassword: ({ user, url }) => {
+    sendResetPassword: async ({ user, url }) => {
       console.log(`[${user.email}]: ${url}`);
     },
   },
@@ -27,10 +27,8 @@ export const auth = betterAuth({
     admin(),
     passkey(),
     customSession(async ({ session, user }) => {
-      const usr = await prisma.user.findFirst({
-        where: {
-          id: user.id,
-        },
+      const usr = await prisma.user.findUnique({
+        where: { id: user.id },
         include: {
           organizationUsers: {
             include: {
