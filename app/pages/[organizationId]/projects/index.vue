@@ -20,12 +20,12 @@ definePageMeta({
   layout: "dashboard",
 });
 
+const route = useRoute();
+const organizationId = route.params.organizationId as string;
+
 if (!isAdmin()) {
   navigateTo(`/${organizationId}/dashboard`);
 }
-
-const route = useRoute();
-const organizationId = route.params.organizationId as string;
 
 const state = ref({
   searchQuery: "",
@@ -262,7 +262,9 @@ const removeTeamMember = async (memberId: string) => {
     <Card v-if="state.showStats" class="border border-primary/10">
       <CardContent class="p-3">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="text-xs font-semibold text-foreground">Project Overview</h3>
+          <h3 class="text-xs font-semibold text-foreground">
+            Project Overview
+          </h3>
           <Button
             variant="ghost"
             size="sm"
@@ -411,137 +413,140 @@ const removeTeamMember = async (memberId: string) => {
         <Card
           class="h-full hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 cursor-pointer border-2 hover:border-primary/30"
         >
-        <CardContent class="p-6">
-          <div class="flex items-start justify-between mb-5">
-            <div class="flex items-center gap-4">
-              <div
-                :class="[
-                  'h-14 w-14 rounded-xl flex items-center justify-center text-white shadow-lg',
-                  project.color || 'bg-blue-500',
-                  'group-hover:scale-110 transition-transform duration-300',
-                ]"
-              >
-                <FolderKanban class="h-7 w-7" />
-              </div>
-              <div>
-                <h3
-                  class="font-bold text-lg group-hover:text-primary transition-colors"
-                >
-                  {{ project.name }}
-                </h3>
-                <p
-                  class="text-xs text-muted-foreground mt-1 font-medium uppercase tracking-wide"
-                >
-                  {{ project.priority?.toLowerCase() }} priority
-                </p>
-              </div>
-            </div>
-            <Badge
-              :variant="getStatusBadge(project.status).variant"
-              :class="[
-                getStatusBadge(project.status).class,
-                'text-xs font-semibold px-3 py-1.5',
-              ]"
-            >
-              {{ project.status?.replace("_", "-")?.toLowerCase() }}
-            </Badge>
-          </div>
-
-          <p
-            class="text-sm text-muted-foreground mb-5 line-clamp-2 leading-relaxed"
-          >
-            {{ project.description || "No description" }}
-          </p>
-
-          <div class="grid grid-cols-2 gap-4 mb-5 text-sm">
-            <div class="flex items-center gap-2.5">
-              <div
-                class="h-8 w-8 rounded-lg bg-primary/5 flex items-center justify-center"
-              >
-                <Calendar class="h-4 w-4 text-primary" />
-              </div>
-              <span class="font-medium text-foreground">{{
-                project.endDate
-                  ? new Date(project.endDate).toLocaleDateString()
-                  : "No date"
-              }}</span>
-            </div>
-            <div
-              class="flex items-center gap-2.5"
-              :class="
-                project.status === 'COMPLETED'
-                  ? 'text-emerald-600'
-                  : 'text-muted-foreground'
-              "
-            >
-              <div
-                class="h-8 w-8 rounded-lg flex items-center justify-center"
-                :class="
-                  project.status === 'COMPLETED'
-                    ? 'bg-emerald-500/10'
-                    : 'bg-amber-500/10'
-                "
-              >
-                <component
-                  :is="project.status === 'COMPLETED' ? CheckCircle2 : Clock"
-                  class="h-4 w-4"
-                  :class="
-                    project.status === 'COMPLETED'
-                      ? 'text-emerald-600'
-                      : 'text-amber-600'
-                  "
-                />
-              </div>
-              <span class="font-medium">{{
-                project.status === "COMPLETED" ? "Completed" : "In Progress"
-              }}</span>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-              <div class="flex -space-x-3">
-                <Avatar
-                  v-for="(member, index) in (project.members || []).slice(0, 3)"
-                  :key="member.id"
-                  class="h-10 w-10 border-2 border-background ring-2 ring-background transition-transform hover:scale-110 cursor-pointer"
-                  :style="{ zIndex: 10 - index }"
-                >
-                  <AvatarImage :src="member.user?.avatar" />
-                  <AvatarFallback
-                    class="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-sm font-semibold"
-                  >
-                    {{ getInitials(member.user?.name || "") }}
-                  </AvatarFallback>
-                </Avatar>
+          <CardContent class="p-6">
+            <div class="flex items-start justify-between mb-5">
+              <div class="flex items-center gap-4">
                 <div
-                  v-if="project.members?.length > 3"
-                  class="h-10 w-10 rounded-full bg-primary border-2 border-background flex items-center justify-center text-xs font-bold text-primary-foreground ring-2 ring-background"
+                  :class="[
+                    'h-14 w-14 rounded-xl flex items-center justify-center text-white shadow-lg',
+                    project.color || 'bg-blue-500',
+                    'group-hover:scale-110 transition-transform duration-300',
+                  ]"
                 >
-                  +{{ project.members.length - 3 }}
+                  <FolderKanban class="h-7 w-7" />
+                </div>
+                <div>
+                  <h3
+                    class="font-bold text-lg group-hover:text-primary transition-colors"
+                  >
+                    {{ project.name }}
+                  </h3>
+                  <p
+                    class="text-xs text-muted-foreground mt-1 font-medium uppercase tracking-wide"
+                  >
+                    {{ project.priority?.toLowerCase() }} priority
+                  </p>
                 </div>
               </div>
-            </div>
-            <div class="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                @click="openAddTeamSheet(project)"
-                class="h-9 px-4 hover:bg-primary/5"
+              <Badge
+                :variant="getStatusBadge(project.status).variant"
+                :class="[
+                  getStatusBadge(project.status).class,
+                  'text-xs font-semibold px-3 py-1.5',
+                ]"
               >
-                <Users class="h-3.5 w-3.5 mr-1.5" />
-                Team
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                class="h-9 w-9 hover:bg-muted"
-              >
-                <MoreVertical class="h-4 w-4" />
-              </Button>
+                {{ project.status?.replace("_", "-")?.toLowerCase() }}
+              </Badge>
             </div>
-          </div>
-        </CardContent>
+
+            <p
+              class="text-sm text-muted-foreground mb-5 line-clamp-2 leading-relaxed"
+            >
+              {{ project.description || "No description" }}
+            </p>
+
+            <div class="grid grid-cols-2 gap-4 mb-5 text-sm">
+              <div class="flex items-center gap-2.5">
+                <div
+                  class="h-8 w-8 rounded-lg bg-primary/5 flex items-center justify-center"
+                >
+                  <Calendar class="h-4 w-4 text-primary" />
+                </div>
+                <span class="font-medium text-foreground">{{
+                  project.endDate
+                    ? new Date(project.endDate).toLocaleDateString()
+                    : "No date"
+                }}</span>
+              </div>
+              <div
+                class="flex items-center gap-2.5"
+                :class="
+                  project.status === 'COMPLETED'
+                    ? 'text-emerald-600'
+                    : 'text-muted-foreground'
+                "
+              >
+                <div
+                  class="h-8 w-8 rounded-lg flex items-center justify-center"
+                  :class="
+                    project.status === 'COMPLETED'
+                      ? 'bg-emerald-500/10'
+                      : 'bg-amber-500/10'
+                  "
+                >
+                  <component
+                    :is="project.status === 'COMPLETED' ? CheckCircle2 : Clock"
+                    class="h-4 w-4"
+                    :class="
+                      project.status === 'COMPLETED'
+                        ? 'text-emerald-600'
+                        : 'text-amber-600'
+                    "
+                  />
+                </div>
+                <span class="font-medium">{{
+                  project.status === "COMPLETED" ? "Completed" : "In Progress"
+                }}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="flex -space-x-3">
+                  <Avatar
+                    v-for="(member, index) in (project.members || []).slice(
+                      0,
+                      3,
+                    )"
+                    :key="member.id"
+                    class="h-10 w-10 border-2 border-background ring-2 ring-background transition-transform hover:scale-110 cursor-pointer"
+                    :style="{ zIndex: 10 - index }"
+                  >
+                    <AvatarImage :src="member.user?.avatar" />
+                    <AvatarFallback
+                      class="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-sm font-semibold"
+                    >
+                      {{ getInitials(member.user?.name || "") }}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div
+                    v-if="project.members?.length > 3"
+                    class="h-10 w-10 rounded-full bg-primary border-2 border-background flex items-center justify-center text-xs font-bold text-primary-foreground ring-2 ring-background"
+                  >
+                    +{{ project.members.length - 3 }}
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  @click="openAddTeamSheet(project)"
+                  class="h-9 px-4 hover:bg-primary/5"
+                >
+                  <Users class="h-3.5 w-3.5 mr-1.5" />
+                  Team
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-9 w-9 hover:bg-muted"
+                >
+                  <MoreVertical class="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </NuxtLink>
     </div>
@@ -825,7 +830,9 @@ const removeTeamMember = async (memberId: string) => {
                   <div class="flex items-center gap-2">
                     <Avatar class="h-5 w-5">
                       <AvatarImage :src="member.photo" />
-                      <AvatarFallback class="text-[10px] bg-primary/10 text-primary">
+                      <AvatarFallback
+                        class="text-[10px] bg-primary/10 text-primary"
+                      >
                         {{ getInitials(member.name) }}
                       </AvatarFallback>
                     </Avatar>
@@ -891,7 +898,11 @@ const removeTeamMember = async (memberId: string) => {
           >
             Cancel
           </Button>
-          <Button @click="addTeamMember" class="h-11 px-6" :disabled="!addTeamForm.userId || state.loading">
+          <Button
+            @click="addTeamMember"
+            class="h-11 px-6"
+            :disabled="!addTeamForm.userId || state.loading"
+          >
             <Plus class="h-4 w-4 mr-1.5" />
             {{ state.loading ? "Adding..." : "Add Member" }}
           </Button>
