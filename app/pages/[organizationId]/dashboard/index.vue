@@ -639,43 +639,43 @@ const getAlertIcon = (type: string) => {
         </Card>
       </div>
 
-      <Card class="border-border bg-gradient-to-br from-background to-muted/20">
-        <CardContent class="p-6">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold text-foreground">
-              Alerts & Reminders
-            </h2>
-            <Badge variant="secondary" class="font-medium"
-              >{{ alerts.length }} active</Badge
-            >
-          </div>
-          <div class="space-y-3">
-            <Alert
-              v-for="alert in alerts"
-              :key="alert.id"
-              :class="
-                alert.type === 'error'
-                  ? 'border-destructive/50 bg-destructive/5 hover:bg-destructive/10 transition-colors'
-                  : alert.type === 'warning'
-                    ? 'border-amber-500/50 bg-amber-500/5 hover:bg-amber-500/10 transition-colors'
-                    : 'border-primary/50 bg-primary/5 hover:bg-primary/10 transition-colors'
-              "
-            >
-              <component :is="getAlertIcon(alert.type)" class="h-4 w-4" />
-              <AlertTitle class="font-semibold">{{ alert.title }}</AlertTitle>
-              <AlertDescription class="text-sm">{{
-                alert.description
-              }}</AlertDescription>
-            </Alert>
-            <div
-              v-if="alerts.length === 0"
-              class="text-center py-4 text-muted-foreground"
-            >
-              No alerts at this time
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <!-- <Card class="border-border bg-gradient-to-br from-background to-muted/20"> -->
+      <!--   <CardContent class="p-6"> -->
+      <!--     <div class="flex items-center justify-between mb-6"> -->
+      <!--       <h2 class="text-xl font-bold text-foreground"> -->
+      <!--         Alerts & Reminders -->
+      <!--       </h2> -->
+      <!--       <Badge variant="secondary" class="font-medium" -->
+      <!--         >{{ alerts.length }} active</Badge -->
+      <!--       > -->
+      <!--     </div> -->
+      <!--     <div class="space-y-3"> -->
+      <!--       <Alert -->
+      <!--         v-for="alert in alerts" -->
+      <!--         :key="alert.id" -->
+      <!--         :class=" -->
+      <!--           alert.type === 'error' -->
+      <!--             ? 'border-destructive/50 bg-destructive/5 hover:bg-destructive/10 transition-colors' -->
+      <!--             : alert.type === 'warning' -->
+      <!--               ? 'border-amber-500/50 bg-amber-500/5 hover:bg-amber-500/10 transition-colors' -->
+      <!--               : 'border-primary/50 bg-primary/5 hover:bg-primary/10 transition-colors' -->
+      <!--         " -->
+      <!--       > -->
+      <!--         <component :is="getAlertIcon(alert.type)" class="h-4 w-4" /> -->
+      <!--         <AlertTitle class="font-semibold">{{ alert.title }}</AlertTitle> -->
+      <!--         <AlertDescription class="text-sm">{{ -->
+      <!--           alert.description -->
+      <!--         }}</AlertDescription> -->
+      <!--       </Alert> -->
+      <!--       <div -->
+      <!--         v-if="alerts.length === 0" -->
+      <!--         class="text-center py-4 text-muted-foreground" -->
+      <!--       > -->
+      <!--         No alerts at this time -->
+      <!--       </div> -->
+      <!--     </div> -->
+      <!--   </CardContent> -->
+      <!-- </Card> -->
     </template>
   </div>
 </template>
