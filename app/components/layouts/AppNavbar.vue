@@ -9,18 +9,18 @@ const links = [
     name: "Home",
     href: "/",
   },
-  {
-    name: "Features",
-    href: "/features",
-  },
-  {
-    name: "About",
-    href: "/about",
-  },
-  {
-    name: "Contact",
-    href: "/contact",
-  },
+  // {
+  //   name: "Features",
+  //   href: "/features",
+  // },
+  // {
+  //   name: "About",
+  //   href: "/about",
+  // },
+  // {
+  //   name: "Contact",
+  //   href: "/contact",
+  // },
 ];
 
 // Close mobile menu when navigating
