@@ -174,7 +174,10 @@ const changePassword = async () => {
       class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
     >
       <div class="flex items-center gap-4">
-        <Button variant="ghost" @click="navigateTo(`/${organizationId}/staff`)">
+        <Button
+          variant="ghost"
+          @click="navigateTo(`/${organizationId}/dashboard`)"
+        >
           <ArrowLeft class="h-4 w-4 mr-2" />
           Back
         </Button>
