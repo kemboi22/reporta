@@ -1,17 +1,4 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { definePageMeta, navigateTo } from "#imports";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Plus,
   Search,
@@ -19,7 +6,6 @@ import {
   Edit3,
   Play,
   Trash2,
-  MoreVertical,
   Grid3x3,
   List,
   Layers,
@@ -35,9 +21,9 @@ definePageMeta({
   layout: "dashboard",
 });
 
-if (!isAdmin()) {
-  navigateTo(`/${organizationId}/dashboard`);
-}
+// if (!isAdmin()) {
+//   navigateTo(`/${organizationId}/dashboard`);
+// }
 
 const route = useRoute();
 const organizationId = route.params.organizationId as string;
@@ -54,22 +40,20 @@ const { data: templates } = await useLazyFetch(
   },
 );
 
-const { data: reports } = await useLazyFetch(
-  `/api/${organizationId}/reports`,
-  {
-    key: `reports-count-${organizationId}`,
-    transform: (data) => data || [],
-  },
-);
+const { data: reports } = await useLazyFetch(`/api/${organizationId}/reports`, {
+  key: `reports-count-${organizationId}`,
+  transform: (data) => data || [],
+});
 
 const filteredTemplates = computed(() => {
   let filtered = templates.value || [];
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter((t: any) => 
-      t.name?.toLowerCase().includes(query) ||
-      t.description?.toLowerCase().includes(query)
+    filtered = filtered.filter(
+      (t: any) =>
+        t.name?.toLowerCase().includes(query) ||
+        t.description?.toLowerCase().includes(query),
     );
   }
 
@@ -82,19 +66,31 @@ const filteredTemplates = computed(() => {
 });
 
 const getTemplateStats = (templateId: string) => {
-  const templateReports = reports.value?.filter((r: any) => r.templateId === templateId) || [];
+  const templateReports =
+    reports.value?.filter((r: any) => r.templateId === templateId) || [];
   return {
     total: templateReports.length,
-    approved: templateReports.filter((r: any) => r.status === "APPROVED").length,
-    lastUsed: templateReports.length > 0 
-      ? new Date(Math.max(...templateReports.map((r: any) => new Date(r.createdAt).getTime()))).toLocaleDateString()
-      : null,
+    approved: templateReports.filter((r: any) => r.status === "APPROVED")
+      .length,
+    lastUsed:
+      templateReports.length > 0
+        ? new Date(
+            Math.max(
+              ...templateReports.map((r: any) =>
+                new Date(r.createdAt).getTime(),
+              ),
+            ),
+          ).toLocaleDateString()
+        : null,
   };
 };
 
 const getFieldsCount = (template: any) => {
   if (!template.fields || !template.fields.sections) return 0;
-  return template.fields.sections.reduce((acc: number, s: any) => acc + s.fields.length, 0);
+  return template.fields.sections.reduce(
+    (acc: number, s: any) => acc + s.fields.length,
+    0,
+  );
 };
 
 const getSectionsCount = (template: any) => {
@@ -120,7 +116,12 @@ const duplicateTemplate = async (template: any) => {
 };
 
 const deleteTemplate = async (templateId: string) => {
-  if (!confirm("Are you sure you want to delete this template? This action cannot be undone.")) return;
+  if (
+    !confirm(
+      "Are you sure you want to delete this template? This action cannot be undone.",
+    )
+  )
+    return;
   try {
     await $fetch(`/api/${organizationId}/templates/${templateId}`, {
       method: "DELETE",
@@ -134,16 +135,23 @@ const deleteTemplate = async (templateId: string) => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div
+      class="flex flex-col md:flex-row md:items-center justify-between gap-4"
+    >
       <div>
         <h1 class="text-3xl font-bold text-foreground">Report Templates</h1>
         <p class="text-muted-foreground mt-1">
-          {{ filteredTemplates.length }} template{{ filteredTemplates.length !== 1 ? 's' : '' }} available
+          {{ filteredTemplates.length }} template{{
+            filteredTemplates.length !== 1 ? "s" : ""
+          }}
+          available
         </p>
       </div>
       <div class="flex items-center gap-3">
         <div class="relative">
-          <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search
+            class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+          />
           <Input
             v-model="searchQuery"
             placeholder="Search templates..."
@@ -178,33 +186,49 @@ const deleteTemplate = async (templateId: string) => {
             <List class="h-4 w-4" />
           </Button>
         </div>
-        <Button :as="NuxtLink" :to="`/${organizationId}/reports/templates/builder`">
+        <Button
+          :as="NuxtLink"
+          :to="`/${organizationId}/reports/templates/builder`"
+        >
           <Plus class="h-4 w-4 mr-2" />
           New Template
         </Button>
       </div>
     </div>
 
-    <div v-if="filteredTemplates.length === 0" class="border-2 border-dashed rounded-lg py-16 text-center">
-      <div class="inline-flex h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-4">
+    <div
+      v-if="filteredTemplates.length === 0"
+      class="border-2 border-dashed rounded-lg py-16 text-center"
+    >
+      <div
+        class="inline-flex h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-4"
+      >
         <FileText class="h-10 w-10 text-muted-foreground" />
       </div>
       <h3 class="text-lg font-semibold mb-2">
         {{ searchQuery ? "No templates found" : "No templates created yet" }}
       </h3>
       <p class="text-muted-foreground mb-6 max-w-md mx-auto">
-        {{ searchQuery 
-          ? "Try adjusting your search terms or filters." 
-          : "Create your first report template to start collecting structured data from your team."
+        {{
+          searchQuery
+            ? "Try adjusting your search terms or filters."
+            : "Create your first report template to start collecting structured data from your team."
         }}
       </p>
-      <Button v-if="!searchQuery" :as="NuxtLink" :to="`/${organizationId}/reports/templates/builder`">
+      <Button
+        v-if="!searchQuery"
+        :as="NuxtLink"
+        :to="`/${organizationId}/reports/templates/builder`"
+      >
         <Plus class="h-4 w-4 mr-2" />
         Create Template
       </Button>
     </div>
 
-    <div v-else-if="viewMode === 'grid'" class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+    <div
+      v-else-if="viewMode === 'grid'"
+      class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+    >
       <Card
         v-for="template in filteredTemplates"
         :key="template.id"
@@ -212,10 +236,15 @@ const deleteTemplate = async (templateId: string) => {
       >
         <CardHeader class="pb-3">
           <div class="flex items-start justify-between mb-2">
-            <div class="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+            <div
+              class="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors"
+            >
               <FileText class="h-5 w-5 text-primary" />
             </div>
-            <Badge :variant="template.isActive ? 'default' : 'secondary'" class="text-xs">
+            <Badge
+              :variant="template.isActive ? 'default' : 'secondary'"
+              class="text-xs"
+            >
               {{ template.isActive ? "Active" : "Inactive" }}
             </Badge>
           </div>
@@ -236,13 +265,18 @@ const deleteTemplate = async (templateId: string) => {
             </div>
           </div>
 
-            <div class="pt-3 border-t">
-            <div class="flex items-center justify-between text-xs text-muted-foreground mb-3">
+          <div class="pt-3 border-t">
+            <div
+              class="flex items-center justify-between text-xs text-muted-foreground mb-3"
+            >
               <span class="flex items-center gap-1">
                 <FileText class="h-3 w-3" />
                 {{ getTemplateStats(template.id).total }} reports created
               </span>
-              <span v-if="getTemplateStats(template.id).lastUsed" class="flex items-center gap-1">
+              <span
+                v-if="getTemplateStats(template.id).lastUsed"
+                class="flex items-center gap-1"
+              >
                 <Calendar class="h-3 w-3" />
                 {{ getTemplateStats(template.id).lastUsed }}
               </span>
@@ -262,7 +296,11 @@ const deleteTemplate = async (templateId: string) => {
                 variant="outline"
                 size="sm"
                 class="px-3"
-                @click.stop="navigateTo(`/${organizationId}/reports/templates/${template.id}`)"
+                @click.stop="
+                  navigateTo(
+                    `/${organizationId}/reports/templates/${template.id}`,
+                  )
+                "
               >
                 <TableIcon class="h-3 w-3" />
               </Button>
@@ -278,7 +316,11 @@ const deleteTemplate = async (templateId: string) => {
                 variant="outline"
                 size="sm"
                 class="px-3"
-                @click.stop="navigateTo(`/${organizationId}/reports/templates/builder?templateId=${template.id}`)"
+                @click.stop="
+                  navigateTo(
+                    `/${organizationId}/reports/templates/builder?templateId=${template.id}`,
+                  )
+                "
               >
                 <Edit3 class="h-3 w-3" />
               </Button>
@@ -296,20 +338,29 @@ const deleteTemplate = async (templateId: string) => {
       >
         <CardContent class="p-5">
           <div class="flex items-center gap-4">
-            <div class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <div
+              class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"
+            >
               <FileText class="h-6 w-6 text-primary" />
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-3 mb-1">
-                <h3 class="font-semibold text-foreground truncate">{{ template.name }}</h3>
-                <Badge :variant="template.isActive ? 'default' : 'secondary'" class="text-xs">
+                <h3 class="font-semibold text-foreground truncate">
+                  {{ template.name }}
+                </h3>
+                <Badge
+                  :variant="template.isActive ? 'default' : 'secondary'"
+                  class="text-xs"
+                >
                   {{ template.isActive ? "Active" : "Inactive" }}
                 </Badge>
               </div>
               <p class="text-sm text-muted-foreground line-clamp-1 mb-2">
                 {{ template.description || "No description" }}
               </p>
-              <div class="flex items-center gap-4 text-xs text-muted-foreground">
+              <div
+                class="flex items-center gap-4 text-xs text-muted-foreground"
+              >
                 <span class="flex items-center gap-1">
                   <Layers class="h-3 w-3" />
                   {{ getSectionsCount(template) }} sections
@@ -338,7 +389,11 @@ const deleteTemplate = async (templateId: string) => {
                 v-if="getTemplateStats(template.id).total > 0"
                 variant="outline"
                 size="sm"
-                @click.stop="navigateTo(`/${organizationId}/reports/templates/${template.id}`)"
+                @click.stop="
+                  navigateTo(
+                    `/${organizationId}/reports/templates/${template.id}`,
+                  )
+                "
               >
                 <TableIcon class="h-4 w-4 mr-2" />
                 View Data
@@ -353,7 +408,11 @@ const deleteTemplate = async (templateId: string) => {
               <Button
                 variant="outline"
                 size="icon"
-                @click.stop="navigateTo(`/${organizationId}/reports/templates/builder?templateId=${template.id}`)"
+                @click.stop="
+                  navigateTo(
+                    `/${organizationId}/reports/templates/builder?templateId=${template.id}`,
+                  )
+                "
               >
                 <Edit3 class="h-4 w-4" />
               </Button>
