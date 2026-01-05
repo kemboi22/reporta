@@ -432,14 +432,16 @@ watch(
             </div>
           </div>
 
-          <DropdownMenuItem @click="navigateTo('/staff/profile')">
+          <DropdownMenuItem
+            @click="navigateTo(`/${organizationId}/staff/profile`)"
+          >
             <User class="h-4 w-4 mr-2" />
             My Profile
           </DropdownMenuItem>
-          <DropdownMenuItem @click="navigateTo('/settings')">
-            <Settings class="h-4 w-4 mr-2" />
-            Settings
-          </DropdownMenuItem>
+          <!-- <DropdownMenuItem @click="navigateTo('/settings')"> -->
+          <!--   <Settings class="h-4 w-4 mr-2" /> -->
+          <!--   Settings -->
+          <!-- </DropdownMenuItem> -->
           <DropdownMenuSeparator />
           <DropdownMenuItem class="text-red-600" @click="logout()">
             <LogOut class="h-4 w-4 mr-2" />
