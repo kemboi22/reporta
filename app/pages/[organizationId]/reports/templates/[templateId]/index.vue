@@ -1,23 +1,4 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { definePageMeta, navigateTo } from "#imports";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Search,
   Download,
@@ -36,15 +17,6 @@ import {
   Trash2,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
 
 definePageMeta({
   layout: "dashboard",
@@ -144,7 +116,7 @@ const filteredReports = computed(() => {
 
 const selectableReports = computed(() => {
   return filteredReports.value.filter((r: any) =>
-    ["SUBMITTED", "UNDER_REVIEW"].includes(r.status)
+    ["SUBMITTED", "UNDER_REVIEW"].includes(r.status),
   );
 });
 
@@ -161,13 +133,17 @@ const stats = computed(() => {
 });
 
 const allSelected = computed(() => {
-  return selectableReports.value.length > 0 &&
-    selectableReports.value.every((r: any) => selectedReports.value.has(r.id));
+  return (
+    selectableReports.value.length > 0 &&
+    selectableReports.value.every((r: any) => selectedReports.value.has(r.id))
+  );
 });
 
 const someSelected = computed(() => {
-  return selectableReports.value.some((r: any) => selectedReports.value.has(r.id)) &&
-    !allSelected.value;
+  return (
+    selectableReports.value.some((r: any) => selectedReports.value.has(r.id)) &&
+    !allSelected.value
+  );
 });
 
 const getFieldValue = (report: any, fieldKey: string) => {
@@ -192,16 +168,6 @@ const getStatusInfo = (status: string) => {
   );
 };
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
 const toggleRow = (reportId: string) => {
   if (expandedRows.value.has(reportId)) {
     expandedRows.value.delete(reportId);
@@ -212,9 +178,13 @@ const toggleRow = (reportId: string) => {
 
 const toggleSelectAll = () => {
   if (allSelected.value) {
-    selectableReports.value.forEach((r: any) => selectedReports.value.delete(r.id));
+    selectableReports.value.forEach((r: any) =>
+      selectedReports.value.delete(r.id),
+    );
   } else {
-    selectableReports.value.forEach((r: any) => selectedReports.value.add(r.id));
+    selectableReports.value.forEach((r: any) =>
+      selectedReports.value.add(r.id),
+    );
   }
 };
 
@@ -483,11 +453,7 @@ const exportToCSV = () => {
             </span>
           </div>
           <div class="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              @click="clearSelection"
-            >
+            <Button size="sm" variant="outline" @click="clearSelection">
               Clear
             </Button>
             <Button
@@ -561,10 +527,14 @@ const exportToCSV = () => {
                 <template v-for="report in filteredReports" :key="report.id">
                   <TableRow
                     :class="{
-                      'bg-primary/5': selectedReports.has(report.id)
+                      'bg-primary/5': selectedReports.has(report.id),
                     }"
                   >
-                    <TableCell v-if="['SUBMITTED', 'UNDER_REVIEW'].includes(report.status)">
+                    <TableCell
+                      v-if="
+                        ['SUBMITTED', 'UNDER_REVIEW'].includes(report.status)
+                      "
+                    >
                       <Checkbox
                         :checked="selectedReports.has(report.id)"
                         @update:model-value="toggleSelect(report.id)"
