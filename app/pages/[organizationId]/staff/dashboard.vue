@@ -1,290 +1,101 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import {
-  Clock,
-  CheckSquare,
-  FileText,
-  Bell,
-  LogIn,
-  LogOut,
-  Calendar,
-  TrendingUp,
-} from "lucide-vue-next";
 import { definePageMeta } from "#imports";
+import { Card, CardContent } from "@/components/ui/card";
+import { Clock, CheckCircle2, FolderKanban, Users } from "lucide-vue-next";
 
 definePageMeta({
   layout: "dashboard",
 });
 
-const isOnDuty = ref(false);
-const currentTime = ref(new Date().toLocaleTimeString());
-const todayHours = ref(4.38);
+const route = useRoute();
+const organizationId = route.params.organizationId as string;
 
-const clockInOut = () => {
-  isOnDuty.value = !isOnDuty.value;
-};
+const { data: staff } = await useLazyFetch(`/api/${organizationId}/staff`, {
+  key: `staff-${organizationId}`,
+  transform: (data) => data || [],
+});
 
-// Update time every second
-// setInterval(() => {
-//   currentTime.value = new Date().toLocaleTimeString();
-// }, 1000);
+const { data: tasks } = await useLazyFetch(`/api/${organizationId}/tasks`, {
+  key: `tasks-${organizationId}`,
+  transform: (data) => data || [],
+});
 
-const tasks = ref([
-  {
-    id: 1,
-    title: "Complete Q4 Performance Review",
-    dueDate: "Today, 5:00 PM",
-    priority: "high",
-    completed: false,
-  },
-  {
-    id: 2,
-    title: "Submit Weekly Report",
-    dueDate: "Today, 6:00 PM",
-    priority: "urgent",
-    completed: false,
-  },
-  {
-    id: 3,
-    title: "Review Marketing Materials",
-    dueDate: "Tomorrow",
-    priority: "normal",
-    completed: false,
-  },
-]);
+const { data: attendances } = await useLazyFetch(`/api/${organizationId}/attendance`, {
+  key: `attendance-${organizationId}`,
+  transform: (data) => data || [],
+});
 
-const reports = ref([
-  {
-    id: 1,
-    name: "Weekly Operations Summary",
-    status: "not-started",
-    dueDate: "Dec 24, 5:00 PM",
-    dueIn: "8 hours",
-  },
-  {
-    id: 2,
-    name: "Monthly Sales Report",
-    status: "in-progress",
-    dueDate: "Dec 25",
-    dueIn: "1 day",
-  },
-]);
+const { data: departments } = await useLazyFetch(`/api/${organizationId}/departments`, {
+  key: `departments-${organizationId}`,
+  transform: (data) => data || [],
+});
 
-const activities = ref([
-  { time: "2 hours ago", action: "Completed task: Client Meeting Notes" },
-  { time: "4 hours ago", action: "Clocked in for morning shift" },
-  { time: "Yesterday", action: "Submitted Weekly Report" },
-]);
+const stats = computed(() => ({
+  totalStaff: staff.value?.length || 0,
+  totalTasks: tasks.value?.length || 0,
+  onTimeToday: attendances.value?.filter((a: any) => a.status === "PRESENT").length || 0,
+  myTasks: tasks.value?.filter((t: any) => t.assignedTo === staff.value?.[0]?.id).length || 0,
+}));
 </script>
 
 <template>
   <div class="p-6 space-y-6">
-    <!-- Header -->
-    <div>
-      <h1 class="text-3xl font-bold text-foreground">My Dashboard</h1>
-      <p class="text-muted-foreground mt-1">
-        Welcome back! Here's your day at a glance
-      </p>
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-foreground">My Dashboard</h1>
+        <p class="text-muted-foreground mt-1">
+          Welcome back! Here's your overview
+        </p>
+      </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Clock Status Card -->
-      <Card class="lg:col-span-2">
-        <CardHeader>
-          <CardTitle>Clock Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div class="text-center space-y-6">
-            <div class="text-6xl font-bold text-foreground">
-              {{ currentTime }}
-            </div>
-            <div class="flex items-center justify-center gap-4">
-              <Badge
-                :class="
-                  isOnDuty
-                    ? 'bg-green-100 text-green-700 border-green-200'
-                    : 'bg-muted text-foreground border-border'
-                "
-                variant="outline"
-                class="text-lg px-4 py-2"
-              >
-                {{ isOnDuty ? "On Duty" : "Off Duty" }}
-              </Badge>
-              <div class="text-sm text-muted-foreground">
-                Shift:
-                <span class="font-medium text-foreground"
-                  >Morning (6 AM - 2 PM)</span
-                >
-              </div>
-            </div>
-            <Button
-              size="lg"
-              :variant="isOnDuty ? 'destructive' : 'default'"
-              class="w-full max-w-sm"
-              @click="clockInOut"
-            >
-              <component :is="isOnDuty ? LogOut : LogIn" class="h-5 w-5 mr-2" />
-              {{ isOnDuty ? "Clock Out" : "Clock In" }}
-            </Button>
-            <div class="text-sm text-muted-foreground">
-              Today's Hours:
-              <span class="font-bold text-lg text-foreground"
-                >{{ todayHours }}h</span
-              >
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <!-- Quick Stats -->
-      <div class="space-y-4">
-        <Card>
-          <CardContent class="p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-muted-foreground">Tasks Assigned</p>
-                <p class="text-3xl font-bold text-foreground">8</p>
-              </div>
-              <div
-                class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center"
-              >
-                <CheckSquare class="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent class="p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-muted-foreground">Reports Due</p>
-                <p class="text-3xl font-bold text-orange-600">2</p>
-              </div>
-              <div
-                class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center"
-              >
-                <FileText class="h-6 w-6 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent class="p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-muted-foreground">Notifications</p>
-                <p class="text-3xl font-bold text-purple-600">5</p>
-              </div>
-              <div
-                class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center"
-              >
-                <Bell class="h-6 w-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <!-- My Tasks Today -->
-      <Card class="lg:col-span-2">
-        <CardHeader>
-          <div class="flex items-center justify-between">
-            <CardTitle>My Tasks Today</CardTitle>
-            <Button variant="link">View All</Button>
-          </div>
-        </CardHeader>
-        <CardContent class="space-y-3">
-          <div
-            v-for="task in tasks"
-            :key="task.id"
-            class="flex items-start gap-4 p-4 rounded-lg border border-border hover:bg-muted transition-colors"
-          >
-            <input type="checkbox" class="mt-1" v-model="task.completed" />
-            <div class="flex-1">
-              <p class="font-medium text-foreground">{{ task.title }}</p>
-              <p class="text-sm text-muted-foreground mt-1">Due: {{ task.dueDate }}</p>
-            </div>
-            <Badge
-              :class="{
-                'bg-red-100 text-red-700 border-red-200':
-                  task.priority === 'urgent',
-                'bg-orange-100 text-orange-700 border-orange-200':
-                  task.priority === 'high',
-                'bg-muted text-foreground border-border':
-                  task.priority === 'normal',
-              }"
-              variant="outline"
-            >
-              {{ task.priority }}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
-
-      <!-- My Reports -->
-      <Card>
-        <CardHeader>
-          <CardTitle>My Reports</CardTitle>
-        </CardHeader>
-        <CardContent class="space-y-4">
-          <div
-            v-for="report in reports"
-            :key="report.id"
-            class="space-y-3 p-4 rounded-lg border border-border"
-          >
+    <div class="grid md:grid-cols-4 gap-6">
+      <Card class="border-border">
+        <CardContent class="p-6">
+          <div class="flex items-start justify-between">
+            <Clock class="h-6 w-6 text-blue-500" />
             <div>
-              <p class="font-medium text-foreground">{{ report.name }}</p>
-              <p class="text-sm text-muted-foreground mt-1">
-                Due: {{ report.dueDate }}
+              <p class="text-sm text-muted-foreground">On Duty</p>
+              <p class="text-2xl font-bold">
+                {{ stats.onTimeToday > 0 ? "Yes" : "No" }}
               </p>
             </div>
-            <Badge
-              :class="{
-                'bg-muted text-foreground border-border':
-                  report.status === 'not-started',
-                'bg-blue-100 text-blue-700 border-blue-200':
-                  report.status === 'in-progress',
-              }"
-              variant="outline"
-            >
-              {{ report.status }}
-            </Badge>
-            <Button variant="outline" size="sm" class="w-full">
-              Fill Report
-            </Button>
           </div>
         </CardContent>
       </Card>
 
-      <!-- Recent Activity -->
-      <Card class="lg:col-span-3">
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div class="space-y-4">
-            <div
-              v-for="(activity, index) in activities"
-              :key="index"
-              class="flex items-start gap-4 pb-4 border-b border-border last:border-0"
-            >
-              <div class="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
-              <div>
-                <p class="text-sm text-foreground">{{ activity.action }}</p>
-                <p class="text-xs text-muted-foreground mt-1">{{ activity.time }}</p>
-              </div>
+      <Card class="border-border">
+        <CardContent class="p-6">
+          <div class="flex items-start justify-between">
+            <CheckCircle2 class="h-6 w-6 text-emerald-500" />
+            <div>
+              <p class="text-sm text-muted-foreground">Tasks Done</p>
+              <p class="text-2xl font-bold">{{ stats.myTasks }}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card class="border-border">
+        <CardContent class="p-6">
+          <div class="flex items-start justify-between">
+            <FolderKanban class="h-6 w-6 text-purple-500" />
+            <div>
+              <p class="text-sm text-muted-foreground">Assigned</p>
+              <p class="text-2xl font-bold">{{ stats.totalTasks }}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card class="border-border">
+        <CardContent class="p-6">
+          <div class="flex items-start justify-between">
+            <Users class="h-6 w-6 text-emerald-500" />
+            <div>
+              <p class="text-sm text-muted-foreground">My Tasks</p>
+              <p class="text-2xl font-bold">{{ stats.myTasks }}</p>
             </div>
           </div>
         </CardContent>
