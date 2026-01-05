@@ -40,26 +40,16 @@ definePageMeta({
 
 const route = useRoute();
 const organizationId = route.params.organizationId as string;
-const routeStaffId = computed(() => route.params.id as string);
 
 const session = authClient.useSession();
 const userId = session.value.data?.user?.id;
 
-const staffId = computed(() => {
-  const id = routeStaffId.value;
-  if (!id) return null;
-  if (id === "me") {
-    return userId || null;
-  }
-  return id;
-});
+const staffId = computed(() => userId || null);
 
 const { data: staffData, refresh: refreshStaff } = await useLazyFetch(
-  () => {
-    return `/api/${organizationId}/staff?userId=${userId}`;
-  },
+  () => `/api/${organizationId}/staff?userId=${staffId.value}`,
   {
-    key: () => `staff-${staffId.value}`,
+    key: `staff-profile-${staffId.value}`,
     transform: (data) => data || null,
   },
 );
@@ -77,7 +67,6 @@ watch(
       await refreshStaff();
     }
   },
-  { immediate: true },
 );
 
 const { data: departments } = await useLazyFetch(
