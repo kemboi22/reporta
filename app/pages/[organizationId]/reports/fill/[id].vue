@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { Eye, Save, CheckCircle, AlertCircle, Plus, X, FileStack } from "lucide-vue-next";
+import {
+  Eye,
+  Save,
+  CheckCircle,
+  AlertCircle,
+  Plus,
+  X,
+  FileStack,
+} from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -93,7 +101,12 @@ const overallProgress = computed(() => {
         }
       });
     });
-    return acc + (recordRequired === 0 ? 100 : Math.round((recordFilled / recordRequired) * 100));
+    return (
+      acc +
+      (recordRequired === 0
+        ? 100
+        : Math.round((recordFilled / recordRequired) * 100))
+    );
   }, 0);
   return Math.round(total / records.value.length);
 });
@@ -113,7 +126,7 @@ const validateRecord = (record: RecordForm) => {
 
 const validateAllRecords = () => {
   let allValid = true;
-  records.value.forEach(record => {
+  records.value.forEach((record) => {
     if (!validateRecord(record)) {
       allValid = false;
     }
@@ -122,7 +135,7 @@ const validateAllRecords = () => {
 };
 
 const handleFieldChange = (recordId: string, fieldId: string, value: any) => {
-  const record = records.value.find(r => r.id === recordId);
+  const record = records.value.find((r) => r.id === recordId);
   if (record) {
     record.content[fieldId] = value;
     touchedFields.value.add(`${recordId}-${fieldId}`);
@@ -163,14 +176,14 @@ const createReportsFromTemplates = async () => {
       method: "POST",
       body: {
         templateId,
-        records: records.value.map(record => ({
+        records: records.value.map((record) => ({
           title: record.title || template.value?.name,
           content: record.content,
         })),
       },
     });
     toast.success(`${reports.length} report(s) created successfully`);
-    navigateTo(`/${organizationId}/reports`);
+    await navigateTo(`/${organizationId}/reports/templates`);
   } catch (error) {
     console.error("Failed to create reports:", error);
     toast.error("Failed to create reports");
@@ -217,7 +230,7 @@ const submitReports = async () => {
       <div class="flex items-center gap-2">
         <FileStack class="h-5 w-5 text-muted-foreground" />
         <span class="text-sm text-muted-foreground">
-          {{ records.length }} record{{ records.length !== 1 ? 's' : '' }}
+          {{ records.length }} record{{ records.length !== 1 ? "s" : "" }}
         </span>
         <Badge :variant="overallProgress === 100 ? 'default' : 'secondary'">
           {{ overallProgress }}% Complete
@@ -237,7 +250,7 @@ const submitReports = async () => {
         size="sm"
         :class="[
           'flex-shrink-0 transition-all',
-          activeRecordIndex === index ? 'border-primary bg-primary/5' : ''
+          activeRecordIndex === index ? 'border-primary bg-primary/5' : '',
         ]"
         @click="activeRecordIndex = index"
       >
@@ -276,7 +289,9 @@ const submitReports = async () => {
                 </svg>
                 Record Details
               </CardTitle>
-              <Badge :variant="recordProgress === 100 ? 'default' : 'secondary'">
+              <Badge
+                :variant="recordProgress === 100 ? 'default' : 'secondary'"
+              >
                 {{ recordProgress }}% Complete
               </Badge>
             </div>
@@ -365,7 +380,8 @@ const submitReports = async () => {
                       <span v-if="field.required" class="text-red-500">*</span>
                       <Badge
                         v-if="
-                          touchedFields.has(`${activeRecord.id}-${field.id}`) && fieldErrors[field.id]
+                          touchedFields.has(`${activeRecord.id}-${field.id}`) &&
+                          fieldErrors[field.id]
                         "
                         variant="destructive"
                         class="h-5 px-2 py-0 text-xs"
@@ -378,7 +394,9 @@ const submitReports = async () => {
                       v-if="field.type === 'text'"
                       v-model="activeRecord.content[field.id]"
                       :placeholder="field.label"
-                      @blur="touchedFields.add(`${activeRecord.id}-${field.id}`)"
+                      @blur="
+                        touchedFields.add(`${activeRecord.id}-${field.id}`)
+                      "
                       :class="{
                         'border-destructive focus-visible:ring-destructive':
                           fieldErrors[field.id],
@@ -390,7 +408,9 @@ const submitReports = async () => {
                       v-model="activeRecord.content[field.id]"
                       :placeholder="field.label"
                       rows="3"
-                      @blur="touchedFields.add(`${activeRecord.id}-${field.id}`)"
+                      @blur="
+                        touchedFields.add(`${activeRecord.id}-${field.id}`)
+                      "
                       :class="{
                         'border-destructive focus-visible:ring-destructive':
                           fieldErrors[field.id],
@@ -402,7 +422,9 @@ const submitReports = async () => {
                       v-model.number="activeRecord.content[field.id]"
                       type="number"
                       :placeholder="field.label"
-                      @blur="touchedFields.add(`${activeRecord.id}-${field.id}`)"
+                      @blur="
+                        touchedFields.add(`${activeRecord.id}-${field.id}`)
+                      "
                       :class="{
                         'border-destructive focus-visible:ring-destructive':
                           fieldErrors[field.id],
@@ -413,7 +435,9 @@ const submitReports = async () => {
                       v-else-if="field.type === 'date'"
                       v-model="activeRecord.content[field.id]"
                       type="date"
-                      @blur="touchedFields.add(`${activeRecord.id}-${field.id}`)"
+                      @blur="
+                        touchedFields.add(`${activeRecord.id}-${field.id}`)
+                      "
                       :class="{
                         'border-destructive focus-visible:ring-destructive':
                           fieldErrors[field.id],
@@ -423,7 +447,9 @@ const submitReports = async () => {
                     <Select
                       v-else-if="field.type === 'select'"
                       v-model="activeRecord.content[field.id]"
-                      @blur="touchedFields.add(`${activeRecord.id}-${field.id}`)"
+                      @blur="
+                        touchedFields.add(`${activeRecord.id}-${field.id}`)
+                      "
                     >
                       <SelectTrigger
                         :class="{
@@ -453,7 +479,9 @@ const submitReports = async () => {
                     >
                       <Checkbox
                         v-model="activeRecord.content[field.id]"
-                        @update:model-value="touchedFields.add(`${activeRecord.id}-${field.id}`)"
+                        @update:model-value="
+                          touchedFields.add(`${activeRecord.id}-${field.id}`)
+                        "
                       />
                       <Label
                         class="text-sm text-muted-foreground cursor-pointer"
@@ -481,7 +509,11 @@ const submitReports = async () => {
                 :disabled="isSubmitting"
               >
                 <Save class="w-4 h-4 mr-2" />
-                {{ isSubmitting ? "Submitting..." : `Submit ${records.length} Report${records.length !== 1 ? 's' : ''}` }}
+                {{
+                  isSubmitting
+                    ? "Submitting..."
+                    : `Submit ${records.length} Report${records.length !== 1 ? "s" : ""}`
+                }}
               </Button>
             </div>
           </CardContent>

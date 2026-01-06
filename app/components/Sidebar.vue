@@ -18,7 +18,14 @@ import {
   FolderKanban,
 } from "lucide-vue-next";
 import { authClient } from "~/lib/auth";
-import { isAdmin, canManageHR, canManageUsers, canManageBilling, canManageIntegrations, canManageSecurity } from "~/utils";
+import {
+  isAdmin,
+  canManageHR,
+  canManageUsers,
+  canManageBilling,
+  canManageIntegrations,
+  canManageSecurity,
+} from "~/utils";
 defineProps<{
   collapsed: boolean;
 }>();
@@ -60,7 +67,11 @@ const navigationItems = computed(() => {
       icon: Building2,
       roles: ["ADMIN", "OWNER"],
       children: [
-        { name: "All Organizations", href: "/organizations", roles: ["ADMIN", "OWNER"] },
+        {
+          name: "All Organizations",
+          href: "/organizations",
+          roles: ["ADMIN", "OWNER"],
+        },
         { name: "Switch Workspace", href: "/workspace/switch" },
       ],
     },
@@ -86,10 +97,26 @@ const navigationItems = computed(() => {
       icon: Users,
       roles: ["ADMIN", "OWNER"],
       children: [
-        { name: "Staff Directory", href: "/hr/staff", roles: ["ADMIN", "OWNER"] },
-        { name: "Shifts & Schedules", href: "/hr/shifts", roles: ["ADMIN", "OWNER"] },
-        { name: "Leave Management", href: "/hr/leave", roles: ["ADMIN", "OWNER"] },
-        { name: "Appraisals", href: "/hr/appraisals", roles: ["ADMIN", "OWNER"] },
+        {
+          name: "Staff Directory",
+          href: "/hr/staff",
+          roles: ["ADMIN", "OWNER"],
+        },
+        {
+          name: "Shifts & Schedules",
+          href: "/hr/shifts",
+          roles: ["ADMIN", "OWNER"],
+        },
+        {
+          name: "Leave Management",
+          href: "/hr/leave",
+          roles: ["ADMIN", "OWNER"],
+        },
+        {
+          name: "Appraisals",
+          href: "/hr/appraisals",
+          roles: ["ADMIN", "OWNER"],
+        },
       ],
     },
     {
@@ -98,8 +125,16 @@ const navigationItems = computed(() => {
       children: [
         { name: "Attendance", href: "/attendance" },
         { name: "Live Attendance", href: "/attendance/live" },
-        { name: "Reports", href: "/attendance/reports", roles: ["ADMIN", "OWNER"] },
-        { name: "Biometric Devices", href: "/attendance/devices", roles: ["ADMIN", "OWNER"] },
+        {
+          name: "Reports",
+          href: "/attendance/reports",
+          roles: ["ADMIN", "OWNER"],
+        },
+        {
+          name: "Biometric Devices",
+          href: "/attendance/devices",
+          roles: ["ADMIN", "OWNER"],
+        },
       ],
     },
     {
@@ -108,8 +143,12 @@ const navigationItems = computed(() => {
       roles: ["ADMIN", "OWNER"],
       children: [
         { name: "Reports", href: "/reports" },
-        { name: "Templates", href: "/reports/templates", roles: ["ADMIN", "OWNER"] },
-        { name: "Analytics", href: "/reports/analytics", roles: ["ADMIN", "OWNER"] },
+        {
+          name: "Templates",
+          href: "/reports/templates",
+          roles: ["ADMIN", "OWNER"],
+        },
+        //   { name: "Analytics", href: "/reports/analytics", roles: ["ADMIN", "OWNER"] },
       ],
     },
     {
