@@ -87,11 +87,11 @@ const { data: departments } = await useLazyFetch(
 );
 
 const filteredReports = computed(() => {
-  let filtered = reports.value || [];
+  let filtered = reports.value?.filter((r: any) => r.status === "SUBMITTED") || [];
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter((r: any) => 
+    filtered = filtered.filter((r: any) =>
       r.title?.toLowerCase().includes(query) ||
       r.template?.name?.toLowerCase().includes(query) ||
       r.submittedBy?.name?.toLowerCase().includes(query)
@@ -151,12 +151,13 @@ const formatDate = (dateString: string) => {
 
 const stats = computed(() => {
   const allReports = reports.value || [];
+  const submittedReports = allReports.filter((r: any) => r.status === "SUBMITTED");
   return {
-    total: allReports.length,
-    approved: allReports.filter((r: any) => r.status === "APPROVED").length,
-    pending: allReports.filter((r: any) => ["SUBMITTED", "IN_PROGRESS"].includes(r.status)).length,
-    rejected: allReports.filter((r: any) => r.status === "REJECTED").length,
-    draft: allReports.filter((r: any) => r.status === "DRAFT").length,
+    total: submittedReports.length,
+    approved: submittedReports.filter((r: any) => r.status === "APPROVED").length,
+    pending: submittedReports.filter((r: any) => ["SUBMITTED", "IN_PROGRESS"].includes(r.status)).length,
+    rejected: submittedReports.filter((r: any) => r.status === "REJECTED").length,
+    draft: submittedReports.filter((r: any) => r.status === "DRAFT").length,
   };
 });
 
@@ -231,7 +232,7 @@ const rejectReport = async (reportId: string) => {
       <div>
         <h1 class="text-3xl font-bold text-foreground">Submitted Reports</h1>
         <p class="text-muted-foreground mt-1">
-          {{ filteredReports.length }} of {{ stats.total }} reports
+          {{ filteredReports.length }} submitted report{{ filteredReports.length !== 1 ? "s" : "" }}
         </p>
       </div>
       <div class="flex items-center gap-3">

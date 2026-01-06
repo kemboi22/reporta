@@ -233,7 +233,6 @@ watch(
         variant="ghost"
         size="icon"
         @click="$emit('toggle-sidebar')"
-        class="lg:hidden"
       >
         <Menu class="h-5 w-5" />
       </Button>
