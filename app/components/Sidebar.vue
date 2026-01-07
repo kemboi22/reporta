@@ -148,6 +148,11 @@ const navigationItems = computed(() => {
           href: "/reports/templates",
           roles: ["ADMIN", "OWNER"],
         },
+        {
+          name: "Submitted Reports",
+          href: "/reports/submitted",
+          roles: ["ADMIN", "OWNER"],
+        },
         //   { name: "Analytics", href: "/reports/analytics", roles: ["ADMIN", "OWNER"] },
       ],
     },
