@@ -17,6 +17,14 @@ import {
   Trash2,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 definePageMeta({
   layout: "dashboard",
@@ -33,6 +41,9 @@ const isLoading = ref(false);
 const expandedRows = ref<Set<string>>(new Set());
 const selectedReports = ref<Set<string>>(new Set());
 const isApproving = ref(false);
+const isDeleting = ref(false);
+const showDeleteDialog = ref(false);
+const reportToDelete = ref<string | null>(null);
 
 const dateFrom = ref("");
 const dateTo = ref("");
@@ -243,6 +254,31 @@ const bulkReject = async () => {
     toast.error(error.data?.message || "Failed to reject records");
   } finally {
     isApproving.value = false;
+  }
+};
+
+const confirmDeleteReport = (reportId: string) => {
+  reportToDelete.value = reportId;
+  showDeleteDialog.value = true;
+};
+
+const deleteReport = async () => {
+  if (!reportToDelete.value) return;
+
+  isDeleting.value = true;
+  try {
+    await $fetch(`/api/${organizationId}/reports/${reportToDelete.value}`, {
+      method: "DELETE",
+    });
+    toast.success("Report deleted successfully");
+    showDeleteDialog.value = false;
+    reportToDelete.value = null;
+    await refreshReports();
+  } catch (error: any) {
+    console.error("Failed to delete report:", error);
+    toast.error(error.data?.message || "Failed to delete report");
+  } finally {
+    isDeleting.value = false;
   }
 };
 
@@ -590,6 +626,16 @@ const exportToCSV = () => {
                       >
                         <Eye class="h-4 w-4" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        class="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        @click="confirmDeleteReport(report.id)"
+                        :disabled="isDeleting"
+                      >
+                        <Trash2 v-if="!isDeleting" class="h-4 w-4" />
+                        <RefreshCw v-else class="h-4 w-4 animate-spin" />
+                      </Button>
                     </TableCell>
                   </TableRow>
 
@@ -625,5 +671,30 @@ const exportToCSV = () => {
         </div>
       </CardContent>
     </Card>
+
+    <Dialog v-model:open="showDeleteDialog">
+      <DialogContent class="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete Report</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete this report? This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" @click="showDeleteDialog = false">
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            @click="deleteReport"
+            :disabled="isDeleting"
+          >
+            <RefreshCw v-if="isDeleting" class="h-4 w-4 mr-2 animate-spin" />
+            <Trash2 v-else class="h-4 w-4 mr-2" />
+            {{ isDeleting ? "Deleting..." : "Delete" }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

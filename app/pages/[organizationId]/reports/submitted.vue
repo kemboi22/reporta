@@ -5,6 +5,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -29,6 +37,7 @@ import {
   Check,
   X,
   Table as TableIcon,
+  Trash2,
 } from "lucide-vue-next";
 import { definePageMeta } from "#imports";
 import { toast } from "vue-sonner";
@@ -61,6 +70,9 @@ const { data: session } = await authClient.useSession();
 
 const isApproving = ref<string | null>(null);
 const isRejecting = ref<string | null>(null);
+const isDeleting = ref<string | null>(null);
+const showDeleteDialog = ref(false);
+const reportToDelete = ref<string | null>(null);
 
 const { data: reports, refresh: refreshReports } = await useLazyFetch(
   `/api/${organizationId}/reports`,
@@ -222,6 +234,31 @@ const rejectReport = async (reportId: string) => {
     toast.error("Failed to reject report");
   } finally {
     isRejecting.value = null;
+  }
+};
+
+const confirmDeleteReport = (reportId: string) => {
+  reportToDelete.value = reportId;
+  showDeleteDialog.value = true;
+};
+
+const deleteReport = async () => {
+  if (!reportToDelete.value) return;
+
+  isDeleting.value = reportToDelete.value;
+  try {
+    await $fetch(`/api/${organizationId}/reports/${reportToDelete.value}`, {
+      method: "DELETE",
+    });
+    toast.success("Report deleted successfully");
+    showDeleteDialog.value = false;
+    reportToDelete.value = null;
+    refreshReports();
+  } catch (error) {
+    console.error("Failed to delete report:", error);
+    toast.error("Failed to delete report");
+  } finally {
+    isDeleting.value = null;
   }
 };
 </script>
@@ -516,6 +553,15 @@ const rejectReport = async (reportId: string) => {
             >
               <Download class="h-3 w-3" />
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              class="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+              @click.stop="confirmDeleteReport(report.id)"
+              :disabled="isDeleting === report.id"
+            >
+              <Trash2 class="h-3 w-3" />
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -603,6 +649,16 @@ const rejectReport = async (reportId: string) => {
                       <Clock v-else class="h-4 w-4 animate-spin" />
                     </Button>
                   </template>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    class="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    @click.stop="confirmDeleteReport(report.id)"
+                    :disabled="isDeleting === report.id"
+                  >
+                    <Trash2 v-if="isDeleting !== report.id" class="h-4 w-4" />
+                    <Clock v-else class="h-4 w-4 animate-spin" />
+                  </Button>
                 </div>
               </TableCell>
             </TableRow>
@@ -610,5 +666,30 @@ const rejectReport = async (reportId: string) => {
         </Table>
       </CardContent>
     </Card>
+
+    <Dialog v-model:open="showDeleteDialog">
+      <DialogContent class="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete Report</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete this report? This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" @click="showDeleteDialog = false">
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            @click="deleteReport"
+            :disabled="isDeleting !== null"
+          >
+            <Trash2 v-if="isDeleting !== null" class="h-4 w-4 mr-2 animate-spin" />
+            <Trash2 v-else class="h-4 w-4 mr-2" />
+            {{ isDeleting !== null ? "Deleting..." : "Delete" }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
