@@ -1,24 +1,4 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Search,
   Download,
@@ -42,14 +22,6 @@ import {
 import { definePageMeta } from "#imports";
 import { toast } from "vue-sonner";
 import { authClient } from "~/lib/auth";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 definePageMeta({
   layout: "dashboard",
@@ -66,7 +38,7 @@ const selectedDepartment = ref("all");
 const sortBy = ref("newest");
 const viewMode = ref<"grid" | "list" | "table">("grid");
 
-const { data: session } = await authClient.useSession();
+const session = authClient.useSession();
 
 const isApproving = ref<string | null>(null);
 const isRejecting = ref<string | null>(null);
@@ -99,19 +71,24 @@ const { data: departments } = await useLazyFetch(
 );
 
 const filteredReports = computed(() => {
-  let filtered = reports.value?.filter((r: any) => r.status === "SUBMITTED") || [];
+  let filtered = reports.value?.filter((r: any) =>
+    ["SUBMITTED", "APPROVED", "REJECTED", "IN_PROGRESS"].includes(r.status)
+  ) || [];
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter((r: any) =>
-      r.title?.toLowerCase().includes(query) ||
-      r.template?.name?.toLowerCase().includes(query) ||
-      r.submittedBy?.name?.toLowerCase().includes(query)
+    filtered = filtered.filter(
+      (r: any) =>
+        r.title?.toLowerCase().includes(query) ||
+        r.template?.name?.toLowerCase().includes(query) ||
+        r.submittedBy?.name?.toLowerCase().includes(query),
     );
   }
 
   if (selectedTemplate.value !== "all") {
-    filtered = filtered.filter((r: any) => r.templateId === selectedTemplate.value);
+    filtered = filtered.filter(
+      (r: any) => r.templateId === selectedTemplate.value,
+    );
   }
 
   if (selectedStatus.value !== "all") {
@@ -119,7 +96,9 @@ const filteredReports = computed(() => {
   }
 
   if (selectedDepartment.value !== "all") {
-    filtered = filtered.filter((r: any) => r.departmentId === selectedDepartment.value);
+    filtered = filtered.filter(
+      (r: any) => r.departmentId === selectedDepartment.value,
+    );
   }
 
   if (selectedDateRange.value !== "all") {
@@ -130,9 +109,15 @@ const filteredReports = computed(() => {
   }
 
   if (sortBy.value === "newest") {
-    filtered.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    filtered.sort(
+      (a: any, b: any) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
   } else if (sortBy.value === "oldest") {
-    filtered.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    filtered.sort(
+      (a: any, b: any) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
   }
 
   return filtered;
@@ -140,13 +125,41 @@ const filteredReports = computed(() => {
 
 const getStatusInfo = (status: string) => {
   const info: Record<string, any> = {
-    DRAFT: { color: "bg-slate-100 text-slate-700 hover:bg-slate-100 border-slate-200", icon: Clock, label: "Draft" },
-    IN_PROGRESS: { color: "bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200", icon: Clock, label: "In Progress" },
-    SUBMITTED: { color: "bg-purple-100 text-purple-700 hover:bg-purple-100 border-purple-200", icon: FileText, label: "Submitted" },
-    APPROVED: { color: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200", icon: CheckCircle2, label: "Approved" },
-    REJECTED: { color: "bg-red-100 text-red-700 hover:bg-red-100 border-red-200", icon: AlertCircle, label: "Rejected" },
+    DRAFT: {
+      color: "bg-slate-100 text-slate-700 hover:bg-slate-100 border-slate-200",
+      icon: Clock,
+      label: "Draft",
+    },
+    IN_PROGRESS: {
+      color: "bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200",
+      icon: Clock,
+      label: "In Progress",
+    },
+    SUBMITTED: {
+      color:
+        "bg-purple-100 text-purple-700 hover:bg-purple-100 border-purple-200",
+      icon: FileText,
+      label: "Submitted",
+    },
+    APPROVED: {
+      color:
+        "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200",
+      icon: CheckCircle2,
+      label: "Approved",
+    },
+    REJECTED: {
+      color: "bg-red-100 text-red-700 hover:bg-red-100 border-red-200",
+      icon: AlertCircle,
+      label: "Rejected",
+    },
   };
-  return info[status] || { color: "bg-slate-100 text-slate-700", icon: FileText, label: status };
+  return (
+    info[status] || {
+      color: "bg-slate-100 text-slate-700",
+      icon: FileText,
+      label: status,
+    }
+  );
 };
 
 const formatDate = (dateString: string) => {
@@ -154,7 +167,7 @@ const formatDate = (dateString: string) => {
   const now = new Date();
   const diff = now.getTime() - date.getTime();
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  
+
   if (days === 0) return "Today";
   if (days === 1) return "Yesterday";
   if (days < 7) return `${days} days ago`;
@@ -163,13 +176,18 @@ const formatDate = (dateString: string) => {
 
 const stats = computed(() => {
   const allReports = reports.value || [];
-  const submittedReports = allReports.filter((r: any) => r.status === "SUBMITTED");
+  const relevantReports = allReports.filter((r: any) =>
+    ["SUBMITTED", "APPROVED", "REJECTED", "IN_PROGRESS"].includes(r.status)
+  );
   return {
-    total: submittedReports.length,
-    approved: submittedReports.filter((r: any) => r.status === "APPROVED").length,
-    pending: submittedReports.filter((r: any) => ["SUBMITTED", "IN_PROGRESS"].includes(r.status)).length,
-    rejected: submittedReports.filter((r: any) => r.status === "REJECTED").length,
-    draft: submittedReports.filter((r: any) => r.status === "DRAFT").length,
+    total: relevantReports.length,
+    approved: relevantReports.filter((r: any) => r.status === "APPROVED")
+      .length,
+    pending: relevantReports.filter((r: any) =>
+      ["SUBMITTED", "IN_PROGRESS"].includes(r.status),
+    ).length,
+    rejected: relevantReports.filter((r: any) => r.status === "REJECTED")
+      .length,
   };
 });
 
@@ -182,11 +200,13 @@ const clearFilters = () => {
 };
 
 const hasActiveFilters = computed(() => {
-  return searchQuery.value || 
-    selectedTemplate.value !== "all" || 
-    selectedStatus.value !== "all" || 
-    selectedDepartment.value !== "all" || 
-    selectedDateRange.value !== "all";
+  return (
+    searchQuery.value ||
+    selectedTemplate.value !== "all" ||
+    selectedStatus.value !== "all" ||
+    selectedDepartment.value !== "all" ||
+    selectedDateRange.value !== "all"
+  );
 });
 
 const canApproveOrReject = (status: string) => {
@@ -194,19 +214,27 @@ const canApproveOrReject = (status: string) => {
 };
 
 const approveReport = async (reportId: string) => {
-  if (!session.value?.user?.id) {
+  if (!session.value?.data?.user?.id) {
     toast.error("You must be logged in to approve reports");
     return;
   }
 
   isApproving.value = reportId;
   try {
-    await $fetch(`/api/${organizationId}/reports/${reportId}/approve`, {
-      method: "POST",
-      body: { reviewedBy: session.value.user.id },
-    });
-    toast.success("Report approved successfully");
-    refreshReports();
+    const response = await $fetch<{ success: boolean; data?: any; error?: string }>(
+      `/api/${organizationId}/reports/${reportId}/approve`,
+      {
+        method: "POST",
+        body: { reviewedBy: session.value.data?.user.id },
+      },
+    );
+
+    if (response.success) {
+      toast.success("Report approved successfully");
+      refreshReports();
+    } else {
+      toast.error(response.error || "Failed to approve report");
+    }
   } catch (error) {
     console.error("Failed to approve report:", error);
     toast.error("Failed to approve report");
@@ -216,19 +244,27 @@ const approveReport = async (reportId: string) => {
 };
 
 const rejectReport = async (reportId: string) => {
-  if (!session.value?.user?.id) {
+  if (!session.value.data?.user?.id) {
     toast.error("You must be logged in to reject reports");
     return;
   }
 
   isRejecting.value = reportId;
   try {
-    await $fetch(`/api/${organizationId}/reports/${reportId}/reject`, {
-      method: "POST",
-      body: { reviewedBy: session.value.user.id },
-    });
-    toast.success("Report rejected successfully");
-    refreshReports();
+    const response = await $fetch<{ success: boolean; data?: any; error?: string }>(
+      `/api/${organizationId}/reports/${reportId}/reject`,
+      {
+        method: "POST",
+        body: { reviewedBy: session.value.data?.user.id },
+      },
+    );
+
+    if (response.success) {
+      toast.success("Report rejected successfully");
+      refreshReports();
+    } else {
+      toast.error(response.error || "Failed to reject report");
+    }
   } catch (error) {
     console.error("Failed to reject report:", error);
     toast.error("Failed to reject report");
@@ -265,11 +301,15 @@ const deleteReport = async () => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div
+      class="flex flex-col md:flex-row md:items-center justify-between gap-4"
+    >
       <div>
         <h1 class="text-3xl font-bold text-foreground">Submitted Reports</h1>
         <p class="text-muted-foreground mt-1">
-          {{ filteredReports.length }} submitted report{{ filteredReports.length !== 1 ? "s" : "" }}
+          {{ filteredReports.length }} submitted report{{
+            filteredReports.length !== 1 ? "s" : ""
+          }}
         </p>
       </div>
       <div class="flex items-center gap-3">
@@ -317,7 +357,9 @@ const deleteReport = async () => {
               <p class="text-sm text-muted-foreground mb-1">Total Reports</p>
               <p class="text-2xl font-bold">{{ stats.total }}</p>
             </div>
-            <div class="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center">
+            <div
+              class="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center"
+            >
               <FileText class="h-5 w-5 text-slate-600" />
             </div>
           </div>
@@ -328,9 +370,13 @@ const deleteReport = async () => {
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-muted-foreground mb-1">Approved</p>
-              <p class="text-2xl font-bold text-emerald-600">{{ stats.approved }}</p>
+              <p class="text-2xl font-bold text-emerald-600">
+                {{ stats.approved }}
+              </p>
             </div>
-            <div class="h-10 w-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+            <div
+              class="h-10 w-10 rounded-lg bg-emerald-100 flex items-center justify-center"
+            >
               <CheckCircle2 class="h-5 w-5 text-emerald-600" />
             </div>
           </div>
@@ -341,9 +387,13 @@ const deleteReport = async () => {
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-muted-foreground mb-1">Pending</p>
-              <p class="text-2xl font-bold text-blue-600">{{ stats.pending }}</p>
+              <p class="text-2xl font-bold text-blue-600">
+                {{ stats.pending }}
+              </p>
             </div>
-            <div class="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+            <div
+              class="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center"
+            >
               <Clock class="h-5 w-5 text-blue-600" />
             </div>
           </div>
@@ -354,9 +404,13 @@ const deleteReport = async () => {
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-muted-foreground mb-1">Rejected</p>
-              <p class="text-2xl font-bold text-red-600">{{ stats.rejected }}</p>
+              <p class="text-2xl font-bold text-red-600">
+                {{ stats.rejected }}
+              </p>
             </div>
-            <div class="h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center">
+            <div
+              class="h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center"
+            >
               <AlertCircle class="h-5 w-5 text-red-600" />
             </div>
           </div>
@@ -369,7 +423,9 @@ const deleteReport = async () => {
               <p class="text-sm text-muted-foreground mb-1">Drafts</p>
               <p class="text-2xl font-bold text-slate-600">{{ stats.draft }}</p>
             </div>
-            <div class="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center">
+            <div
+              class="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center"
+            >
               <FileText class="h-5 w-5 text-slate-600" />
             </div>
           </div>
@@ -381,7 +437,9 @@ const deleteReport = async () => {
       <CardContent class="p-6">
         <div class="flex flex-col lg:flex-row gap-4">
           <div class="relative flex-1">
-            <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search
+              class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+            />
             <Input
               v-model="searchQuery"
               placeholder="Search reports, templates, or users..."
@@ -463,20 +521,35 @@ const deleteReport = async () => {
       </CardContent>
     </Card>
 
-    <div v-if="!filteredReports || filteredReports.length === 0" class="text-center py-16">
-      <div class="inline-flex h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-4">
+    <div
+      v-if="!filteredReports || filteredReports.length === 0"
+      class="text-center py-16"
+    >
+      <div
+        class="inline-flex h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-4"
+      >
         <FileText class="h-10 w-10 text-muted-foreground" />
       </div>
       <h3 class="text-lg font-semibold mb-2">No reports found</h3>
       <p class="text-muted-foreground mb-6">
-        {{ hasActiveFilters ? "Try adjusting your filters or search query." : "No reports have been submitted yet." }}
+        {{
+          hasActiveFilters
+            ? "Try adjusting your filters or search query."
+            : "No reports have been submitted yet."
+        }}
       </p>
-      <Button v-if="!hasActiveFilters" @click="navigateTo(`/${organizationId}/reports/templates`)">
+      <Button
+        v-if="!hasActiveFilters"
+        @click="navigateTo(`/${organizationId}/reports/templates`)"
+      >
         Create a Report
       </Button>
     </div>
 
-    <div v-else-if="viewMode === 'grid'" class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+    <div
+      v-else-if="viewMode === 'grid'"
+      class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+    >
       <Card
         v-for="report in filteredReports"
         :key="report.id"
@@ -485,16 +558,23 @@ const deleteReport = async () => {
       >
         <CardContent class="p-5">
           <div class="flex items-start justify-between mb-3">
-            <div class="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+            <div
+              class="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors"
+            >
               <FileText class="h-5 w-5 text-primary" />
             </div>
             <Badge :class="getStatusInfo(report.status).color" class="text-xs">
-              <component :is="getStatusInfo(report.status).icon" class="w-3 h-3 mr-1" />
+              <component
+                :is="getStatusInfo(report.status).icon"
+                class="w-3 h-3 mr-1"
+              />
               {{ getStatusInfo(report.status).label }}
             </Badge>
           </div>
 
-          <h4 class="font-semibold text-foreground line-clamp-1 mb-1">{{ report.title }}</h4>
+          <h4 class="font-semibold text-foreground line-clamp-1 mb-1">
+            {{ report.title }}
+          </h4>
           <p class="text-sm text-muted-foreground mb-3 line-clamp-1">
             {{ report.template?.name || "Report" }}
           </p>
@@ -502,9 +582,14 @@ const deleteReport = async () => {
           <div class="space-y-2 mb-4">
             <div class="flex items-center gap-2 text-sm text-muted-foreground">
               <User class="w-4 h-4" />
-              <span class="truncate">{{ report.submittedBy?.name || "Unknown" }}</span>
+              <span class="truncate">{{
+                report.submittedBy?.name || "Unknown"
+              }}</span>
             </div>
-            <div v-if="report.department" class="flex items-center gap-2 text-sm text-muted-foreground">
+            <div
+              v-if="report.department"
+              class="flex items-center gap-2 text-sm text-muted-foreground"
+            >
               <Building class="w-4 h-4" />
               <span class="truncate">{{ report.department.name }}</span>
             </div>
@@ -519,7 +604,9 @@ const deleteReport = async () => {
               variant="outline"
               size="sm"
               class="flex-1"
-              @click.stop="navigateTo(`/${organizationId}/reports/view/${report.id}`)"
+              @click.stop="
+                navigateTo(`/${organizationId}/reports/view/${report.id}`)
+              "
             >
               <Eye class="h-3 w-3 mr-1" />
               View
@@ -545,12 +632,7 @@ const deleteReport = async () => {
                 <X class="h-3 w-3" />
               </Button>
             </template>
-            <Button
-              v-else
-              variant="outline"
-              size="sm"
-              @click.stop
-            >
+            <Button v-else variant="outline" size="sm" @click.stop>
               <Download class="h-3 w-3" />
             </Button>
             <Button
@@ -587,11 +669,15 @@ const deleteReport = async () => {
               v-for="report in filteredReports"
               :key="report.id"
               class="cursor-pointer"
-              @click="navigateTo(`/${organizationId}/reports/view/${report.id}`)"
+              @click="
+                navigateTo(`/${organizationId}/reports/view/${report.id}`)
+              "
             >
               <TableCell>
                 <div class="flex items-center gap-3">
-                  <div class="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <div
+                    class="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center"
+                  >
                     <FileText class="h-5 w-5 text-primary" />
                   </div>
                   <span class="font-medium">{{ report.title }}</span>
@@ -599,8 +685,14 @@ const deleteReport = async () => {
               </TableCell>
               <TableCell>{{ report.template?.name || "Report" }}</TableCell>
               <TableCell>
-                <Badge :class="getStatusInfo(report.status).color" class="text-xs">
-                  <component :is="getStatusInfo(report.status).icon" class="w-3 h-3 mr-1" />
+                <Badge
+                  :class="getStatusInfo(report.status).color"
+                  class="text-xs"
+                >
+                  <component
+                    :is="getStatusInfo(report.status).icon"
+                    class="w-3 h-3 mr-1"
+                  />
                   {{ getStatusInfo(report.status).label }}
                 </Badge>
               </TableCell>
@@ -623,7 +715,9 @@ const deleteReport = async () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    @click.stop="navigateTo(`/${organizationId}/reports/view/${report.id}`)"
+                    @click.stop="
+                      navigateTo(`/${organizationId}/reports/view/${report.id}`)
+                    "
                   >
                     <Eye class="h-4 w-4" />
                   </Button>
@@ -672,7 +766,8 @@ const deleteReport = async () => {
         <DialogHeader>
           <DialogTitle>Delete Report</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this report? This action cannot be undone.
+            Are you sure you want to delete this report? This action cannot be
+            undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -684,7 +779,10 @@ const deleteReport = async () => {
             @click="deleteReport"
             :disabled="isDeleting !== null"
           >
-            <Trash2 v-if="isDeleting !== null" class="h-4 w-4 mr-2 animate-spin" />
+            <Trash2
+              v-if="isDeleting !== null"
+              class="h-4 w-4 mr-2 animate-spin"
+            />
             <Trash2 v-else class="h-4 w-4 mr-2" />
             {{ isDeleting !== null ? "Deleting..." : "Delete" }}
           </Button>
