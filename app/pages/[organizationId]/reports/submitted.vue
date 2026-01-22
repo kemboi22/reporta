@@ -18,6 +18,8 @@ import {
   X,
   Table as TableIcon,
   Trash2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-vue-next";
 import { definePageMeta } from "#imports";
 import { toast } from "vue-sonner";
@@ -46,13 +48,25 @@ const isDeleting = ref<string | null>(null);
 const showDeleteDialog = ref(false);
 const reportToDelete = ref<string | null>(null);
 
-const { data: reports, refresh: refreshReports } = await useLazyFetch(
-  `/api/${organizationId}/reports`,
+const page = ref(1);
+const limit = ref(12);
+
+const { data: reportsResponse, refresh: refreshReports } = await useLazyFetch(
+  () => `/api/${organizationId}/reports?page=${page.value}&limit=${limit.value}`,
   {
     key: `reports-${organizationId}`,
-    transform: (data) => data || [],
   },
 );
+
+const reports = computed(() => reportsResponse.value?.data || []);
+const paginationMeta = computed(() => reportsResponse.value?.pagination || {
+  page: 1,
+  limit: 12,
+  total: 0,
+  totalPages: 1,
+  hasNextPage: false,
+  hasPrevPage: false,
+});
 
 const { data: templates, refresh: refreshTemplates } = await useLazyFetch(
   `/api/${organizationId}/templates`,
@@ -180,7 +194,7 @@ const stats = computed(() => {
     ["SUBMITTED", "APPROVED", "REJECTED", "IN_PROGRESS"].includes(r.status)
   );
   return {
-    total: relevantReports.length,
+    total: paginationMeta.value.total,
     approved: relevantReports.filter((r: any) => r.status === "APPROVED")
       .length,
     pending: relevantReports.filter((r: any) =>
@@ -307,8 +321,8 @@ const deleteReport = async () => {
       <div>
         <h1 class="text-3xl font-bold text-foreground">Submitted Reports</h1>
         <p class="text-muted-foreground mt-1">
-          {{ filteredReports.length }} submitted report{{
-            filteredReports.length !== 1 ? "s" : ""
+          {{ paginationMeta.total }} submitted report{{
+            paginationMeta.total !== 1 ? "s" : ""
           }}
         </p>
       </div>
@@ -520,6 +534,44 @@ const deleteReport = async () => {
         </div>
       </CardContent>
     </Card>
+
+    <div class="flex items-center justify-between">
+      <div class="text-sm text-muted-foreground">
+        Showing {{ (paginationMeta.page - 1) * paginationMeta.limit + 1 }} to 
+        {{ Math.min(paginationMeta.page * paginationMeta.limit, paginationMeta.total) }} 
+        of {{ paginationMeta.total }} reports
+      </div>
+      <div class="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          :disabled="!paginationMeta.hasPrevPage"
+          @click="page--; refreshReports()"
+        >
+          <ChevronLeft class="h-4 w-4" />
+        </Button>
+        <div class="flex items-center gap-1">
+          <Button
+            v-for="p in paginationMeta.totalPages"
+            :key="p"
+            variant="outline"
+            size="sm"
+            :class="{ 'bg-primary text-primary-foreground': p === paginationMeta.page }"
+            @click="page = p; refreshReports()"
+          >
+            {{ p }}
+          </Button>
+        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          :disabled="!paginationMeta.hasNextPage"
+          @click="page++; refreshReports()"
+        >
+          <ChevronRight class="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
 
     <div
       v-if="!filteredReports || filteredReports.length === 0"

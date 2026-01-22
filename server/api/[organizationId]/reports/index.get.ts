@@ -1,12 +1,23 @@
-import { getReports } from "~~/server/services";
+import { getReports, getReportCount } from "~~/server/services";
 
 export default defineEventHandler(async (event) => {
   const organizationId = getRouterParam(event, "organizationId");
-  const { skip, take, status, workspaceId, templateId, orderBy } = getQuery(event);
+  const { 
+    page = "1", 
+    limit = "12", 
+    status, 
+    workspaceId, 
+    templateId,
+    search,
+    sortBy = "newest" 
+  } = getQuery(event);
   
   if (!organizationId) {
     throw createError({ statusCode: 400, message: "Organization ID is required" });
   }
+
+  const skip = (Number(page) - 1) * Number(limit);
+  const take = Number(limit);
 
   const where: any = { workspace: { organizationId } };
   
@@ -19,24 +30,44 @@ export default defineEventHandler(async (event) => {
   }
   
   if (status) {
-    where.status = status;
+    if (Array.isArray(status)) {
+      where.status = { in: status };
+    } else {
+      where.status = status;
+    }
   }
 
-  const sortOrder = orderBy === "asc" ? "asc" : "desc";
+  const [reports, total] = await Promise.all([
+    getReports({
+      skip,
+      take,
+      where,
+      include: {
+        workspace: true,
+        template: true,
+      },
+      orderBy: { createdAt: sortBy === "oldest" ? "asc" : "desc" },
+    }),
+    getReportCount({ where }),
+  ]);
 
-  const reports = await getReports({
-    skip: skip ? Number(skip) : undefined,
-    take: take ? Number(take) : undefined,
-    where,
-    include: {
-      workspace: true,
-      template: true,
+  const transformedReports = reports.map((report: any) => ({
+    ...report,
+    submittedBy: {
+      id: report.submittedBy,
+      name: report.submittedBy,
     },
-  });
+  }));
 
-  return reports.sort((a: any, b: any) => {
-    const dateA = new Date(a.createdAt).getTime();
-    const dateB = new Date(b.createdAt).getTime();
-    return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
-  });
+  return {
+    data: transformedReports,
+    pagination: {
+      page: Number(page),
+      limit: Number(limit),
+      total,
+      totalPages: Math.ceil(total / Number(limit)),
+      hasNextPage: skip + take < total,
+      hasPrevPage: Number(page) > 1,
+    },
+  };
 });

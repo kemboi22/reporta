@@ -54,6 +54,13 @@ export const getReports = async (params?: {
   });
 };
 
+export const getReportCount = async (params?: {
+  where?: Prisma.ReportWhereInput;
+}): Promise<number> => {
+  const { where } = params || {};
+  return prisma.report.count({ where });
+};
+
 export const createReport = async (
   data: ReportCreateInput,
 ): Promise<Report> => {
