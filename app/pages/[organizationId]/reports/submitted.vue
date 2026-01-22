@@ -1,4 +1,40 @@
 <script setup lang="ts">
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import {
+  Card,
+  CardContent,
+} from "~/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+import { Badge } from "~/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
+import { RangeCalendar } from "~/components/ui/range-calendar";
 import {
   Search,
   Download,
@@ -36,6 +72,7 @@ const searchQuery = ref("");
 const selectedTemplate = ref("all");
 const selectedStatus = ref("all");
 const selectedDateRange = ref("all");
+const customDateRange = ref<{ from: Date; to: Date } | undefined>(undefined);
 const selectedDepartment = ref("all");
 const sortBy = ref("newest");
 const viewMode = ref<"grid" | "list" | "table">("grid");
@@ -84,10 +121,38 @@ const { data: departments } = await useLazyFetch(
   },
 );
 
+const effectiveDateRange = computed(() => {
+  if (!selectedDateRange.value || selectedDateRange.value === "all") {
+    return null;
+  }
+  
+  if (selectedDateRange.value === "custom" && customDateRange.value?.from && customDateRange.value?.to) {
+    const fromDate = new Date(customDateRange.value.from);
+    const toDate = new Date(customDateRange.value.to);
+    toDate.setHours(23, 59, 59, 999);
+    return { from: fromDate, to: toDate };
+  } else if (!isNaN(parseInt(selectedDateRange.value))) {
+    const now = new Date();
+    const days = parseInt(selectedDateRange.value);
+    const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    return { from: cutoff, to: null };
+  }
+  return null;
+});
+
+watch([selectedDateRange, customDateRange], ([newRange, newCustom]) => {
+  console.log("Date filter changed:");
+  console.log("  selectedDateRange:", newRange);
+  console.log("  customDateRange:", newCustom);
+}, { deep: true });
+
 const filteredReports = computed(() => {
   let filtered = reports.value?.filter((r: any) =>
     ["SUBMITTED", "APPROVED", "REJECTED", "IN_PROGRESS"].includes(r.status)
   ) || [];
+
+  console.log("Initial filtered count:", filtered.length);
+  console.log("Applying filters with effectiveDateRange:", effectiveDateRange.value);
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
@@ -115,11 +180,26 @@ const filteredReports = computed(() => {
     );
   }
 
-  if (selectedDateRange.value !== "all") {
-    const now = new Date();
-    const days = parseInt(selectedDateRange.value);
-    const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-    filtered = filtered.filter((r: any) => new Date(r.createdAt) >= cutoff);
+  if (effectiveDateRange.value && effectiveDateRange.value.from) {
+    if (selectedDateRange.value === "custom" && effectiveDateRange.value.to) {
+      const { from, to } = effectiveDateRange.value;
+      const fromTime = from.getTime();
+      const toTime = to.getTime();
+      const beforeFilter = filtered.length;
+      filtered = filtered.filter((r: any) => {
+        const createdAt = new Date(r.createdAt);
+        return createdAt.getTime() >= fromTime && createdAt.getTime() <= toTime;
+      });
+      console.log("Custom date filter: removed", beforeFilter - filtered.length, "reports");
+    } else if (effectiveDateRange.value.from) {
+      const { from: cutoff } = effectiveDateRange.value;
+      const cutoffTime = cutoff.getTime();
+      const beforeFilter = filtered.length;
+      filtered = filtered.filter((r: any) => {
+        return new Date(r.createdAt).getTime() >= cutoffTime;
+      });
+      console.log("Preset date filter:", selectedDateRange.value, "days: removed", beforeFilter - filtered.length, "reports");
+    }
   }
 
   if (sortBy.value === "newest") {
@@ -134,6 +214,7 @@ const filteredReports = computed(() => {
     );
   }
 
+  console.log("Final filtered count:", filtered.length);
   return filtered;
 });
 
@@ -211,6 +292,7 @@ const clearFilters = () => {
   selectedStatus.value = "all";
   selectedDepartment.value = "all";
   selectedDateRange.value = "all";
+  customDateRange.value = undefined;
 };
 
 const hasActiveFilters = computed(() => {
@@ -219,9 +301,35 @@ const hasActiveFilters = computed(() => {
     selectedTemplate.value !== "all" ||
     selectedStatus.value !== "all" ||
     selectedDepartment.value !== "all" ||
-    selectedDateRange.value !== "all"
+    selectedDateRange.value !== "all" ||
+    (selectedDateRange.value === "custom" && customDateRange.value?.from && customDateRange.value?.to)
   );
 });
+
+const datePickerOpen = ref(false);
+const datePickerRef = ref<any>(null);
+
+const closeDatePicker = () => {
+  datePickerOpen.value = false;
+};
+
+const formatCustomDate = (date: Date) => {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const getDateRangeLabel = (value: string) => {
+  const labels: Record<string, string> = {
+    "7": "Last 7 Days",
+    "30": "Last 30 Days",
+    "90": "Last 90 Days",
+    "365": "Last Year",
+  };
+  return labels[value] || value;
+};
 
 const canApproveOrReject = (status: string) => {
   return ["SUBMITTED", "UNDER_REVIEW"].includes(status);
@@ -508,18 +616,68 @@ const deleteReport = async () => {
               </SelectContent>
             </Select>
 
-            <Select v-model="selectedDateRange">
-              <SelectTrigger class="w-[140px]">
-                <SelectValue placeholder="Date Range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Time</SelectItem>
-                <SelectItem value="7">Last 7 Days</SelectItem>
-                <SelectItem value="30">Last 30 Days</SelectItem>
-                <SelectItem value="90">Last 90 Days</SelectItem>
-                <SelectItem value="365">Last Year</SelectItem>
-              </SelectContent>
-            </Select>
+            <Popover v-model:open="datePickerOpen">
+              <PopoverTrigger as-child>
+                <Button
+                  variant="outline"
+                  :class="[
+                    'w-[180px] justify-start text-left font-normal',
+                    !selectedDateRange && 'text-muted-foreground'
+                  ]"
+                >
+                  <Calendar class="mr-2 h-4 w-4" />
+                  <template v-if="selectedDateRange === 'custom' && customDateRange?.from && customDateRange?.to">
+                    {{ formatCustomDate(customDateRange.from) }} - {{ formatCustomDate(customDateRange.to) }}
+                  </template>
+                  <template v-else-if="selectedDateRange !== 'all'">
+                    {{ getDateRangeLabel(selectedDateRange) }}
+                  </template>
+                  <template v-else>
+                    Date Range
+                  </template>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent class="w-auto p-0" align="start" :side-offset="4">
+                <div class="p-4 border-b">
+                  <Select
+                    v-model="selectedDateRange"
+                    @update:model-value="() => {
+                      if (selectedDateRange !== 'custom') {
+                        closeDatePicker();
+                      }
+                    }"
+                  >
+                    <SelectTrigger class="w-[180px]">
+                      <SelectValue placeholder="Select range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Time</SelectItem>
+                      <SelectItem value="7">Last 7 Days</SelectItem>
+                      <SelectItem value="30">Last 30 Days</SelectItem>
+                      <SelectItem value="90">Last 90 Days</SelectItem>
+                      <SelectItem value="365">Last Year</SelectItem>
+                      <SelectItem value="custom">Custom Range</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <RangeCalendar
+                  v-if="selectedDateRange === 'custom'"
+                  :model-value="customDateRange"
+                  :max="new Date()"
+                  initial-focus
+                  class="mt-2"
+                  @update:model-value="(range: any) => {
+                    customDateRange = range;
+                    if (range?.from && range?.to) {
+                      closeDatePicker();
+                    }
+                  }"
+                />
+                <div v-else class="p-4 text-center text-muted-foreground text-sm">
+                  Select "Custom Range" to choose specific dates
+                </div>
+              </PopoverContent>
+            </Popover>
 
             <Select v-model="sortBy">
               <SelectTrigger class="w-[130px]">

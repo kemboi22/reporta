@@ -37,7 +37,11 @@ const { data: templates } = await useLazyFetch(
 
 const { data: reports } = await useLazyFetch(`/api/${organizationId}/reports`, {
   key: `reports-count-${organizationId}`,
-  transform: (data) => data || [],
+  transform: (data) => {
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.data)) return data.data;
+    return [];
+  },
 });
 
 const filteredTemplates = computed(() => {
