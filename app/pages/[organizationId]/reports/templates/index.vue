@@ -67,7 +67,7 @@ const filteredTemplates = computed(() => {
 
 const getTemplateStats = (templateId: string) => {
   const templateReports =
-    reports.value?.filter((r: any) => r.templateId === templateId) || [];
+    reports.value?.data?.filter((r: any) => r.templateId === templateId) || [];
   return {
     total: templateReports.length,
     approved: templateReports.filter((r: any) => r.status === "APPROVED")
