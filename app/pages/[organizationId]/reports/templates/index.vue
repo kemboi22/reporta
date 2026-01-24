@@ -13,6 +13,7 @@ import {
   Calendar,
   Copy,
   Table as TableIcon,
+  BarChart3,
 } from "lucide-vue-next";
 import { NuxtLink } from "#components";
 import { isAdmin } from "~/utils";
@@ -298,6 +299,19 @@ const deleteTemplate = async (templateId: string) => {
                 class="px-3"
                 @click.stop="
                   navigateTo(
+                    `/${organizationId}/reports/analytics/${template.id}`,
+                  )
+                "
+              >
+                <BarChart3 class="h-3 w-3" />
+              </Button>
+              <Button
+                v-if="getTemplateStats(template.id).total > 0"
+                variant="outline"
+                size="sm"
+                class="px-3"
+                @click.stop="
+                  navigateTo(
                     `/${organizationId}/reports/templates/${template.id}`,
                   )
                 "
@@ -384,6 +398,19 @@ const deleteTemplate = async (templateId: string) => {
               >
                 <Play class="h-4 w-4 mr-2" />
                 Use Template
+              </Button>
+              <Button
+                v-if="getTemplateStats(template.id).total > 0"
+                variant="outline"
+                size="sm"
+                @click.stop="
+                  navigateTo(
+                    `/${organizationId}/reports/analytics/${template.id}`,
+                  )
+                "
+              >
+                <BarChart3 class="h-4 w-4 mr-2" />
+                Analytics
               </Button>
               <Button
                 v-if="getTemplateStats(template.id).total > 0"

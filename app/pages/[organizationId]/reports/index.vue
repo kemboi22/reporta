@@ -103,7 +103,7 @@ const getSectionsCount = (template: any) => {
 };
 
 const overallStats = computed(() => {
-  const allReports = reports.value || [];
+  const allReports = reports.value.data || reports.value || [];
   return {
     totalTemplates: templates.value?.length || 0,
     activeTemplates:

@@ -84,7 +84,7 @@ const tableColumns = computed(() => {
 });
 
 const filteredReports = computed(() => {
-  let filtered = reports.value || [];
+  let filtered = reports.value?.data || [];
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
@@ -132,7 +132,7 @@ const selectableReports = computed(() => {
 });
 
 const stats = computed(() => {
-  const allReports = reports.value || [];
+  const allReports = reports.value?.data || [];
   return {
     total: allReports.length,
     approved: allReports.filter((r: any) => r.status === "APPROVED").length,
@@ -317,6 +317,91 @@ const exportToCSV = () => {
 
   toast.success("Data exported successfully");
 };
+
+const fieldGroups = computed(() => {
+  return template.value?.fieldGroups || [];
+});
+
+const groupFieldMap = computed(() => {
+  const map: Record<string, any[]> = {};
+  templateFields.value.forEach((section: any) => {
+    section.fields.forEach((field: any) => {
+      if (field.groupId) {
+        if (!map[field.groupId]) {
+          map[field.groupId] = [];
+        }
+        map[field.groupId].push(field);
+      }
+    });
+  });
+  return map;
+});
+
+const groupAggregations = computed(() => {
+  return fieldGroups.value
+    .map((group: any) => {
+      const fields = groupFieldMap.value[group.id] || [];
+      const fieldStats: any[] = [];
+
+      fields.forEach((field: any) => {
+        const stats: any = {
+          id: field.id,
+          label: field.label || "Untitled",
+          type: field.type,
+          summable: field.summable || false,
+          countable: field.countable || false,
+          showInSummary: field.showInSummary || false,
+        };
+
+        if (stats.summable && field.type === "number") {
+          stats.sum = filteredReports.value.reduce(
+            (sum: number, report: any) => {
+              const value = report.content?.[field.id];
+              return sum + (typeof value === "number" ? value : 0);
+            },
+            0,
+          );
+        }
+
+        if (stats.countable) {
+          stats.count = filteredReports.value.reduce(
+            (count: number, report: any) => {
+              const value = report.content?.[field.id];
+              if (field.type === "checkbox") {
+                return count + (value === true ? 1 : 0);
+              }
+              return (
+                count +
+                (value !== undefined && value !== null && value !== "" ? 1 : 0)
+              );
+            },
+            0,
+          );
+        }
+
+        if (stats.showInSummary) {
+          stats.hasValueCount = filteredReports.value.reduce(
+            (count: number, report: any) => {
+              const value = report.content?.[field.id];
+              return (
+                count +
+                (value !== undefined && value !== null && value !== "" ? 1 : 0)
+              );
+            },
+            0,
+          );
+        }
+
+        fieldStats.push(stats);
+      });
+
+      return {
+        ...group,
+        fieldStats,
+      };
+    })
+    .filter((group: any) => group.fieldStats.length > 0);
+});
 </script>
 
 <template>
@@ -419,6 +504,112 @@ const exportToCSV = () => {
         </CardContent>
       </Card>
     </div>
+
+    <Card v-if="groupAggregations.length > 0">
+      <CardHeader>
+        <CardTitle class="flex items-center gap-2">
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+            ></path>
+          </svg>
+          Field Groups Summary
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div class="space-y-4">
+          <div
+            v-for="group in groupAggregations"
+            :key="group.id"
+            class="border rounded-lg p-4 bg-card"
+          >
+            <div class="mb-3">
+              <h3 class="font-semibold text-lg">
+                {{ group.name || "Untitled Group" }}
+              </h3>
+              <p v-if="group.description" class="text-sm text-muted-foreground">
+                {{ group.description }}
+              </p>
+            </div>
+
+            <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              <div
+                v-for="field in group.fieldStats"
+                :key="field.id"
+                class="bg-muted/50 rounded-lg p-3 space-y-2"
+              >
+                <div>
+                  <p class="font-medium text-sm">{{ field.label }}</p>
+                  <div class="flex items-center gap-1 mt-1">
+                    <Badge
+                      v-if="field.summable"
+                      variant="secondary"
+                      class="text-xs"
+                    >
+                      Sum
+                    </Badge>
+                    <Badge
+                      v-if="field.countable"
+                      variant="secondary"
+                      class="text-xs"
+                    >
+                      Count
+                    </Badge>
+                    <Badge
+                      v-if="field.showInSummary"
+                      variant="secondary"
+                      class="text-xs"
+                    >
+                      Summary
+                    </Badge>
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <div
+                    v-if="field.summable"
+                    class="flex items-center justify-between"
+                  >
+                    <span class="text-xs text-muted-foreground">Sum:</span>
+                    <span class="font-bold text-emerald-600">{{
+                      field.sum ?? 0
+                    }}</span>
+                  </div>
+                  <div
+                    v-if="field.countable"
+                    class="flex items-center justify-between"
+                  >
+                    <span class="text-xs text-muted-foreground">Count:</span>
+                    <span class="font-bold text-blue-600">{{
+                      field.count ?? 0
+                    }}</span>
+                  </div>
+                  <div
+                    v-if="field.showInSummary && !field.summable"
+                    class="flex items-center justify-between"
+                  >
+                    <span class="text-xs text-muted-foreground"
+                      >With Value:</span
+                    >
+                    <span class="font-bold text-purple-600">
+                      {{ field.hasValueCount ?? 0 }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
 
     <Card>
       <CardContent class="p-6">
@@ -610,7 +801,7 @@ const exportToCSV = () => {
                     <TableCell>
                       <div class="flex items-center gap-2">
                         <User class="h-4 w-4 text-muted-foreground" />
-                        <span>{{ report.submittedBy || "Unknown" }}</span>
+                        <span>{{ report.submittedBy?.name || "Unknown" }}</span>
                       </div>
                     </TableCell>
                     <TableCell>{{ formatDate(report.createdAt) }}</TableCell>
@@ -677,7 +868,8 @@ const exportToCSV = () => {
         <DialogHeader>
           <DialogTitle>Delete Report</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this report? This action cannot be undone.
+            Are you sure you want to delete this report? This action cannot be
+            undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

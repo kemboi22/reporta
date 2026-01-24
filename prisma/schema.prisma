@@ -462,6 +462,9 @@ model ReportTemplate {
   name        String
   description String?
   fields      Json // JSON schema for form fields
+  summaryConfig Json? // Configuration for which fields to sum/count/analyze
+  fieldGroups Json? // Field groups for combined analysis
+  feedbackTemplateId String? // Optional template to show after report submission as feedback form
   isActive    Boolean  @default(true)
   createdBy   String
   createdAt   DateTime @default(now())
@@ -469,6 +472,8 @@ model ReportTemplate {
 
   // Relations
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  feedbackTemplate ReportTemplate? @relation("FeedbackTemplate", fields: [feedbackTemplateId], references: [id], onDelete: SetNull)
+  feedbackForms ReportTemplate[] @relation("FeedbackTemplate")
   reports   Report[]
 
   @@map("report_templates")

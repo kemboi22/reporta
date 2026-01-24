@@ -12,46 +12,31 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Plus, Users, ArrowRight } from "lucide-vue-next";
 import { navigateTo } from "#app";
+import { definePageMeta } from "#imports";
 
-const workspaces = ref([
+definePageMeta({
+  layout: "dashboard",
+});
+
+const route = useRoute();
+const organizationId = route.params.organizationId as string;
+
+const { data: workspaces } = await useLazyFetch(
+  `/api/${organizationId}/workspaces`,
   {
-    id: 1,
-    name: "Acme Corporation",
-    subdomain: "acme",
-    role: "Admin",
-    logo: null,
-    members: 45,
-    active: true,
+    key: `workspaces-${organizationId}`,
+    transform: (data) => data || [],
   },
-  {
-    id: 2,
-    name: "TechStart Inc",
-    subdomain: "techstart",
-    role: "Manager",
-    logo: null,
-    members: 12,
-    active: false,
-  },
-  {
-    id: 3,
-    name: "Global Healthcare",
-    subdomain: "globalhealth",
-    role: "Staff",
-    logo: null,
-    members: 234,
-    active: false,
-  },
-]);
+);
 
 const switchingTo = ref<number | null>(null);
 
 const switchWorkspace = async (workspaceId: number) => {
   switchingTo.value = workspaceId;
 
-  // Simulate workspace switch with smooth transition
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
-  navigateTo("/dashboard");
+  navigateTo(`/${organizationId}/dashboard`);
 };
 
 const createNewWorkspace = () => {
@@ -82,7 +67,6 @@ const getRoleBadgeClass = (role: string) => {
 <template>
   <NuxtLayout name="dashboard">
     <div class="p-6 max-w-6xl mx-auto">
-      <!-- Header -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-foreground mb-2">Switch Workspace</h1>
         <p class="text-muted-foreground">
@@ -90,14 +74,12 @@ const getRoleBadgeClass = (role: string) => {
         </p>
       </div>
 
-      <!-- Enhanced workspace cards with shadcn-vue components -->
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <Card
           v-for="workspace in workspaces"
           :key="workspace.id"
           :class="[
             'cursor-pointer transition-all hover:shadow-lg group',
-            workspace.active && 'ring-2 ring-blue-600',
             switchingTo === workspace.id && 'opacity-50 pointer-events-none',
           ]"
           @click="switchWorkspace(workspace.id)"
@@ -111,50 +93,39 @@ const getRoleBadgeClass = (role: string) => {
                   {{ getInitials(workspace.name) }}
                 </AvatarFallback>
               </Avatar>
-              <Badge v-if="workspace.active" class="bg-blue-600 text-white">
-                Active
-              </Badge>
             </div>
             <CardTitle class="text-lg">{{ workspace.name }}</CardTitle>
             <CardDescription class="text-sm">
-              {{ workspace.subdomain }}.workforcepro.com
+              {{ workspace.slug }}.workforcepro.com
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users class="h-4 w-4" />
-                <span>{{ workspace.members }} members</span>
+                <span>{{ workspace.members?.length || 0 }} members</span>
               </div>
-              <Badge :class="getRoleBadgeClass(workspace.role)" class="text-xs">
-                {{ workspace.role }}
-              </Badge>
-            </div>
-
-            <!-- Loading indicator during switch -->
-            <div
-              v-if="switchingTo === workspace.id"
-              class="mt-4 flex items-center justify-center gap-2 text-sm text-blue-600"
-            >
               <div
-                class="h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"
-              ></div>
-              <span>Switching...</span>
-            </div>
-
-            <!-- Hover action indicator -->
-            <div
-              v-else
-              class="mt-4 flex items-center justify-between text-sm text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <span class="font-medium">Switch to workspace</span>
-              <ArrowRight class="h-4 w-4" />
+                v-if="switchingTo === workspace.id"
+                class="flex items-center justify-center gap-2 text-sm text-blue-600"
+              >
+                <div
+                  class="h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"
+                ></div>
+                <span>Switching...</span>
+              </div>
+              <div
+                v-else
+                class="flex items-center justify-between text-sm text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <span class="font-medium">Switch to workspace</span>
+                <ArrowRight class="h-4 w-4" />
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <!-- Enhanced create workspace card -->
       <Card
         class="border-2 border-dashed border-border hover:border-blue-400 hover:bg-blue-500/10 transition-all cursor-pointer group"
         @click="createNewWorkspace"

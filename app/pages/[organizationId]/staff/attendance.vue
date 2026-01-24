@@ -1,223 +1,170 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { definePageMeta } from "#imports"; // Declare definePageMeta
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Calendar as CalendarIcon,
-  TrendingUp,
-  Clock,
-  AlertCircle,
-} from "lucide-vue-next";
+import { ref, computed, watch } from "vue";
+import { definePageMeta, navigateTo } from "#imports";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Clock, Calendar, LogIn, LogOut } from "lucide-vue-next";
+import { toast } from "vue-sonner";
 
 definePageMeta({
   layout: "dashboard",
 });
 
-const currentMonth = ref("December 2024");
+const route = useRoute();
+const organizationId = route.params.organizationId as string;
 
-const attendanceData = ref([
-  { date: 1, status: "present", hours: 8, clockIn: "08:00", clockOut: "17:00" },
+const { data: staff } = await useLazyFetch(`/api/${organizationId}/staff`, {
+  key: `staff-${organizationId}`,
+  transform: (data) => data || [],
+});
+
+const { data: myAttendance, refresh: refreshMyAttendance } = await useLazyFetch(
+  `/api/${organizationId}/attendance/me`,
   {
-    date: 2,
-    status: "present",
-    hours: 8.5,
-    clockIn: "07:55",
-    clockOut: "17:25",
+    key: `my-attendance-${organizationId}`,
+    transform: (data) => data || [],
   },
-  { date: 3, status: "late", hours: 7.5, clockIn: "08:30", clockOut: "17:00" },
-  { date: 4, status: "present", hours: 8, clockIn: "08:00", clockOut: "17:00" },
-  { date: 5, status: "present", hours: 8, clockIn: "08:05", clockOut: "17:05" },
-  { date: 6, status: "leave", hours: 0, clockIn: "-", clockOut: "-" },
-  { date: 7, status: "leave", hours: 0, clockIn: "-", clockOut: "-" },
-  // ... more days
-]);
+);
 
-const stats = ref({
-  attendanceRate: 95,
-  daysPresent: 19,
-  totalDays: 20,
-  lateArrivals: 1,
-  totalHours: 152,
+const { data: attendances, refresh: refreshAttendances } = await useLazyFetch(`/api/${organizationId}/attendance`, {
+  key: `attendance-${organizationId}`,
+  transform: (data) => data || [],
+});
+
+const { data: tasks } = await useLazyFetch(`/api/${organizationId}/tasks`, {
+  key: `tasks-${organizationId}`,
+  transform: (data) => data || [],
+});
+
+const isClockedIn = computed(() => {
+  if (!myAttendance.value || myAttendance.value.length === 0) return false;
+  return myAttendance.value.some((a: any) => !a.checkOut);
+});
+
+const lastAttendance = computed(() => {
+  if (!myAttendance.value || myAttendance.value.length === 0) return null;
+  return myAttendance.value[0];
+});
+
+const isLoading = ref(false);
+
+const clockIn = async () => {
+  isLoading.value = true;
+  try {
+    await $fetch(`/api/${organizationId}/attendance`, {
+      method: "POST",
+      body: {},
+    });
+    await refreshMyAttendance();
+    await refreshAttendances();
+    toast.success("Successfully clocked in");
+  } catch (error: any) {
+    toast.error(error.message || "Failed to clock in");
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const clockOut = async () => {
+  if (!lastAttendance.value) return;
+  isLoading.value = true;
+  try {
+    await $fetch(`/api/${organizationId}/attendance/${lastAttendance.value.id}/checkout`, {
+      method: "POST",
+      body: {},
+    });
+    await refreshMyAttendance();
+    await refreshAttendances();
+    toast.success("Successfully clocked out");
+  } catch (error: any) {
+    toast.error(error.message || "Failed to clock out");
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const stats = computed(() => {
+  const presentToday = attendances.value?.filter((a: any) => a.status === "PRESENT")?.length || 0;
+  const lateToday = attendances.value?.filter((a: any) => a.status === "LATE")?.length || 0;
+  return {
+    present: presentToday,
+    late: lateToday,
+  };
 });
 </script>
 
 <template>
-  <div class="p-6 space-y-6">
-    <div>
-      <h1 class="text-3xl font-bold text-foreground">My Attendance</h1>
-      <p class="text-muted-foreground mt-1">Track your attendance and working hours</p>
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-foreground">Attendance</h1>
+        <p class="text-muted-foreground mt-1">Your attendance records</p>
+      </div>
+      <div class="flex gap-3">
+        <Button
+          v-if="!isClockedIn"
+          @click="clockIn"
+          :disabled="isLoading"
+          class="bg-emerald-500 hover:bg-emerald-600 text-white"
+        >
+          <LogIn class="h-4 w-4 mr-2" />
+          Clock In
+        </Button>
+        <Button
+          v-else
+          @click="clockOut"
+          :disabled="isLoading"
+          class="bg-red-500 hover:bg-red-600 text-white"
+        >
+          <LogOut class="h-4 w-4 mr-2" />
+          Clock Out
+        </Button>
+        <Button @click="navigateTo(`/${organizationId}/attendance/reports`)">
+          <Calendar class="h-4 w-4 mr-2" />
+          View Reports
+        </Button>
+      </div>
     </div>
 
-    <!-- Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <Card>
-        <CardContent class="p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-muted-foreground">Attendance Rate</p>
-              <p class="text-3xl font-bold text-green-600">
-                {{ stats.attendanceRate }}%
-              </p>
-            </div>
-            <div
-              class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center"
-            >
-              <TrendingUp class="h-6 w-6 text-green-600" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent class="p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-muted-foreground">Days Present</p>
-              <p class="text-3xl font-bold text-foreground">
-                {{ stats.daysPresent }}/{{ stats.totalDays }}
-              </p>
-            </div>
-            <div
-              class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center"
-            >
-              <CalendarIcon class="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent class="p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-muted-foreground">Late Arrivals</p>
-              <p class="text-3xl font-bold text-orange-600">
-                {{ stats.lateArrivals }}
-              </p>
-            </div>
-            <div
-              class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center"
-            >
-              <AlertCircle class="h-6 w-6 text-orange-600" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent class="p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-muted-foreground">Total Hours</p>
-              <p class="text-3xl font-bold text-purple-600">
-                {{ stats.totalHours }}h
-              </p>
-            </div>
-            <div
-              class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center"
-            >
-              <Clock class="h-6 w-6 text-purple-600" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div v-if="isClockedIn && lastAttendance" class="bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 bg-emerald-500 rounded-full flex items-center justify-center">
+          <Clock class="h-5 w-5 text-white" />
+        </div>
+        <div>
+          <p class="font-medium text-emerald-700 dark:text-emerald-300">You are currently clocked in</p>
+          <p class="text-sm text-emerald-600 dark:text-emerald-400">
+            Since {{ new Date(lastAttendance.checkIn).toLocaleTimeString() }}
+          </p>
+        </div>
+      </div>
     </div>
 
-    <!-- Calendar & History -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>{{ currentMonth }}</CardTitle>
-          <CardDescription>Your attendance calendar</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div class="grid grid-cols-7 gap-2">
-            <div
-              v-for="day in ['S', 'M', 'T', 'W', 'T', 'F', 'S']"
-              :key="day"
-              class="text-center text-sm font-medium text-muted-foreground p-2"
-            >
-              {{ day }}
+    <div class="grid md:grid-cols-4 gap-6">
+      <Card class="border-border">
+        <CardContent class="p-6">
+          <div class="flex items-start justify-between">
+            <div class="h-12 w-12 bg-emerald-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Clock class="h-6 w-6 text-emerald-500" />
             </div>
-            <div
-              v-for="item in attendanceData.slice(0, 21)"
-              :key="item.date"
-              :class="[
-                'aspect-square rounded-lg flex items-center justify-center text-sm font-medium cursor-pointer transition-colors',
-                item.status === 'present' &&
-                  'bg-green-100 text-green-700 hover:bg-green-200',
-                item.status === 'late' &&
-                  'bg-orange-100 text-orange-700 hover:bg-orange-200',
-                item.status === 'absent' &&
-                  'bg-red-100 text-red-700 hover:bg-red-200',
-                item.status === 'leave' &&
-                  'bg-blue-100 text-blue-700 hover:bg-blue-200',
-              ]"
-            >
-              {{ item.date }}
-            </div>
-          </div>
-          <div class="flex items-center gap-4 mt-6 text-sm">
-            <div class="flex items-center gap-2">
-              <div class="w-4 h-4 bg-green-100 rounded"></div>
-              <span class="text-muted-foreground">Present</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <div class="w-4 h-4 bg-orange-100 rounded"></div>
-              <span class="text-muted-foreground">Late</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <div class="w-4 h-4 bg-red-100 rounded"></div>
-              <span class="text-muted-foreground">Absent</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <div class="w-4 h-4 bg-blue-100 rounded"></div>
-              <span class="text-muted-foreground">Leave</span>
+            <div>
+              <p class="text-sm text-muted-foreground">Present Today</p>
+              <p class="text-2xl font-bold">{{ stats.present }}</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Clock-in History</CardTitle>
-          <CardDescription>Recent attendance records</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div class="space-y-3">
-            <div
-              v-for="item in attendanceData.slice(0, 8)"
-              :key="item.date"
-              class="flex items-center justify-between p-3 rounded-lg border border-border"
-            >
-              <div class="flex items-center gap-3">
-                <div class="text-sm font-medium text-foreground">
-                  Dec {{ item.date }}
-                </div>
-                <Badge
-                  :class="{
-                    'bg-green-100 text-green-700 border-green-200':
-                      item.status === 'present',
-                    'bg-orange-100 text-orange-700 border-orange-200':
-                      item.status === 'late',
-                    'bg-blue-100 text-blue-700 border-blue-200':
-                      item.status === 'leave',
-                  }"
-                  variant="outline"
-                >
-                  {{ item.status }}
-                </Badge>
-              </div>
-              <div class="text-sm text-muted-foreground">
-                {{ item.clockIn }} - {{ item.clockOut }} ({{ item.hours }}h)
-              </div>
+      <Card class="border-border">
+        <CardContent class="p-6">
+          <div class="flex items-start justify-between">
+            <div class="h-12 w-12 bg-amber-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Clock class="h-6 w-6 text-amber-500" />
+            </div>
+            <div>
+              <p class="text-sm text-muted-foreground">Late Today</p>
+              <p class="text-2xl font-bold">{{ stats.late }}</p>
             </div>
           </div>
         </CardContent>

@@ -208,9 +208,23 @@ export const getTemplates = async (params?: {
 };
 
 export const createTemplate = async (
-  data: TemplateCreateInput,
+  data: any,
 ): Promise<ReportTemplate> => {
-  const template = await prisma.reportTemplate.create({ data });
+  const { feedbackTemplateId, fieldGroups, ...rest } = data;
+  
+  const createData: any = {
+    ...rest,
+  };
+  
+  if (feedbackTemplateId) {
+    createData.feedbackTemplate = { connect: { id: feedbackTemplateId } };
+  }
+  
+  if (fieldGroups) {
+    createData.fieldGroups = fieldGroups;
+  }
+  
+  const template = await prisma.reportTemplate.create({ data: createData });
 
   const cacheKey = `${TEMPLATE_PREFIX}${template.id}`;
   await cacheSet(cacheKey, template, TEMPLATE_CACHE_TTL);
@@ -220,11 +234,27 @@ export const createTemplate = async (
 
 export const updateTemplate = async (
   id: string,
-  data: TemplateUpdateInput,
+  data: any,
 ): Promise<ReportTemplate> => {
+  const { feedbackTemplateId, fieldGroups, ...rest } = data;
+  
+  const updateData: any = {
+    ...rest,
+  };
+  
+  if (feedbackTemplateId !== undefined) {
+    if (feedbackTemplateId === null) {
+      updateData.feedbackTemplate = { disconnect: true };
+    } else {
+      updateData.feedbackTemplate = { connect: { id: feedbackTemplateId } };
+    }
+  }
+  
+  updateData.fieldGroups = fieldGroups !== undefined ? fieldGroups : undefined;
+  
   const template = await prisma.reportTemplate.update({
     where: { id },
-    data,
+    data: updateData,
   });
 
   await invalidateTemplateCache(id, template.workspaceId);

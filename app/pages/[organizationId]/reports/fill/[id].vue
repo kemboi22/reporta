@@ -167,7 +167,7 @@ const removeRecord = (index: number) => {
 const createReportsFromTemplates = async () => {
   if (!validateAllRecords()) {
     toast.error("Please fill in all required fields");
-    return;
+    return null;
   }
 
   isSubmitting.value = true;
@@ -183,17 +183,28 @@ const createReportsFromTemplates = async () => {
       },
     });
     toast.success(`${reports.length} report(s) created successfully`);
-    await navigateTo(`/${organizationId}/reports/templates`);
+    return reports;
   } catch (error) {
     console.error("Failed to create reports:", error);
     toast.error("Failed to create reports");
+    return null;
   } finally {
     isSubmitting.value = false;
   }
 };
 
 const submitReports = async () => {
-  await createReportsFromTemplates();
+  const reports = await createReportsFromTemplates();
+
+  if (!reports) return;
+
+  if (reports.length > 0 && reports[0].id && template.value?.feedbackTemplateId) {
+    await navigateTo(
+      `/${organizationId}/reports/feedback/${template.value.feedbackTemplateId}?reportId=${reports[0].id}`
+    );
+  } else {
+    await navigateTo(`/${organizationId}/reports/templates`);
+  }
 };
 </script>
 

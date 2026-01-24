@@ -19,6 +19,8 @@ import {
   XCircle,
   Check,
   MoreVertical,
+  TrendingUp,
+  BarChart3,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import {
@@ -52,6 +54,30 @@ const {
   pending,
   refresh,
 } = await useLazyFetch(`/api/${organizationId}/reports/${reportId}`);
+
+const analyticsData = ref<any | null>(null);
+
+const fetchAnalytics = async () => {
+  if (report.value?.templateId) {
+    try {
+      analyticsData.value = await $fetch(
+        `/api/${organizationId}/analytics/${report.value.templateId}`
+      );
+    } catch (error) {
+      console.error("Failed to fetch analytics:", error);
+    }
+  }
+};
+
+watch(
+  report,
+  () => {
+    if (report.value) {
+      fetchAnalytics();
+    }
+  },
+  { immediate: true }
+);
 
 const newComment = ref("");
 const showComments = ref(true);
@@ -112,6 +138,12 @@ const formatDate = (dateString: string | Date | undefined) => {
     hour: "2-digit",
     minute: "2-digit",
   });
+};
+
+const formatNumber = (num: number) => {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+  if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+  return num.toFixed(2);
 };
 
 const formatDateTime = (dateString: string | Date | undefined) => {
@@ -430,6 +462,36 @@ const getFieldIcon = (key: string, value: any) => {
           </Button>
         </div>
       </div>
+    </div>
+
+    <div
+      v-if="analyticsData && Object.keys(analyticsData.analytics.sums || {}).length > 0"
+      class="bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg p-4"
+    >
+      <div class="flex items-center gap-2 mb-3">
+        <TrendingUp class="h-5 w-5 text-primary" />
+        <h3 class="font-semibold text-primary">Template Analytics</h3>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div
+          v-for="(sumData, fieldId) in analyticsData.analytics.sums"
+          :key="fieldId"
+          class="bg-background rounded-lg p-3"
+        >
+          <p class="text-xs text-muted-foreground mb-1">
+            {{ sumData.label }}
+          </p>
+          <p class="text-lg font-bold">{{ formatNumber(sumData.value) }}</p>
+        </div>
+      </div>
+      <Button
+        variant="link"
+        size="sm"
+        class="mt-3 p-0 h-auto text-primary"
+        @click="navigateTo(`/${organizationId}/reports/analytics/${report.templateId}`)"
+      >
+        View full analytics <BarChart3 class="h-3 w-3 ml-1" />
+      </Button>
     </div>
 
     <div class="grid lg:grid-cols-3 gap-6">
