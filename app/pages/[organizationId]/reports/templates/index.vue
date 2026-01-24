@@ -37,17 +37,15 @@ const { data: templates } = await useLazyFetch(
   `/api/${organizationId}/templates`,
   {
     key: `templates-${organizationId}`,
-    transform: (data) => data || [],
   },
 );
 
 const { data: reports } = await useLazyFetch(`/api/${organizationId}/reports`, {
   key: `reports-count-${organizationId}`,
-  transform: (data) => data || [],
 });
 
 const filteredTemplates = computed(() => {
-  let filtered = templates.value || [];
+  let filtered = Array.isArray(templates.value) ? templates.value : (templates.value?.data || []);
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
@@ -67,8 +65,8 @@ const filteredTemplates = computed(() => {
 });
 
 const getTemplateStats = (templateId: string) => {
-  const templateReports =
-    reports.value?.data?.filter((r: any) => r.templateId === templateId) || [];
+  const allReports = Array.isArray(reports.value) ? reports.value : (reports.value?.data || []);
+  const templateReports = allReports.filter((r: any) => r.templateId === templateId) || [];
   return {
     total: templateReports.length,
     approved: templateReports.filter((r: any) => r.status === "APPROVED")

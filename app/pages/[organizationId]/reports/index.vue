@@ -31,21 +31,15 @@ const { data: templates } = await useLazyFetch(
   `/api/${organizationId}/templates`,
   {
     key: `reports-templates-${organizationId}`,
-    transform: (data) => data || [],
   },
 );
 
 const { data: reports } = await useLazyFetch(`/api/${organizationId}/reports`, {
   key: `reports-count-${organizationId}`,
-  transform: (data) => {
-    if (Array.isArray(data)) return data;
-    if (data && Array.isArray(data.data)) return data.data;
-    return [];
-  },
 });
 
 const filteredTemplates = computed(() => {
-  let filtered = templates.value || [];
+  let filtered = Array.isArray(templates.value) ? templates.value : (templates.value?.data || []);
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
@@ -65,8 +59,8 @@ const filteredTemplates = computed(() => {
 });
 
 const getTemplateStats = (templateId: string) => {
-  const templateReports =
-    reports.value?.filter((r: any) => r.templateId === templateId) || [];
+  const allReports = Array.isArray(reports.value) ? reports.value : (reports.value?.data || []);
+  const templateReports = allReports.filter((r: any) => r.templateId === templateId) || [];
   return {
     total: templateReports.length,
     approved: templateReports.filter((r: any) => r.status === "APPROVED")
@@ -103,11 +97,12 @@ const getSectionsCount = (template: any) => {
 };
 
 const overallStats = computed(() => {
-  const allReports = reports.value.data || reports.value || [];
+  const allTemplates = Array.isArray(templates.value) ? templates.value : (templates.value?.data || []);
+  const allReports = Array.isArray(reports.value) ? reports.value : (reports.value?.data || []);
   return {
-    totalTemplates: templates.value?.length || 0,
+    totalTemplates: allTemplates.length || 0,
     activeTemplates:
-      templates.value?.filter((t: any) => t.isActive).length || 0,
+      allTemplates.filter((t: any) => t.isActive).length || 0,
     totalReports: allReports.length,
     pendingReview: allReports.filter((r: any) =>
       ["SUBMITTED", "UNDER_REVIEW"].includes(r.status),
