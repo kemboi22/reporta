@@ -19,7 +19,7 @@ const route = useRoute();
 const organizationId = route.params.organizationId as string;
 const templateId = route.params.id as string;
 
-const selectedPeriod = ref("7");
+const selectedPeriod = ref("today");
 const selectedMetric = ref("all");
 const dateFrom = ref("");
 const dateTo = ref("");
@@ -172,6 +172,7 @@ const exportAnalytics = () => {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="today">Today</SelectItem>
             <SelectItem value="7">Last 7 days</SelectItem>
             <SelectItem value="14">Last 14 days</SelectItem>
             <SelectItem value="30">Last 30 days</SelectItem>

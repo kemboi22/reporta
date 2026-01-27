@@ -28,12 +28,19 @@ export default defineEventHandler(async (event) => {
     endDate.setHours(23, 59, 59, 999);
   } else if (period) {
     // Predefined period
-    const days = parseInt(period as string);
-    endDate = new Date();
-    endDate.setHours(23, 59, 59, 999);
-    startDate = new Date();
-    startDate.setDate(endDate.getDate() - days + 1);
-    startDate.setHours(0, 0, 0, 0);
+    if (period === "today") {
+      startDate = new Date();
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date();
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      const days = parseInt(period as string);
+      endDate = new Date();
+      endDate.setHours(23, 59, 59, 999);
+      startDate = new Date();
+      startDate.setDate(endDate.getDate() - days + 1);
+      startDate.setHours(0, 0, 0, 0);
+    }
   }
 
   const workspace = await prisma.workspace.findFirst({
@@ -197,7 +204,7 @@ export default defineEventHandler(async (event) => {
     if (summaryConfig.showInSummaryFields) {
       summaryConfig.showInSummaryFields.forEach((fieldId: string) => {
         const values = reports
-          .map((report) => report.content ? (report.content[fieldId] as any) : null)
+          .map((report) => report.content && typeof report.content === 'object' ? (report.content as Record<string, any>)[fieldId] : null)
           .filter((v) => v !== undefined && v !== null && v !== "");
         analytics.fieldBreakdown[fieldId] = {
           label: fieldLabels[fieldId] || fieldId,
