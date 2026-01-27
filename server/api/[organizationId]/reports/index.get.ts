@@ -2,33 +2,36 @@ import { getReports, getReportCount } from "~~/server/services";
 
 export default defineEventHandler(async (event) => {
   const organizationId = getRouterParam(event, "organizationId");
-  const { 
-    page = "1", 
-    limit = "12", 
-    status, 
-    workspaceId, 
+  const {
+    page = "1",
+    limit = "12",
+    status,
+    workspaceId,
     templateId,
     search,
-    sortBy = "newest" 
+    sortBy = "newest",
   } = getQuery(event);
-  
+
   if (!organizationId) {
-    throw createError({ statusCode: 400, message: "Organization ID is required" });
+    throw createError({
+      statusCode: 400,
+      message: "Organization ID is required",
+    });
   }
 
   const skip = (Number(page) - 1) * Number(limit);
   const take = Number(limit);
 
   const where: any = { workspace: { organizationId } };
-  
+
   if (workspaceId) {
     where.workspaceId = workspaceId;
   }
-  
+
   if (templateId) {
     where.templateId = templateId;
   }
-  
+
   if (status) {
     if (Array.isArray(status)) {
       where.status = { in: status };

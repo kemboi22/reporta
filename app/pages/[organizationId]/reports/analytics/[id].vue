@@ -19,17 +19,35 @@ const route = useRoute();
 const organizationId = route.params.organizationId as string;
 const templateId = route.params.id as string;
 
-const { data: analyticsData, pending } = await useLazyFetch(
-  `/api/${organizationId}/analytics/${templateId}`,
-);
-
 const selectedPeriod = ref("7");
 const selectedMetric = ref("all");
+const dateFrom = ref("");
+const dateTo = ref("");
+const useCustomDateRange = ref(false);
+
+const { data: analyticsData, pending } = await useLazyFetch(
+  () => {
+    const params = new URLSearchParams();
+    
+    if (useCustomDateRange.value) {
+      if (dateFrom.value) params.append('dateFrom', dateFrom.value);
+      if (dateTo.value) params.append('dateTo', dateTo.value);
+    } else {
+      params.append('period', selectedPeriod.value);
+    }
+    
+    const queryString = params.toString();
+    return `/api/${organizationId}/analytics/${templateId}${queryString ? `?${queryString}` : ''}`;
+  },
+  { 
+    key: `analytics-${templateId}`,
+    watch: [selectedPeriod, dateFrom, dateTo, useCustomDateRange]
+  },
+);
 
 const filteredDailyData = computed(() => {
   if (!analyticsData.value?.analytics?.dailyBreakdown) return [];
-  const days = parseInt(selectedPeriod.value);
-  return analyticsData.value.analytics.dailyBreakdown.slice(0, days);
+  return analyticsData.value.analytics.dailyBreakdown;
 });
 
 const formatNumber = (num: number) => {
@@ -129,8 +147,27 @@ const exportAnalytics = () => {
           </p>
         </div>
       </div>
-      <div class="flex items-center gap-3">
-        <Select v-model="selectedPeriod" class="w-[140px]">
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            @click="useCustomDateRange = false"
+            :class="{ 'bg-primary text-primary-foreground': !useCustomDateRange }"
+          >
+            Period
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            @click="useCustomDateRange = true"
+            :class="{ 'bg-primary text-primary-foreground': useCustomDateRange }"
+          >
+            Date Range
+          </Button>
+        </div>
+
+        <Select v-if="!useCustomDateRange" v-model="selectedPeriod" class="w-[140px]">
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -142,6 +179,28 @@ const exportAnalytics = () => {
             <SelectItem value="365">Last year</SelectItem>
           </SelectContent>
         </Select>
+
+        <div v-if="useCustomDateRange" class="flex items-center gap-2">
+          <div class="flex items-center gap-2">
+            <Calendar class="h-4 w-4 text-muted-foreground" />
+            <Input
+              v-model="dateFrom"
+              type="date"
+              class="w-[140px]"
+              placeholder="From date"
+            />
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-muted-foreground">to</span>
+            <Input
+              v-model="dateTo"
+              type="date"
+              class="w-[140px]"
+              placeholder="To date"
+            />
+          </div>
+        </div>
+
         <Button variant="outline" size="sm" @click="exportAnalytics">
           <Download class="h-4 w-4 mr-2" />
           Export

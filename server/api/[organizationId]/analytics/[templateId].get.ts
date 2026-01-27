@@ -3,6 +3,7 @@ import { prisma } from "~~/server/utils/db";
 export default defineEventHandler(async (event) => {
   const organizationId = getRouterParam(event, "organizationId");
   const templateId = getRouterParam(event, "templateId");
+  const { period, dateFrom, dateTo } = getQuery(event);
 
   if (!organizationId) {
     throw createError({
@@ -13,6 +14,26 @@ export default defineEventHandler(async (event) => {
 
   if (!templateId) {
     throw createError({ statusCode: 400, message: "Template ID is required" });
+  }
+
+  // Calculate date range
+  let startDate: Date | null = null;
+  let endDate: Date | null = null;
+
+  if (dateFrom && dateTo) {
+    // Custom date range
+    startDate = new Date(dateFrom as string);
+    startDate.setHours(0, 0, 0, 0);
+    endDate = new Date(dateTo as string);
+    endDate.setHours(23, 59, 59, 999);
+  } else if (period) {
+    // Predefined period
+    const days = parseInt(period as string);
+    endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
+    startDate = new Date();
+    startDate.setDate(endDate.getDate() - days + 1);
+    startDate.setHours(0, 0, 0, 0);
   }
 
   const workspace = await prisma.workspace.findFirst({
@@ -32,11 +53,19 @@ export default defineEventHandler(async (event) => {
   }
 
   const summaryConfig = template.summaryConfig as any;
+  const whereClause: any = {
+    templateId: template.id,
+  };
+
+  if (startDate && endDate) {
+    whereClause.createdAt = {
+      gte: startDate,
+      lte: endDate,
+    };
+  }
+
   const reports = await prisma.report.findMany({
-    where: {
-      templateId: template.id,
-      // workspaceId: workspace.id,
-    },
+    where: whereClause,
     orderBy: {
       createdAt: "desc",
     },
@@ -69,7 +98,8 @@ export default defineEventHandler(async (event) => {
     ) {
       summaryConfig.summableFields.forEach((fieldId: string) => {
         const sum = reports.reduce((acc: number, report: any) => {
-          const value = report.content[fieldId];
+          if (!report.content) return acc;
+          const value = report.content[fieldId] as any;
           if (typeof value === "number") {
             return acc + value;
           }
@@ -89,7 +119,8 @@ export default defineEventHandler(async (event) => {
     ) {
       summaryConfig.countableFields.forEach((fieldId: string) => {
         const count = reports.filter((report: any) => {
-          const value = report.content[fieldId];
+          if (!report.content) return false;
+          const value = report.content[fieldId] as any;
           return value !== undefined && value !== null && value !== "";
         }).length;
         analytics.counts[fieldId] = {
@@ -106,7 +137,8 @@ export default defineEventHandler(async (event) => {
       summaryConfig.summableFields.forEach((fieldId: string) => {
         const numericValues = reports
           .map((report: any) => {
-            const value = report.content[fieldId];
+            if (!report.content) return null;
+            const value = report.content[fieldId] as any;
             if (typeof value === "number") return value;
             const parsed = parseFloat(value);
             return isNaN(parsed) ? null : parsed;
@@ -140,7 +172,8 @@ export default defineEventHandler(async (event) => {
           if (!dailyData[dateKey].sums[fieldId]) {
             dailyData[dateKey].sums[fieldId] = 0;
           }
-          const value = report.content[fieldId];
+          if (!report.content) return;
+          const value = report.content[fieldId] as any;
           if (typeof value === "number") {
             dailyData[dateKey].sums[fieldId] += value;
           } else {
@@ -164,7 +197,7 @@ export default defineEventHandler(async (event) => {
     if (summaryConfig.showInSummaryFields) {
       summaryConfig.showInSummaryFields.forEach((fieldId: string) => {
         const values = reports
-          .map((report) => report.content[fieldId])
+          .map((report) => report.content ? (report.content[fieldId] as any) : null)
           .filter((v) => v !== undefined && v !== null && v !== "");
         analytics.fieldBreakdown[fieldId] = {
           label: fieldLabels[fieldId] || fieldId,
