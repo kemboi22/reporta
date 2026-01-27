@@ -5,7 +5,10 @@ export default defineEventHandler(async (event) => {
   const templateId = getRouterParam(event, "templateId");
 
   if (!organizationId) {
-    throw createError({ statusCode: 400, message: "Organization ID is required" });
+    throw createError({
+      statusCode: 400,
+      message: "Organization ID is required",
+    });
   }
 
   if (!templateId) {
@@ -31,8 +34,8 @@ export default defineEventHandler(async (event) => {
   const summaryConfig = template.summaryConfig as any;
   const reports = await prisma.report.findMany({
     where: {
-      templateId,
-      workspaceId: workspace.id,
+      templateId: template.id,
+      // workspaceId: workspace.id,
     },
     orderBy: {
       createdAt: "desc",
@@ -46,6 +49,7 @@ export default defineEventHandler(async (event) => {
     averages: {},
     dailyBreakdown: [],
     fieldBreakdown: {},
+    reports,
   };
 
   if (summaryConfig && reports.length > 0) {
@@ -59,7 +63,10 @@ export default defineEventHandler(async (event) => {
       });
     });
 
-    if (summaryConfig.summableFields && summaryConfig.summableFields.length > 0) {
+    if (
+      summaryConfig.summableFields &&
+      summaryConfig.summableFields.length > 0
+    ) {
       summaryConfig.summableFields.forEach((fieldId: string) => {
         const sum = reports.reduce((acc: number, report: any) => {
           const value = report.content[fieldId];
@@ -76,7 +83,10 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    if (summaryConfig.countableFields && summaryConfig.countableFields.length > 0) {
+    if (
+      summaryConfig.countableFields &&
+      summaryConfig.countableFields.length > 0
+    ) {
       summaryConfig.countableFields.forEach((fieldId: string) => {
         const count = reports.filter((report: any) => {
           const value = report.content[fieldId];
@@ -89,7 +99,10 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    if (summaryConfig.summableFields && summaryConfig.summableFields.length > 0) {
+    if (
+      summaryConfig.summableFields &&
+      summaryConfig.summableFields.length > 0
+    ) {
       summaryConfig.summableFields.forEach((fieldId: string) => {
         const numericValues = reports
           .map((report: any) => {
@@ -101,7 +114,8 @@ export default defineEventHandler(async (event) => {
           .filter((v) => v !== null);
 
         if (numericValues.length > 0) {
-          const average = numericValues.reduce((a, b) => a + b, 0) / numericValues.length;
+          const average =
+            numericValues.reduce((a, b) => a + b, 0) / numericValues.length;
           analytics.averages[fieldId] = {
             label: fieldLabels[fieldId] || fieldId,
             value: parseFloat(average.toFixed(2)),
@@ -110,7 +124,10 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const dailyData: Record<string, { count: number; sums: Record<string, number> }> = {};
+    const dailyData: Record<
+      string,
+      { count: number; sums: Record<string, number> }
+    > = {};
     reports.forEach((report: any) => {
       const dateKey = new Date(report.createdAt).toISOString().split("T")[0];
       if (!dailyData[dateKey]) {
@@ -146,7 +163,9 @@ export default defineEventHandler(async (event) => {
 
     if (summaryConfig.showInSummaryFields) {
       summaryConfig.showInSummaryFields.forEach((fieldId: string) => {
-        const values = reports.map((report) => report.content[fieldId]).filter((v) => v !== undefined && v !== null && v !== "");
+        const values = reports
+          .map((report) => report.content[fieldId])
+          .filter((v) => v !== undefined && v !== null && v !== "");
         analytics.fieldBreakdown[fieldId] = {
           label: fieldLabels[fieldId] || fieldId,
           values: values,

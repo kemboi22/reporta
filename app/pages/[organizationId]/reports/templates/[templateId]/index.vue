@@ -37,6 +37,8 @@ const templateId = route.params.templateId as string;
 const searchQuery = ref("");
 const selectedStatus = ref("all");
 const sortBy = ref("newest");
+const currentPage = ref(1);
+const limit = ref(12);
 const isLoading = ref(false);
 const expandedRows = ref<Set<string>>(new Set());
 const selectedReports = ref<Set<string>>(new Set());
@@ -54,8 +56,25 @@ const { data: template, refresh: refreshTemplate } = await useLazyFetch(
 );
 
 const { data: reports, refresh: refreshReports } = await useLazyFetch(
-  () => `/api/${organizationId}/reports?templateId=${templateId}`,
-  { key: `template-reports-${templateId}` },
+  () => {
+    const params = new URLSearchParams({
+      templateId,
+      page: currentPage.value.toString(),
+      limit: limit.value.toString(),
+    });
+    
+    if (searchQuery.value) params.append('search', searchQuery.value);
+    if (selectedStatus.value !== 'all') params.append('status', selectedStatus.value);
+    if (dateFrom.value) params.append('dateFrom', dateFrom.value);
+    if (dateTo.value) params.append('dateTo', dateTo.value);
+    params.append('sortBy', sortBy.value);
+    
+    return `/api/${organizationId}/reports?${params.toString()}`;
+  },
+  { 
+    key: `template-reports-${templateId}`,
+    watch: [currentPage, limit, searchQuery, selectedStatus, dateFrom, dateTo, sortBy]
+  },
 );
 
 const templateFields = computed(() => {
@@ -84,45 +103,7 @@ const tableColumns = computed(() => {
 });
 
 const filteredReports = computed(() => {
-  let filtered = reports.value?.data || [];
-
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter((r: any) =>
-      r.title?.toLowerCase().includes(query) || r.content
-        ? JSON.stringify(r.content).toLowerCase().includes(query)
-        : false,
-    );
-  }
-
-  if (selectedStatus.value !== "all") {
-    filtered = filtered.filter((r: any) => r.status === selectedStatus.value);
-  }
-
-  if (dateFrom.value) {
-    const fromDate = new Date(dateFrom.value);
-    filtered = filtered.filter((r: any) => new Date(r.createdAt) >= fromDate);
-  }
-
-  if (dateTo.value) {
-    const toDate = new Date(dateTo.value);
-    toDate.setHours(23, 59, 59, 999);
-    filtered = filtered.filter((r: any) => new Date(r.createdAt) <= toDate);
-  }
-
-  if (sortBy.value === "newest") {
-    filtered.sort(
-      (a: any, b: any) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
-  } else if (sortBy.value === "oldest") {
-    filtered.sort(
-      (a: any, b: any) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-    );
-  }
-
-  return filtered;
+  return reports.value?.data || [];
 });
 
 const selectableReports = computed(() => {
@@ -132,9 +113,10 @@ const selectableReports = computed(() => {
 });
 
 const stats = computed(() => {
+  const pagination = reports.value?.pagination;
   const allReports = reports.value?.data || [];
   return {
-    total: allReports.length,
+    total: pagination?.total || allReports.length,
     approved: allReports.filter((r: any) => r.status === "APPROVED").length,
     pending: allReports.filter((r: any) =>
       ["SUBMITTED", "UNDER_REVIEW"].includes(r.status),
@@ -335,6 +317,38 @@ const groupFieldMap = computed(() => {
     });
   });
   return map;
+});
+
+const pagination = computed(() => {
+  return reports.value?.pagination || {
+    page: 1,
+    limit: 12,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
+  };
+});
+
+const visiblePageRange = computed(() => {
+  const currentPageNum = pagination.value.page;
+  const totalPages = pagination.value.totalPages;
+  
+  let startPage = Math.max(1, currentPageNum - 2);
+  let endPage = Math.min(totalPages, currentPageNum + 2);
+  
+  if (currentPageNum <= 3) {
+    endPage = Math.min(totalPages, 5);
+  } else if (currentPageNum >= totalPages - 2) {
+    startPage = Math.max(1, totalPages - 4);
+  }
+  
+  const pages = [];
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+  
+  return pages;
 });
 
 const groupAggregations = computed(() => {
@@ -667,6 +681,19 @@ const groupAggregations = computed(() => {
                 <SelectItem value="oldest">Oldest First</SelectItem>
               </SelectContent>
             </Select>
+
+            <Select v-model="limit" @update:model-value="currentPage = 1">
+              <SelectTrigger class="w-[120px]">
+                <SelectValue placeholder="Records" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10 records</SelectItem>
+                <SelectItem value="12">12 records</SelectItem>
+                <SelectItem value="25">25 records</SelectItem>
+                <SelectItem value="50">50 records</SelectItem>
+                <SelectItem value="100">100 records</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -858,6 +885,74 @@ const groupAggregations = computed(() => {
                 </template>
               </TableBody>
             </Table>
+          </div>
+
+          <!-- Pagination Controls -->
+          <div v-if="pagination.totalPages > 1" class="flex items-center justify-between mt-4">
+            <div class="text-sm text-muted-foreground">
+              Showing {{ ((pagination.page - 1) * pagination.limit) + 1 }} to 
+              {{ Math.min(pagination.page * pagination.limit, pagination.total) }} 
+              of {{ pagination.total }} results
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                :disabled="!pagination.hasPrevPage"
+                @click="currentPage--"
+              >
+                Previous
+              </Button>
+              
+              <div class="flex items-center gap-1">
+                <!-- Show first page -->
+                <Button
+                  v-if="pagination.page > 3"
+                  variant="outline"
+                  size="sm"
+                  @click="currentPage = 1"
+                >
+                  1
+                </Button>
+                
+                <!-- Show ellipsis -->
+                <span v-if="pagination.page > 4" class="px-2 text-muted-foreground">...</span>
+                
+                <!-- Show pages around current page -->
+                <Button
+                  v-for="pageNum in visiblePageRange"
+                  :key="pageNum"
+                  :variant="pageNum === pagination.page ? 'default' : 'outline'"
+                  size="sm"
+                  @click="currentPage = pageNum"
+                >
+                  {{ pageNum }}
+                </Button>
+                
+                <!-- Show ellipsis -->
+                <span v-if="pagination.page < pagination.totalPages - 3" class="px-2 text-muted-foreground">...</span>
+                
+                <!-- Show last page -->
+                <Button
+                  v-if="pagination.page < pagination.totalPages - 2"
+                  variant="outline"
+                  size="sm"
+                  @click="currentPage = pagination.totalPages"
+                >
+                  {{ pagination.totalPages }}
+                </Button>
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                :disabled="!pagination.hasNextPage"
+                @click="currentPage++"
+              >
+                Next
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>
