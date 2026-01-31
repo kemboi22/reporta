@@ -85,7 +85,6 @@ export default defineEventHandler(async (event) => {
     averages: {},
     dailyBreakdown: [],
     fieldBreakdown: {},
-    reports,
   };
 
   if (summaryConfig && reports.length > 0) {
@@ -204,7 +203,11 @@ export default defineEventHandler(async (event) => {
     if (summaryConfig.showInSummaryFields) {
       summaryConfig.showInSummaryFields.forEach((fieldId: string) => {
         const values = reports
-          .map((report) => report.content && typeof report.content === 'object' ? (report.content as Record<string, any>)[fieldId] : null)
+          .map((report) =>
+            report.content && typeof report.content === "object"
+              ? (report.content as Record<string, any>)[fieldId]
+              : null,
+          )
           .filter((v) => v !== undefined && v !== null && v !== "");
         analytics.fieldBreakdown[fieldId] = {
           label: fieldLabels[fieldId] || fieldId,
@@ -223,12 +226,6 @@ export default defineEventHandler(async (event) => {
     },
     summaryConfig,
     analytics,
-    reports: reports.map((r) => ({
-      id: r.id,
-      title: r.title,
-      status: r.status,
-      submittedAt: r.submittedAt,
-      createdAt: r.createdAt,
-    })),
+    reports: reports,
   };
 });

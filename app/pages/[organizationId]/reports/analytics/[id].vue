@@ -28,20 +28,20 @@ const useCustomDateRange = ref(false);
 const { data: analyticsData, pending } = await useLazyFetch(
   () => {
     const params = new URLSearchParams();
-    
+
     if (useCustomDateRange.value) {
-      if (dateFrom.value) params.append('dateFrom', dateFrom.value);
-      if (dateTo.value) params.append('dateTo', dateTo.value);
+      if (dateFrom.value) params.append("dateFrom", dateFrom.value);
+      if (dateTo.value) params.append("dateTo", dateTo.value);
     } else {
-      params.append('period', selectedPeriod.value);
+      params.append("period", selectedPeriod.value);
     }
-    
+
     const queryString = params.toString();
-    return `/api/${organizationId}/analytics/${templateId}${queryString ? `?${queryString}` : ''}`;
+    return `/api/${organizationId}/analytics/${templateId}${queryString ? `?${queryString}` : ""}`;
   },
-  { 
+  {
     key: `analytics-${templateId}`,
-    watch: [selectedPeriod, dateFrom, dateTo, useCustomDateRange]
+    watch: [selectedPeriod, dateFrom, dateTo, useCustomDateRange],
   },
 );
 
@@ -51,8 +51,8 @@ const filteredDailyData = computed(() => {
 });
 
 const formatNumber = (num: number) => {
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
-  if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+  // if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+  // if (num >= 1000) return (num / 1000).toFixed(1) + "K";
   return num.toFixed(2);
 };
 
@@ -65,11 +65,9 @@ const formatDate = (dateStr: string) => {
 };
 
 const maxValue = computed(() => {
-  if (!filteredDailyData.value || filteredDailyData.value.length === 0) return 100;
-  return Math.max(
-    ...filteredDailyData.value.map((d: any) => d.reportCount),
-    1
-  );
+  if (!filteredDailyData.value || filteredDailyData.value.length === 0)
+    return 100;
+  return Math.max(...filteredDailyData.value.map((d: any) => d.reportCount), 1);
 });
 
 const exportAnalytics = () => {
@@ -78,9 +76,7 @@ const exportAnalytics = () => {
   const rows: string[][] = [];
   rows.push(["Date", "Report Count"]);
 
-  const sumsKeys = Object.keys(
-    analyticsData.value.analytics.sums || {}
-  );
+  const sumsKeys = Object.keys(analyticsData.value.analytics.sums || {});
 
   if (sumsKeys.length > 0) {
     sumsKeys.forEach((key) => {
@@ -105,7 +101,7 @@ const exportAnalytics = () => {
           const escaped = String(cell).replace(/"/g, '""');
           return `"${escaped}"`;
         })
-        .join(",")
+        .join(","),
     )
     .join("\n");
 
@@ -153,7 +149,9 @@ const exportAnalytics = () => {
             variant="outline"
             size="sm"
             @click="useCustomDateRange = false"
-            :class="{ 'bg-primary text-primary-foreground': !useCustomDateRange }"
+            :class="{
+              'bg-primary text-primary': !useCustomDateRange,
+            }"
           >
             Period
           </Button>
@@ -161,13 +159,19 @@ const exportAnalytics = () => {
             variant="outline"
             size="sm"
             @click="useCustomDateRange = true"
-            :class="{ 'bg-primary text-primary-foreground': useCustomDateRange }"
+            :class="{
+              'bg-primary text-primary': useCustomDateRange,
+            }"
           >
             Date Range
           </Button>
         </div>
 
-        <Select v-if="!useCustomDateRange" v-model="selectedPeriod" class="w-[140px]">
+        <Select
+          v-if="!useCustomDateRange"
+          v-model="selectedPeriod"
+          class="w-[140px]"
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -209,101 +213,101 @@ const exportAnalytics = () => {
       </div>
     </div>
 
-    <div class="grid gap-6 md:grid-cols-4">
-      <Card>
-        <CardContent class="p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-muted-foreground">
-                Total Reports
-              </p>
-              <p class="text-2xl font-bold mt-1">
-                {{ analyticsData.analytics.totalReports }}
-              </p>
-            </div>
-            <div class="p-3 bg-primary/10 rounded-lg">
-              <BarChart3 class="h-6 w-6 text-primary" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card
-        v-if="Object.keys(analyticsData.analytics.sums || {}).length > 0"
-      >
-        <CardContent class="p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-muted-foreground">Total Sum</p>
-              <p class="text-2xl font-bold mt-1">
-                {{
-                  formatNumber(
-                    Object.values(analyticsData.analytics.sums).reduce(
-                      (acc: number, v: any) => acc + v.value,
-                      0
-                    )
-                  )
-                }}
-              </p>
-            </div>
-            <div class="p-3 bg-emerald-10 rounded-lg">
-              <DollarSign class="h-6 w-6 text-emerald-600" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card
-        v-if="Object.keys(analyticsData.analytics.counts || {}).length > 0"
-      >
-        <CardContent class="p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-muted-foreground">
-                Total Counted
-              </p>
-              <p class="text-2xl font-bold mt-1">
-                {{
-                  Object.values(analyticsData.analytics.counts).reduce(
-                    (acc: number, v: any) => acc + v.value,
-                    0
-                  )
-                }}
-              </p>
-            </div>
-            <div class="p-3 bg-blue-10 rounded-lg">
-              <Users class="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card
-        v-if="Object.keys(analyticsData.analytics.averages || {}).length > 0"
-      >
-        <CardContent class="p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-muted-foreground">Average</p>
-              <p class="text-2xl font-bold mt-1">
-                {{
-                  formatNumber(
-                    Object.values(analyticsData.analytics.averages).reduce(
-                      (acc: number, v: any) => acc + v.value,
-                      0
-                    ) /
-                      Object.keys(analyticsData.analytics.averages).length
-                  )
-                }}
-              </p>
-            </div>
-            <div class="p-3 bg-amber-10 rounded-lg">
-              <TrendingUp class="h-6 w-6 text-amber-600" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <!-- <div class="grid gap-6 md:grid-cols-4"> -->
+    <!--   <Card> -->
+    <!--     <CardContent class="p-6"> -->
+    <!--       <div class="flex items-center justify-between"> -->
+    <!--         <div> -->
+    <!--           <p class="text-sm font-medium text-muted-foreground"> -->
+    <!--             Total Reports -->
+    <!--           </p> -->
+    <!--           <p class="text-2xl font-bold mt-1"> -->
+    <!--             {{ analyticsData.analytics.totalReports }} -->
+    <!--           </p> -->
+    <!--         </div> -->
+    <!--         <div class="p-3 bg-primary/10 rounded-lg"> -->
+    <!--           <BarChart3 class="h-6 w-6 text-primary" /> -->
+    <!--         </div> -->
+    <!--       </div> -->
+    <!--     </CardContent> -->
+    <!--   </Card> -->
+    <!---->
+    <!--   <Card -->
+    <!--     v-if="Object.keys(analyticsData.analytics.sums || {}).length > 0" -->
+    <!--   > -->
+    <!--     <CardContent class="p-6"> -->
+    <!--       <div class="flex items-center justify-between"> -->
+    <!--         <div> -->
+    <!--           <p class="text-sm font-medium text-muted-foreground">Total Sum</p> -->
+    <!--           <p class="text-2xl font-bold mt-1"> -->
+    <!--             {{ -->
+    <!--               formatNumber( -->
+    <!--                 Object.values(analyticsData.analytics.sums).reduce( -->
+    <!--                   (acc: number, v: any) => acc + v.value, -->
+    <!--                   0 -->
+    <!--                 ) -->
+    <!--               ) -->
+    <!--             }} -->
+    <!--           </p> -->
+    <!--         </div> -->
+    <!--         <div class="p-3 bg-emerald-10 rounded-lg"> -->
+    <!--           <DollarSign class="h-6 w-6 text-emerald-600" /> -->
+    <!--         </div> -->
+    <!--       </div> -->
+    <!--     </CardContent> -->
+    <!--   </Card> -->
+    <!---->
+    <!--   <Card -->
+    <!--     v-if="Object.keys(analyticsData.analytics.counts || {}).length > 0" -->
+    <!--   > -->
+    <!--     <CardContent class="p-6"> -->
+    <!--       <div class="flex items-center justify-between"> -->
+    <!--         <div> -->
+    <!--           <p class="text-sm font-medium text-muted-foreground"> -->
+    <!--             Total Counted -->
+    <!--           </p> -->
+    <!--           <p class="text-2xl font-bold mt-1"> -->
+    <!--             {{ -->
+    <!--               Object.values(analyticsData.analytics.counts).reduce( -->
+    <!--                 (acc: number, v: any) => acc + v.value, -->
+    <!--                 0 -->
+    <!--               ) -->
+    <!--             }} -->
+    <!--           </p> -->
+    <!--         </div> -->
+    <!--         <div class="p-3 bg-blue-10 rounded-lg"> -->
+    <!--           <Users class="h-6 w-6 text-blue-600" /> -->
+    <!--         </div> -->
+    <!--       </div> -->
+    <!--     </CardContent> -->
+    <!--   </Card> -->
+    <!---->
+    <!--   <Card -->
+    <!--     v-if="Object.keys(analyticsData.analytics.averages || {}).length > 0" -->
+    <!--   > -->
+    <!--     <CardContent class="p-6"> -->
+    <!--       <div class="flex items-center justify-between"> -->
+    <!--         <div> -->
+    <!--           <p class="text-sm font-medium text-muted-foreground">Average</p> -->
+    <!--           <p class="text-2xl font-bold mt-1"> -->
+    <!--             {{ -->
+    <!--               formatNumber( -->
+    <!--                 Object.values(analyticsData.analytics.averages).reduce( -->
+    <!--                   (acc: number, v: any) => acc + v.value, -->
+    <!--                   0 -->
+    <!--                 ) / -->
+    <!--                   Object.keys(analyticsData.analytics.averages).length -->
+    <!--               ) -->
+    <!--             }} -->
+    <!--           </p> -->
+    <!--         </div> -->
+    <!--         <div class="p-3 bg-amber-10 rounded-lg"> -->
+    <!--           <TrendingUp class="h-6 w-6 text-amber-600" /> -->
+    <!--         </div> -->
+    <!--       </div> -->
+    <!--     </CardContent> -->
+    <!--   </Card> -->
+    <!-- </div> -->
 
     <Card>
       <CardHeader>
@@ -360,9 +364,7 @@ const exportAnalytics = () => {
       </CardContent>
     </Card>
 
-    <Card
-      v-if="Object.keys(analyticsData.analytics.sums || {}).length > 0"
-    >
+    <Card v-if="Object.keys(analyticsData.analytics.sums || {}).length > 0">
       <CardHeader>
         <CardTitle class="flex items-center gap-2">
           <DollarSign class="h-5 w-5" />
@@ -389,9 +391,7 @@ const exportAnalytics = () => {
       </CardContent>
     </Card>
 
-    <Card
-      v-if="Object.keys(analyticsData.analytics.counts || {}).length > 0"
-    >
+    <Card v-if="Object.keys(analyticsData.analytics.counts || {}).length > 0">
       <CardHeader>
         <CardTitle class="flex items-center gap-2">
           <Users class="h-5 w-5" />
@@ -416,9 +416,7 @@ const exportAnalytics = () => {
       </CardContent>
     </Card>
 
-    <Card
-      v-if="Object.keys(analyticsData.analytics.averages || {}).length > 0"
-    >
+    <Card v-if="Object.keys(analyticsData.analytics.averages || {}).length > 0">
       <CardHeader>
         <CardTitle class="flex items-center gap-2">
           <TrendingUp class="h-5 w-5" />
@@ -436,7 +434,9 @@ const exportAnalytics = () => {
               <p class="text-sm text-muted-foreground mb-1">
                 {{ avgData.label }}
               </p>
-              <p class="text-2xl font-bold">{{ formatNumber(avgData.value) }}</p>
+              <p class="text-2xl font-bold">
+                {{ formatNumber(avgData.value) }}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -444,7 +444,9 @@ const exportAnalytics = () => {
     </Card>
 
     <Card
-      v-if="Object.keys(analyticsData.analytics.fieldBreakdown || {}).length > 0"
+      v-if="
+        Object.keys(analyticsData.analytics.fieldBreakdown || {}).length > 0
+      "
     >
       <CardHeader>
         <CardTitle class="flex items-center gap-2">
