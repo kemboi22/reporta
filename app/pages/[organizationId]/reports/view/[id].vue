@@ -23,22 +23,7 @@ import {
   BarChart3,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import { authClient } from "~/lib/auth";
 
 definePageMeta({
@@ -61,7 +46,7 @@ const fetchAnalytics = async () => {
   if (report.value?.templateId) {
     try {
       analyticsData.value = await $fetch(
-        `/api/${organizationId}/analytics/${report.value.templateId}`
+        `/api/${organizationId}/analytics/${report.value.templateId}?period=today`,
       );
     } catch (error) {
       console.error("Failed to fetch analytics:", error);
@@ -76,7 +61,7 @@ watch(
       fetchAnalytics();
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const newComment = ref("");
@@ -141,8 +126,8 @@ const formatDate = (dateString: string | Date | undefined) => {
 };
 
 const formatNumber = (num: number) => {
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
-  if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+  // if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+  // if (num >= 1000) return (num / 1000).toFixed(1) + "K";
   return num.toFixed(2);
 };
 
@@ -465,7 +450,10 @@ const getFieldIcon = (key: string, value: any) => {
     </div>
 
     <div
-      v-if="analyticsData && Object.keys(analyticsData.analytics.sums || {}).length > 0"
+      v-if="
+        analyticsData &&
+        Object.keys(analyticsData.analytics.sums || {}).length > 0
+      "
       class="bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg p-4"
     >
       <div class="flex items-center gap-2 mb-3">
@@ -488,7 +476,11 @@ const getFieldIcon = (key: string, value: any) => {
         variant="link"
         size="sm"
         class="mt-3 p-0 h-auto text-primary"
-        @click="navigateTo(`/${organizationId}/reports/analytics/${report.templateId}`)"
+        @click="
+          navigateTo(
+            `/${organizationId}/reports/analytics/${report.templateId}`,
+          )
+        "
       >
         View full analytics <BarChart3 class="h-3 w-3 ml-1" />
       </Button>

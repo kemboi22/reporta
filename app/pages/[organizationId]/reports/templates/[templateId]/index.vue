@@ -17,14 +17,6 @@ import {
   Trash2,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 definePageMeta({
   layout: "dashboard",
@@ -62,18 +54,27 @@ const { data: reports, refresh: refreshReports } = await useLazyFetch(
       page: currentPage.value.toString(),
       limit: limit.value.toString(),
     });
-    
-    if (searchQuery.value) params.append('search', searchQuery.value);
-    if (selectedStatus.value !== 'all') params.append('status', selectedStatus.value);
-    if (dateFrom.value) params.append('dateFrom', dateFrom.value);
-    if (dateTo.value) params.append('dateTo', dateTo.value);
-    params.append('sortBy', sortBy.value);
-    
+
+    if (searchQuery.value) params.append("search", searchQuery.value);
+    if (selectedStatus.value !== "all")
+      params.append("status", selectedStatus.value);
+    if (dateFrom.value) params.append("dateFrom", dateFrom.value);
+    if (dateTo.value) params.append("dateTo", dateTo.value);
+    params.append("sortBy", sortBy.value);
+
     return `/api/${organizationId}/reports?${params.toString()}`;
   },
-  { 
+  {
     key: `template-reports-${templateId}`,
-    watch: [currentPage, limit, searchQuery, selectedStatus, dateFrom, dateTo, sortBy]
+    watch: [
+      currentPage,
+      limit,
+      searchQuery,
+      selectedStatus,
+      dateFrom,
+      dateTo,
+      sortBy,
+    ],
   },
 );
 
@@ -320,34 +321,36 @@ const groupFieldMap = computed(() => {
 });
 
 const pagination = computed(() => {
-  return reports.value?.pagination || {
-    page: 1,
-    limit: 12,
-    total: 0,
-    totalPages: 0,
-    hasNextPage: false,
-    hasPrevPage: false,
-  };
+  return (
+    reports.value?.pagination || {
+      page: 1,
+      limit: 12,
+      total: 0,
+      totalPages: 0,
+      hasNextPage: false,
+      hasPrevPage: false,
+    }
+  );
 });
 
 const visiblePageRange = computed(() => {
   const currentPageNum = pagination.value.page;
   const totalPages = pagination.value.totalPages;
-  
+
   let startPage = Math.max(1, currentPageNum - 2);
   let endPage = Math.min(totalPages, currentPageNum + 2);
-  
+
   if (currentPageNum <= 3) {
     endPage = Math.min(totalPages, 5);
   } else if (currentPageNum >= totalPages - 2) {
     startPage = Math.max(1, totalPages - 4);
   }
-  
+
   const pages = [];
   for (let i = startPage; i <= endPage; i++) {
     pages.push(i);
   }
-  
+
   return pages;
 });
 
@@ -888,13 +891,18 @@ const groupAggregations = computed(() => {
           </div>
 
           <!-- Pagination Controls -->
-          <div v-if="pagination.totalPages > 1" class="flex items-center justify-between mt-4">
+          <div
+            v-if="pagination.totalPages > 1"
+            class="flex items-center justify-between mt-4"
+          >
             <div class="text-sm text-muted-foreground">
-              Showing {{ ((pagination.page - 1) * pagination.limit) + 1 }} to 
-              {{ Math.min(pagination.page * pagination.limit, pagination.total) }} 
+              Showing {{ (pagination.page - 1) * pagination.limit + 1 }} to
+              {{
+                Math.min(pagination.page * pagination.limit, pagination.total)
+              }}
               of {{ pagination.total }} results
             </div>
-            
+
             <div class="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -904,7 +912,7 @@ const groupAggregations = computed(() => {
               >
                 Previous
               </Button>
-              
+
               <div class="flex items-center gap-1">
                 <!-- Show first page -->
                 <Button
@@ -915,10 +923,14 @@ const groupAggregations = computed(() => {
                 >
                   1
                 </Button>
-                
+
                 <!-- Show ellipsis -->
-                <span v-if="pagination.page > 4" class="px-2 text-muted-foreground">...</span>
-                
+                <span
+                  v-if="pagination.page > 4"
+                  class="px-2 text-muted-foreground"
+                  >...</span
+                >
+
                 <!-- Show pages around current page -->
                 <Button
                   v-for="pageNum in visiblePageRange"
@@ -929,10 +941,14 @@ const groupAggregations = computed(() => {
                 >
                   {{ pageNum }}
                 </Button>
-                
+
                 <!-- Show ellipsis -->
-                <span v-if="pagination.page < pagination.totalPages - 3" class="px-2 text-muted-foreground">...</span>
-                
+                <span
+                  v-if="pagination.page < pagination.totalPages - 3"
+                  class="px-2 text-muted-foreground"
+                  >...</span
+                >
+
                 <!-- Show last page -->
                 <Button
                   v-if="pagination.page < pagination.totalPages - 2"
@@ -943,7 +959,7 @@ const groupAggregations = computed(() => {
                   {{ pagination.totalPages }}
                 </Button>
               </div>
-              
+
               <Button
                 variant="outline"
                 size="sm"
